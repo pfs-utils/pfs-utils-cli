@@ -1,0 +1,234 @@
+#!/bin/bash
+# Подключение файловой системы к AUFS (PuppyRus), by Zay, GPL v3.
+# Версия 0.2, последнее изменение: 15.01.2013
+
+[ ! "$1" ] && exit
+if [ $# -gt 1 ]; then
+  for arg in "$@"; do
+    "$0" "${arg}"
+  done; exit
+fi
+
+if [ -f "$1" ]; then
+  filemnt="$(realpath "$1")"
+elif [ -b "$1" ]; then
+  filemnt="$1"
+elif [ -d "$1" ]; then
+  filemnt="$(realpath "$1")" 
+else
+  echo "Object \"${infile}\" not found!"; exit 1
+fi
+
+function export_DIALOG_INFO () {
+export DIALOG_INFO="<window title=\"$1\" resizable=\"false\">
+<vbox border-width=\"16\"><text><label>\"$2\"</label></text></vbox>
+</window>"
+}
+
+function export_DIALOG_MESSAGE () {
+export DIALOG_MESSAGE="<window title=\"$1\" resizable=\"false\"><vbox>
+<vbox border-width=\"12\"><hbox><text use-markup=\"true\"><label>\"$2\"</label></text></hbox></vbox>
+<hbox homogeneous=\"true\"><button ok></button></hbox>
+</vbox></window>"
+}
+
+function export_DIALOG_QUECTION () {
+export DIALOG_QUECTION="<window title=\"$1\" resizable=\"false\"><vbox>
+<vbox border-width=\"12\"><hbox><text use-markup=\"true\"><label>\"$2\"</label></text></hbox></vbox>
+<hbox homogeneous=\"true\"><hbox><button yes></button><button no></button></hbox></hbox>
+</vbox></window>"
+}
+
+function export_DIALOG_ERROR () {
+export DIALOG_ERROR="<window title=\"$1\" resizable=\"false\" icon-name=\"gtk-stop\"><vbox>
+<vbox border-width=\"12\"><hbox>
+ <pixmap icon_size=\"3\"><input file stock=\"gtk-stop\"></input></pixmap>
+ <text><label>\"$2\"</label></text>
+</hbox></vbox>
+<hbox homogeneous=\"true\"><button ok></button></hbox>
+</vbox></window>"
+}
+
+function TIMEOUT_DIALOG () { sleep 10; ps ax | grep -v -F "grep" | grep -F "$1" | grep -q -F "gtkdialog" && kill $1; }
+
+mountpoint="/mnt/.$(basename "${filemnt}")"
+[ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
+if [ ! -d "${mountpoint}" ]; then
+
+  if  [ "$(basename "${filemnt}" | awk -F. '{print $NF}' | tr A-Z a-z)" = "pfs" ]; then
+    checksfsxz 2>/dev/null
+    if [ $? -gt 0 ]; then
+      export_DIALOG_ERROR " Подключение PFS " "  ВНИМАНИЕ: Подключение PFS-файла невозможно! \n Ядра Linux 2.6.37 и более ранних версий не поддерживают PFS-файлы."
+      gtkdialog3 --program=DIALOG_ERROR --center &
+      exit 1
+    fi
+  fi 
+  diskinfo="$(disktype "${filemnt}" 2>/dev/null)"
+  fstype=""
+  if echo "${diskinfo}" | grep -q -F "squashfs"; then
+    kerneluname="$(uname -r)"
+    kernel1ver="$(echo -n "${kerneluname}" | cut -f 1 -d '.' | cut -f 1 -d '-')"
+    #kernel2ver="$(echo -n "${kerneluname}" | cut -f 2 -d '.' | cut -f 1 -d '-')"
+    kernel3ver="$(echo -n "${kerneluname}" | cut -f 3 -d '.' | cut -f 1 -d '-')"
+    kernel4ver="$(echo -n "${kerneluname}" | cut -f 4 -d '.' | cut -f 1 -d '-')"
+    sfsver="squashfs, version 4"
+    if [ ${kernel1ver} -lt 3 ];then
+      if [ ${kernel3ver} -lt 29 ];then
+        if [ ${kernel3ver} -eq 27 ];then
+          [ ${kernel4ver} -lt 47 ] && sfsver="squashfs, version 3"
+	    else
+	      sfsver="squashfs, version 3"
+	    fi
+      fi
+    fi
+    if [ "$(echo "${diskinfo}" | grep "${sfsver}")" = "" ];then
+      if [ "${sfsver}" = "squashfs, version 4" ];then
+        export_DIALOG_ERROR " Подключение SFS " "  ВНИМАНИЕ: Это файл SquashFS <b>3</b>.x старой версии, и его не возможно использовать. ${IFS}  Все ядра Linux <i>2.6.29.x</i> или более поздних версий используют SquashFS <b>4</b>.x файлы. "
+      else        
+        export_DIALOG_ERROR " Подключение SFS " "  ВНИМАНИЕ: Это SquashFS 4.x файл новой версии, и его не возможно использовать. ${IFS}  Все ядра Linux <i>2.6.28.x</i> или более ранних версий используют SquashFS 3.x файлы. "
+      fi
+      kill ${dlgwait} 2>/dev/null
+      gtkdialog3 --program=DIALOG_ERROR --center &
+      exit 1
+    fi
+    ramloader="$(which pfsramload)"
+    fstype='SquashFS'
+  elif echo "${diskinfo}" | grep -q -F "Ext2"; then
+    fstype='Ext2'
+  elif echo "${diskinfo}" | grep -q -F "Ext3"; then
+    fstype='Ext3'
+  elif echo "${diskinfo}" | grep -q -F "Ext4"; then
+    fstype='Ext4'
+  else
+    export_DIALOG_ERROR " Ошибка! " "  Неизвестный тип файловой системы. "
+    gtkdialog3 --program=DIALOG_ERROR --center &
+    exit 1
+  fi
+
+  if [ "${ramloader}" != "" ]; then
+    RAMLD="<checkbox tooltip-text=\"Файл будет скопирован в оперативную память. После этого можно размонтировать и извлечь носитель, не отключая файл. \">${IFS}<label>Копировать файл в ОЗУ</label>${IFS}<variable>CHECKBOX_RAMLOAD</variable>${IFS}<default>no</default>${IFS}</checkbox>"
+  else
+    CHECKBOX_RAMLOAD="false"
+  fi
+
+  export MAIN_DIALOG="<window title=\" Подключение файловой системы к AUFS \" resizable=\"false\">
+ <vbox border-width=\"2\">
+  <hbox homogeneous=\"true\" border-width=\"5\">
+   <text use-markup=\"true\"><label>\"Тип файловой системы:  <b>${fstype}</b> \"</label></text>
+  </hbox>
+  <vbox border-width=\"7\"> 
+   <checkbox tooltip-text=\"Имеющиеся в системе файлы не будут заменены файлами из подключаемой ФС. \">
+    <label>Подключить в безопасном режиме   </label>
+    <variable>CHECKBOX_LOWER</variable>
+    <default>yes</default>
+   </checkbox>  
+   ${RAMLD}
+  </vbox>
+  <hbox border-width=\"3\">
+   <button ok>
+   </button> 
+   <button cancel>
+   </button>
+  </hbox>
+ </vbox>
+</window>"
+
+  REST="`gtkdialog3 --program=MAIN_DIALOG --center`"
+  eval "$REST" 
+
+  [ "$EXIT" != "OK" ] && exit
+
+  export_DIALOG_INFO " Подключение... " " Подключение файловой системы... "
+  gtkdialog3 --program=DIALOG_INFO --center & 
+  dlgwait=$!
+
+  # Монтирование (Mount):
+  if [ "${CHECKBOX_RAMLOAD}" != "true" ]; then
+    [ "$CHECKBOX_LOWER" = "false" ] && pfsload -u "${filemnt}"|| pfsload -l "${filemnt}"
+  else
+    [ "$CHECKBOX_LOWER" = "false" ] && "${ramloader}" -u "${filemnt}" || "${ramloader}" -l "${filemnt}"
+  fi
+  status=$?
+
+  if [ ${status} -eq 0 ]; then
+    [ `find "${mountpoint}" | grep -ic "desktop$"` -gt 0 ] && fixmenus
+    mfs="$(which mkfontscale)"
+    mfd="$(which mkfontdir)"
+    for fontdir in "/usr/X11R6/lib/X11/fonts/TTF" "/usr/share/fonts/default/TTF"
+    do
+      if [ -d "${mountpoint}/${fontdir}" ]; then
+        cd "${fontdir}"
+        [ "${mfs}" !=  "" ] && "${mfs}" .
+        [ "${mfd}" !=  "" ] && "${mfd}" .
+      fi
+    done
+    ### SFS_event support:
+    sfsevent="$(which sfs_event_add)"
+    if [ "${sfsevent}" != "" ]; then
+      [ "$(basename "$0" | grep -E "nomenu")" = "" ] && "${sfsevent}" "${filemnt}" &
+    fi
+    ###;
+    export_DIALOG_MESSAGE " Подключение файловой системы " " Файловая система <b>${filemnt}</b> подключена. "
+    kill ${dlgwait} 2>/dev/null
+    gtkdialog3 --program=DIALOG_MESSAGE --center &
+    TIMEOUT_DIALOG $! &
+  else
+    rmdir "${mntpoint}"
+    export_DIALOG_ERROR " Подключение файловой системы " "  ОШИБКА! Файловую систему <b>${filemnt}</b> не удалось подключить! "
+    kill ${dlgwait} 2>/dev/null
+    gtkdialog3 --program=DIALOG_ERROR --center &
+    exit 1
+  fi
+  
+else
+
+  export_DIALOG_QUECTION " Отключение файловой системы " " Файловая система уже подключена. ${IFS} Отключить ее сейчас? "
+  eval "`gtkdialog3 --program=DIALOG_QUECTION --center`"   
+  if [ "$EXIT" = "Yes" ]; then
+
+    export_DIALOG_INFO " Отключение... " " Отключение файловой системы... "
+    gtkdialog3 --program=DIALOG_INFO --center & 
+    dlgwait=$!
+
+    fm="$(find "${mountpoint}" 2>/dev/null | grep -ic "desktop$")"
+    [ -d "${mountpoint}/usr/X11R6/lib/X11/fonts/TTF" -o -d "${mountpoint}/usr/share/fonts/default/TTF" ] && nf=1 || nf=0
+  
+    # Размонтирование (Unmount):
+    pfsunload "${filemnt}"
+    status=$?
+  
+    if [ ${status} -eq 0 ]; then
+      cmdfree="$(which pfsramfree)"
+      [ "${cmdfree}" != "" ] && "${cmdfree}" "${filemnt}"
+      [ ${fm} -gt 0 ] && fixmenus
+      if [ ${nf} -gt 0 ]; then
+        mfs="$(which mkfontscale)"
+        mfd="$(which mkfontdir)"
+        for fontdir in "/usr/X11R6/lib/X11/fonts/TTF" "/usr/share/fonts/default/TTF"
+	    do
+          cd "${fontdir}"
+          [ "${mfs}" !=  "" ] && "${mfs}" .
+          [ "${mfd}" !=  "" ] && "${mfd}" .		
+	    done
+      fi
+      kill ${dlgwait} 2>/dev/null
+      ### SFS_event support:
+      sfsevent="$(which sfs_event_rem)"
+      if [ "${sfsevent}" != "" ]; then
+        [ "$(basename "$0" | grep -E "nomenu")" = "" ] && "${sfsevent}" "${filemnt}" &
+      fi
+      ###;
+      export_DIALOG_MESSAGE " Отключение файловой системы " " Файловая система <b>${filemnt}</b> отключена. "
+      kill ${dlgwait} 2>/dev/null
+      gtkdialog3 --program=DIALOG_MESSAGE --center &
+      TIMEOUT_DIALOG $! &
+    else
+      export_DIALOG_ERROR " Отключение файловой системы " "  ОШИБКА! Файловую систему <b>${filemnt}</b> не удалось отключить! "
+      kill ${dlgwait} 2>/dev/null
+      gtkdialog3 --program=DIALOG_ERROR --center &
+      exit 1
+    fi
+    
+  fi
+  
+fi

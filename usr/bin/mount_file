@@ -1,0 +1,79 @@
+#!/bin/bash
+# GUI Mount / Unmount file for PuppyRus (supported filesystems: "Ext2", "Ext3", "Ext4", "SquashFS", "ISO"), by Zay, GPL v3.
+# Depends: mountfile, umountfile.
+ulocfile="/usr/share/locale/"$(echo $LANG | sed "s/\(..\).*/\1/")"/LC_MESSAGES/mount_file.mo"
+[ -f "${ulocfile}" ] && . "${ulocfile}" || . "/usr/share/locale/en/LC_MESSAGES/mount_file.mo"
+
+[ ! -f "$1" ] && exit 1
+filemnt="$(realpath "$1")"
+mntpoint=/mnt/$(echo "${filemnt}" | tr ' ' '_' | sed "s#^\.##g" | sed "s#/#+#g")
+if [ ! -d "${mntpoint}" ]; then
+
+  # Check mount:
+  [ "${filemnt:0:8}" != "/initrd/" ] && checkname="${filemnt}" || checkname="${filemnt:7}"
+  [ -z "$(which losetup-FULL)" ] && closetpup="losetup" || closetpup="losetup-FULL"
+  useloop="$(${closetpup} -a | grep -F "${checkname}" | cut -d ':' -f1)"
+  if [ "${useloop}" != "" ]; then
+    mpoint="$(df "${useloop}" | grep -F "${useloop}" | cut -d '%' -f2 | cut -d ' ' -f2)"
+    if [ -d "${mpoint}" ]; then
+      rox -d "${mpoint}"
+      yaf-splash -timeout 6 -font "8x16" -outline 0 -margin 4 -bg orange -text "${Loc_FILEISMOUNT1} $(basename "$1") ${Loc_FILEISMOUNT2}"
+      exit
+    else
+      yaf-splash -timeout 10 -font "8x16" -outline 0 -margin 4 -bg red -text "${Loc_FILEISMOUNT1} $(basename "$1") ${Loc_FILEISMOUNT2}"
+    fi 
+  fi
+
+  # Check kernel version (SquashFS):
+  dt="$(disktype "${filemnt}" 2>/dev/null)"
+  if [ "$(echo "${dt}" | grep -F 'squashfs')" != "" ];then
+    kerneluname="$(uname -r)"
+    kernel1ver="$(echo -n "${kerneluname}" | cut -f 1 -d '.' | cut -f 1 -d '-')"
+    #kernel2ver="$(echo -n "${kerneluname}" | cut -f 2 -d '.' | cut -f 1 -d '-')"
+    kernel3ver="$(echo -n "${kerneluname}" | cut -f 3 -d '.' | cut -f 1 -d '-')"
+    kernel4ver="$(echo -n "${kerneluname}" | cut -f 4 -d '.' | cut -f 1 -d '-')"   
+    sfsver="squashfs, version 4"
+    if [ ${kernel1ver} -lt 3 ];then
+      if [ ${kernel3ver} -lt 29 ];then
+        if [ ${kernel3ver} -eq 27 ];then
+          [ ${kernel4ver} -lt 47 ] && sfsver="squashfs, version 3"
+	    else
+	      sfsver="squashfs, version 3"
+	    fi
+      fi
+    fi
+    if [ "$(echo "${dt}" | grep -F "${sfsver}")" = "" ];then
+      if [ "${sfsver}" = "squashfs, version 4" ];then
+        Xdialog --title "$0" --msgbox "${Loc_ERRORSFSOLD}" 6 0
+      else
+        Xdialog --title "$0" --msgbox "${Loc_ERRORSFSNEW}" 6 0
+      fi
+      exit
+    fi
+  fi
+ 
+  # Mount:
+  mkdir -p "${mntpoint}"
+  mountfile "${filemnt}" "${mntpoint}"
+  if [ $? -eq 0 ] ;then
+    rox -d "${mntpoint}"
+    yaf-splash -timeout 6 -font "8x16" -outline 0 -margin 4 -bg green -text "${Loc_MOUNTOK1} $(basename "$1") ${Loc_MOUNTOK2}" &
+  else
+    rmdir "${mntpoint}"
+    yaf-splash -timeout 10 -font "8x16" -outline 0 -margin 4 -bg red -text "${Loc_MOUNTERROR}"; exit 1
+  fi
+  
+else	
+   
+  # Unmount:
+  umountfile "$1"
+  if [ $? -eq 0 ]; then
+    rox -D "${mntpoint}"
+    yaf-splash -timeout 3 -font "8x16" -outline 0 -margin 4 -bg orange -text "${Loc_UNMOUNTPROGRESS} $(basename "$1") ..."
+  else
+    yaf-splash -timeout 14 -font "8x16" -outline 0 -margin 4 -bg red -text "${Loc_UNMOUNTFAILED} $(basename "$1") !"; exit 1
+  fi
+
+fi
+
+exit 0

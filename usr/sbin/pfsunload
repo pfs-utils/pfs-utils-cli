@@ -1,0 +1,51 @@
+#!/bin/sh
+#Unmount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
+#Version 0.15
+#Modify 28.12.2013
+
+for arg in "$@"
+do
+  case "${arg}" in
+    "-n" | "--no-update") fupdate="no";;
+    "-h" | "--help") infile=""; break;;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
+    *) infile="${arg}";;
+  esac
+done
+if [ "${infile}" = "" ]; then
+  echo "Usage: $(basename "$0") FYLESYSTEM"; exit
+fi
+
+[ -f "${infile}" ] && fsname="`basename $(realpath "${infile}")`" || fsname="$(basename "${infile}")"
+if [ "$(echo "${fsname}" | sed 's/^.*\.//')" = "pfs" ]; then
+  checksfsxz >/dev/null 2>&1
+  if [ $? -gt 0 ]; then
+    echo "Kernel not support PFS!" >&2; exit 1
+  fi
+fi
+
+mountpoint="/mnt/.${fsname}"
+if [ -d "${mountpoint}" ]; then
+  sync
+  busybox mount -t aufs -o remount,del:"${mountpoint}"/ aufs / >/dev/null 2>&1
+  stataufs=$?
+  sync
+  if [ "${fupdate}" != "no" ]; then
+    if [ ${stataufs} -eq 0 ]; then 
+      [ "$(find "${mountpoint}/lib/modules" "${mountpoint}/usr/lib/modules" -type f -name "*.ko" 2>/dev/null)" != "" ] && depmod &
+      [ "$(find "${mountpoint}/lib" "${mountpoint}/usr/lib" "${mountpoint}/usr/local/lib" "${mountpoint}/usr/X11R7/lib" -type f -name "*.so" 2>/dev/null)" != "" ] && ldconfig &
+      [ -d "${mountpoint}/usr/share/glib-2.0/schemas/" ] && glib-compile-schemas /usr/share/glib-2.0/schemas/ &
+    fi
+  fi
+  busybox umount -d "${mountpoint}" >/dev/null 2>&1
+  status=$?
+  sync
+  rmdir "${mountpoint}" 2>/dev/null
+  [ ${status} -eq 0 ] && status=${stataufs}
+  [ ${status} -gt 0 ] && echo "Unmount \"${fsname}\" failed!"
+  sync
+else
+  echo "Object \"${fsname}\" not mounted." >&2
+fi
+
+exit ${status}

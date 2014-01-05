@@ -1,0 +1,61 @@
+#!/bin/sh
+# GUI Unload SquashFS (for PuppyRus), by Zay, GPL v3.
+# Supported extensions: ".pfs", ".xzm", ".sfs".
+
+[ ! -f "$1" ] && exit 1
+if [ $# -gt 1 ]; then
+  for arg in "$@"; do
+    "$0" "${arg}"
+  done; exit
+fi
+
+filemnt="$(realpath "$1")"
+mountpoint="/mnt/.$(basename "${filemnt}")"
+if [ -d "${mountpoint}" ]; then
+
+  export WAIT_DIALOG="<window title=\" Отключение... \" resizable=\"false\"><vbox border-width=\"16\">
+  <text><label>\"Отключение файла...\"</label></text>
+  </vbox></window>"
+  gtkdialog3 --program=WAIT_DIALOG --center &
+  dlgwait=$!
+
+  fm="$(find "${mountpoint}" 2>/dev/null | grep -ic "desktop$")"
+  [ -d "${mountpoint}/usr/X11R6/lib/X11/fonts/TTF" -o -d "${mountpoint}/usr/share/fonts/default/TTF" ] && nf=1 || nf=0
+  
+  # Размонтирование (Unmount):
+  pfsunload "${filemnt}"
+  status=$?
+  
+  if [ ${status} -eq 0 ]; then
+    cmdfree="$(which pfsramfree)"
+    [ "${cmdfree}" != "" ] && "${cmdfree}" "${filemnt}"
+    [ ${fm} -gt 0 ] && fixmenus
+    if [ ${nf} -gt 0 ]; then
+      mfs="$(which mkfontscale)"
+      mfd="$(which mkfontdir)"
+      for fontdir in "/usr/X11R6/lib/X11/fonts/TTF" "/usr/share/fonts/default/TTF"
+	  do
+        cd "${fontdir}"
+        [ "${mfs}" !=  "" ] && "${mfs}" .
+        [ "${mfd}" !=  "" ] && "${mfd}" .		
+	  done
+    fi
+    kill ${dlgwait} 2>/dev/null
+    ### SFS_event support:
+    sfsevent="$(which sfs_event_rem)"
+    if [ "${sfsevent}" != "" ]; then
+      [ "$(basename "$0" | grep -E "nomenu")" = "" ] && "${sfsevent}" "${filemnt}" &
+    fi
+    ###;
+    Xdialog --title " Отключение файла " --msgbox " Файл \"$(basename "${filemnt}")\" отключен. \n"  6 0
+  else
+    kill ${dlgwait} 2>/dev/null
+    Xdialog --title " Отключение файла " --msgbox " ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось отключить! \n"  6 0
+    exit 1
+  fi
+else
+  kill ${dlgwait} 2>/dev/null	
+  Xdialog --title " Отключение файла  " --msgbox " Файл \"$(basename "${filemnt}")\" не подключен. \n"  6 0
+fi
+
+exit 0
