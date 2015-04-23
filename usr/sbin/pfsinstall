@@ -1,7 +1,7 @@
 #!/bin/sh
 #Install .pfs (for PuppyRus), by Zay, GPL v3.
-#Version 0.12
-#Modify 28.12.2013
+#Version 0.13
+#Modify 21.04.2014
 
 if [ "$1" ]; then
   instfile="$1"
@@ -45,11 +45,12 @@ allfiles="`echo "${listpackage}" | while read pack; do
   fi
   rm -rf "/tmp/.pfs/install/${bsname}/${pack}" 2>/dev/null
   unsquashfs -l "${instfile}" 2>/dev/null | grep -q "/etc/packages/mount/${pack}/pfs.dirs.empty"
-  [ $? -gt 0 ] && continue
-  unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "/etc/packages/mount/${pack}/pfs.dirs.empty" -n >/dev/null 2>&1
   if [ $? -eq 0 ]; then
-    if [ -f "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.dirs.empty" ]; then
-      cat "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.dirs.empty" 2>/dev/null | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g' -e 's:[/*]$::g' | while read dirempty; do mkdir -p "${dirempty}"; done
+    unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "/etc/packages/mount/${pack}/pfs.dirs.empty" -n >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      if [ -f "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.dirs.empty" ]; then
+        cat "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.dirs.empty" 2>/dev/null | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g' -e 's:[/*]$::g' | while read dirempty; do mkdir -p "${dirempty}"; done
+      fi
     fi
   fi
   rm -rf "/tmp/.pfs/install/${bsname}/${pack}" 2>/dev/null
