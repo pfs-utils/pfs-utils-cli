@@ -6,7 +6,7 @@
 compression="xz"
 for arg in "$@"
 do
-  case "${arg}" in 
+  case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
     "-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
     "-n" | "--no-dirs-empty") dirs="off";;
@@ -58,6 +58,6 @@ echo "${allfiles}" >"./etc/packages/mount/${pfsname}/pfs.files"
 if [ "${compression}" = "xz" ]; then
   optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
 fi
-mksquashfs "${pfsdir}" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}} ${useproc}
+mksquashfs "${pfsdir}" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
 
 exit $?
