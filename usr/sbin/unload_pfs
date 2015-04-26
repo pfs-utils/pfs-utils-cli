@@ -44,7 +44,7 @@ if [ -d "${mountpoint}" ]; then
     ### SFS_event support:
     sfsevent="$(which sfs_event_rem)"
     if [ "${sfsevent}" != "" ]; then
-      [ "$(basename "$0" | grep -E "nomenu")" = "" ] && "${sfsevent}" "${filemnt}" &
+      basename "$0" | grep -q -F "nomenu" && "${sfsevent}" "${filemnt}" &
     fi
     ###;
     Xdialog --title " Отключение файла " --msgbox " Файл \"$(basename "${filemnt}")\" отключен. \n"  6 0

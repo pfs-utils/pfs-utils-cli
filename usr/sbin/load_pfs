@@ -81,7 +81,7 @@ if [ ! -d "${mountpoint}" ]; then
     ### SFS_event support:
     sfsevent="$(which sfs_event_add)"
     if [ "${sfsevent}" != "" ]; then
-      [ "$(basename "$0" | grep -E "nomenu")" = "" ] && "${sfsevent}" "${filemnt}" &
+      basename "$0" | grep -q -F "nomenu" && "${sfsevent}" "${filemnt}" &
     fi
     ###;
     kill ${dlgwait} 2>/dev/null
