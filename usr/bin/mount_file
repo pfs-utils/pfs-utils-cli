@@ -11,8 +11,7 @@ if [ ! -d "${mntpoint}" ]; then
 
   # Check mount:
   [ "${filemnt:0:8}" != "/initrd/" ] && checkname="${filemnt}" || checkname="${filemnt:7}"
-  [ -z "$(which losetup-FULL)" ] && closetpup="losetup" || closetpup="losetup-FULL"
-  useloop="$(${closetpup} -a | grep -F "${checkname}" | cut -d ':' -f1)"
+  useloop="$(losetupb -a | grep -F "${checkname}" | cut -d ':' -f1)"
   if [ "${useloop}" != "" ]; then
     mpoint="$(df "${useloop}" | grep -F "${useloop}" | cut -d '%' -f2 | cut -d ' ' -f2)"
     if [ -d "${mpoint}" ]; then

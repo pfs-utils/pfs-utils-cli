@@ -49,7 +49,7 @@ fi
 
 sync
 freeloop=0
-looplist="$(losetup-FULL -a)"
+looplist="$(losetupb -a)"
 while :; do
   echo "${looplist}" | grep -q -F "/dev/loop${freeloop}" && freeloop="$(expr ${freeloop} + 1)" || break
 done
@@ -62,14 +62,14 @@ if [ ! -b /dev/loop${freeloop} ]; then
   "Error! Free loop devices is not found!"; exit 1
 fi
 
-losetup-FULL /dev/loop${freeloop} "${pfsname}"
+losetupb /dev/loop${freeloop} "${pfsname}"
 status=$?
 if [ ${status} -eq 0 ]; then
   mkdir -p "${tmpdir}/pmount"
-  busybox mount -t squashfs -o loop /dev/loop${freeloop} "${tmpdir}/pmount" >/dev/null 2>&1
+  mountb -t squashfs -o loop /dev/loop${freeloop} "${tmpdir}/pmount" >/dev/null 2>&1
   status=$?
   if [ ${status} -gt 0 ]; then
-    losetup-FULL -d /dev/loop${freeloop}
+    losetupb -d /dev/loop${freeloop}
     rmdir "${tmpdir}/pmount" 2>/dev/null
     rmdir "${tmpdir}" 2>/dev/null
     echo "Mount \"${pfsname}\": failed!" >&2; exit ${status}
@@ -133,7 +133,7 @@ echo "${listpackage}" | while read pack; do
   fi
 done
 
-busybox umount -d "${tmpdir}/pmount" >/dev/null 2>&1
+umountb -d "${tmpdir}/pmount" >/dev/null 2>&1
 rmdir "${tmpdir}/pmount" 2>/dev/null
 rmdir "${tmpdir}" 2>/dev/null
 

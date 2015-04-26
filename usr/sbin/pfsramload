@@ -1,7 +1,7 @@
 #!/bin/sh
 #Copy to RAM & Mount SquashFS to AUFS (for PuppyRus), by «sfs» & Zay, GPL v3.
-#Version 0.11
-#Modify 28.12.2013
+#Version 0.13
+#Modify 26.04.2015
 
 copyramdir="/tmp/.mountRAM"
 
@@ -46,11 +46,11 @@ minram="$(expr ${filesize} \* 2)"
 
 if [ "${modecopy}" = "yes" ]; then
   if [ -d "${copyramdir}/${fsname}" ]; then
-    busybox mount | grep -q -F "${copyramdir}/${fsname}"
+    mountb | grep -q -F "${copyramdir}/${fsname}"
     if [ $? -eq 0 ]; then
-      losetup-FULL -a | grep -q -F "${copyramdir}/${fsname}"
+      losetupb -a | grep -q -F "${copyramdir}/${fsname}"
       if [ $? -gt 0 ]; then
-        busybox umount "${copyramdir}/${fsname}" >/dev/null 2>&1
+        umountb "${copyramdir}/${fsname}" >/dev/null 2>&1
         [ $? -eq 0 ] && rmdir "${copyramdir}/${fsname}" 2>/dev/null
       fi
     else
@@ -63,13 +63,13 @@ fi
 if [ "${modecopy}" = "yes" ]; then 
   sync
   mkdir -p "${copyramdir}/${fsname}"
-  busybox mount -t tmpfs -o size=${filesize}k tmpfs "${copyramdir}/${fsname}" >/dev/null 2>&1
+  mountb -t tmpfs -o size=${filesize}k tmpfs "${copyramdir}/${fsname}" >/dev/null 2>&1
   if [ $? -eq 0 ]; then
     sync
     echo "\"${fsname}\" copying to RAM..."
     cp -afL "${fsfile}" "${copyramdir}/${fsname}"
     if [ $? -gt 0 ]; then
-      busybox umount "${copyramdir}/${fsname}" >/dev/null 2>&1
+      umountb "${copyramdir}/${fsname}" >/dev/null 2>&1
       rmdir "${copyramdir}/${fsname}" 2>/dev/null
       modecopy="no"
     fi
@@ -88,7 +88,7 @@ status=$?
 
 if [ ${status} -gt 0 ]; then
   echo -en "\\033[1;31m"; echo -n "ERROR copy to RAM!"; echo -en "\\033[0;39m"
-  busybox umount "${copyramdir}/${fsname}" >/dev/null 2>&1
+  umountb "${copyramdir}/${fsname}" >/dev/null 2>&1
   rmdir "${copyramdir}/${fsname}" 2>/dev/null
 fi
 

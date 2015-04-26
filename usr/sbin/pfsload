@@ -1,7 +1,7 @@
 #!/bin/sh
 #Mount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
-#Version 0.19
-#Modify 28.12.2013
+#Version 0.21
+#Modify 26.04.2015
 
 for arg in "$@"
 do
@@ -72,7 +72,7 @@ fi
 if [ "${devtype}:${fstype}" = "file:squashfs" ]; then
   sync
   freeloop=0
-  looplist="$(losetup-FULL -a)"
+  looplist="$(losetupb -a)"
   while true ; do
     echo "${looplist}" | grep -q -F "/dev/loop${freeloop}" && freeloop="$(expr ${freeloop} + 1)" || break
   done
@@ -84,7 +84,7 @@ if [ "${devtype}:${fstype}" = "file:squashfs" ]; then
   if [ ! -b /dev/loop${freeloop} ]; then
     echo "Error! Free loop devices is not found!" >&2; exit 1
   fi
-  losetup-FULL /dev/loop${freeloop} "${fsfile}"
+  losetupb /dev/loop${freeloop} "${fsfile}"
   status=$?
 else
   status=0
@@ -95,14 +95,14 @@ if [ ${status} -eq 0 ]; then
   sync
   case "${devtype}" in
     "file" )  if [ "${fstype}" = "squashfs" ]; then
-                busybox mount -t squashfs -o ro /dev/loop${freeloop} "${mountpoint}" >/dev/null 2>&1
+                mountb -t squashfs -o ro /dev/loop${freeloop} "${mountpoint}" >/dev/null 2>&1
               else
                 [ "${romode}" ] && optmnt="loop,ro" || optmnt="loop"
-                busybox mount -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1
+                mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1
               fi;;
     "dev" )   [ "${romode}" ] && optmnt="ro" || optmnt="rw"
-              busybox mount -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
-    "dir" )   busybox mount -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
+              mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
+    "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
   esac 
   status=$?
   if [ ${status} -eq 0 ]; then
@@ -112,9 +112,9 @@ if [ ${status} -eq 0 ]; then
       case "${aufslayer}" in
         ''|*[!0-9]*) aufslayer=1;;
       esac
-      busybox mount -o remount,add:${aufslayer}:"${mountpoint}"=ro / >/dev/null 2>&1
+      mountb -o remount,add:${aufslayer}:"${mountpoint}"=ro / >/dev/null 2>&1
     else
-      busybox mount -o remount,append:"${mountpoint}"=ro / >/dev/null 2>&1
+      mountb -o remount,append:"${mountpoint}"=ro / >/dev/null 2>&1
     fi
     status=$?
     sync
@@ -125,12 +125,12 @@ if [ ${status} -eq 0 ]; then
         [ -d "${mountpoint}/usr/share/glib-2.0/schemas/" ] && glib-compile-schemas /usr/share/glib-2.0/schemas/ &
       fi
     else
-      busybox umount -d "${mountpoint}" >/dev/null
+      umountb -d "${mountpoint}" >/dev/null
 	  rmdir "${mountpoint}" >/dev/null
 	  echo "AUFS error!" >&2; exit ${status}
     fi
   else
-    losetup-FULL -d /dev/loop${freeloop}
+    losetupb -d /dev/loop${freeloop}
     rmdir "${mountpoint}" >/dev/null
 	echo "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." >&2; exit ${status}
   fi
