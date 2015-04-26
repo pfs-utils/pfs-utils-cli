@@ -1,11 +1,11 @@
 #!/bin/sh
 #Support alternate location of binary file "losetup" (for PuppyRus), by Zay, GPL v3.
-#Version 0.1
+#Version 0.2
 #Modify 26.04.2015
 
 if [ -x "$(which losetup-FULL)" ]; then
-  echo "$(losetup-FULL $@)"
+  losetup-FULL $@
 else
-  [ -x "$(which losetup)" ] && echo "$(losetup $@)" || exit 1
+  [ -x "$(which losetup)" ] losetup $@ || exit 1
 fi
-exit 0
+exit $?
