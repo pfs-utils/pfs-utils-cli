@@ -1,6 +1,6 @@
 #!/bin/bash
 # Подключение файловой системы к AUFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.2, последнее изменение: 15.01.2013
+# Версия 0.3, последнее изменение: 26.04.2015
 
 [ ! "$1" ] && exit
 if [ $# -gt 1 ]; then
@@ -16,7 +16,7 @@ elif [ -b "$1" ]; then
 elif [ -d "$1" ]; then
   filemnt="$(realpath "$1")" 
 else
-  echo "Object \"${infile}\" not found!"; exit 1
+  echo "Object \"$1\" not found!"; exit 1
 fi
 
 function export_DIALOG_INFO () {
