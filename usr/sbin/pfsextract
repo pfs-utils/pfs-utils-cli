@@ -12,7 +12,7 @@ status=0
 compression="xz"
 for arg in "$@"
 do
-  case "${arg}" in 
+  case "${arg}" in
     "-p" | "--packages" ) upacklist="yes";;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
