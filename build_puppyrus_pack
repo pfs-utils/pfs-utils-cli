@@ -1,0 +1,24 @@
+#!/bin/sh
+# Buildier package "PFS-utils" for PuppyRus, by Zay, GPL v3.
+
+VERSION="`cat "$(dirname "$0")/VERSION.md" | sed -e '2 d'`"
+
+# Start:
+[ -d "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr" ] && rm -rf "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr" 2>/dev/null
+mkdir -p "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr"
+cp -a "$(dirname "$0")/usr" "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr"
+
+# Depends:
+mkdir -p "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc"
+mkdir -p "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc/packages"
+mkdir -p "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc/packages/mount"
+mkdir -p "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc/packages/mount/pfs-utils-${VERSION}-pr"
+echo "gtkdialog-0.8" >>"/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc/packages/mount/pfs-utils-${VERSION}-pr/pfs.depends"
+echo "skeleton " >>"/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc/packages/mount/pfs-utils-${VERSION}-pr/pfs.depends"
+echo "squashfs-tools" >>"/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc/packages/mount/pfs-utils-${VERSION}-pr/pfs.depends"
+echo "util-linux" >>"/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr/etc/packages/mount/pfs-utils-${VERSION}-pr/pfs.depends"
+
+# Build:
+"$(dirname "$0")/usr/sbin/mkpfs" "/tmp/build-pfs-pr/pfs-utils-${VERSION}-pr"
+
+exit $?
