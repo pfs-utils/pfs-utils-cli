@@ -1,12 +1,14 @@
 #!/bin/sh
 #Convert .pet to .pfs (for PuppyRus), by Zay, GPL v3.
-#Version 0.11
-#Modify 28.12.2013
+#Version 0.12
+#Modify 26.04.2015
 
+compression="xz"
 for arg in "$@"
 do
   case "${arg}" in 
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
+    "--gzip") compression="gzip";;
     *) infile="${arg}";;
   esac
 done
@@ -88,8 +90,10 @@ cd "${path}"
 sync
 
 if [ ${status} -eq 0 ]; then
-  uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
-  mksquashfs "${tmpdir}/${basepack}" "./${basepack}.pfs" -comp xz -b 512K -Xbcj ${bcjcomp} -noappend ${noprogress}
+  if [ "${compression}" = "xz" ]; then
+    optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
+  fi
+  mksquashfs "${tmpdir}/${basepack}" "./${basepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress}
   status=$?
 fi
 

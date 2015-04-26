@@ -1,13 +1,15 @@
 #!/bin/sh
 #Merge .pfs (for PuppyRus), by Zay, GPL v3.
-#Version 0.16
-#Modify 28.12.2013
+#Version 0.18
+#Modify 26.04.2015
 
 checksfsxz >/dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo "Kernel not support PFS!" >&2; exit 1
 fi
 status=0
+
+compression="xz"
 
 listpfs=""
 inpath=""
@@ -21,6 +23,7 @@ do
     "-a" | "--cmd" | "--add-command") addcmd="on";;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors") numproc="on";;
+    "--gzip") compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${cutpack}" ]; then delpacks="${delpacks}${arg}$IFS"
        elif [ "${addcmd}" = "on" ]; then usecommand="${arg}"
@@ -211,8 +214,10 @@ if [ ${status} -eq 0 ]; then
 fi
 
 if [ ${status} -eq 0 ]; then
-  uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
-  mksquashfs "/tmp/.pfs/merge/${outbasename}/pfs" "${outfile}" -comp xz -b 512K -Xbcj ${bcjcomp} -noappend ${noprogress} ${useproc}
+  if [ "${compression}" = "xz" ]; then
+    optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
+  fi
+  mksquashfs "/tmp/.pfs/merge/${outbasename}/pfs" "${outfile}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
   status=$?
 fi
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 #Extract .pfs (for PuppyRus), by Zay & «sfs», GPL v3.
-#Version 0.15
-#Modify 28.12.2013
+#Version 0.17
+#Modify 26.04.2015
 
 checksfsxz >/dev/null 2>&1
 if [ $? -gt 0 ]; then
@@ -9,12 +9,14 @@ if [ $? -gt 0 ]; then
 fi
 status=0
 
+compression="xz"
 for arg in "$@"
 do
   case "${arg}" in 
     "-p" | "--packages" ) upacklist="yes";;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
-    "-processors" | "--processors" ) numproc="on";;   
+    "-processors" | "--processors" ) numproc="on";;
+    "--gzip") compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${upacklist}" != "yes" ]; then [ ! "${pfsname}" ] && pfsname="${arg}" || outdir="${arg}" 
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
@@ -116,8 +118,10 @@ echo "${listpackage}" | while read pack; do
           chown "$(ls -ld "${chfp}" | sed -n 's/^[^ ]\+ [^ ]\+ \([^ ]\+\) \([^ ]\+\) .*$/\1:\2/p')" "${chfile}"
           chmod "$(ls -ld "${chfp}" | sed -n 's/^.\(...\)\(...\)\(...\).*$/u=\1,g=\2,o=\3/; s/-//g; p')" "${chfile}"
         done
-        uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
-        mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp xz -b 512K -Xbcj ${bcjcomp} -noappend ${noprogress} ${useproc}
+        if [ "${compression}" = "xz" ]; then
+          optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
+        fi
+        mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
         status=$?
       fi
       rm -rf "${tmpdir}/files" 2>/dev/null
