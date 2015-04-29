@@ -26,6 +26,7 @@ done
 pwddir="$(pwd)"
 [ "${pfsdir}" = "" ] && pfsdir="${pwddir}"
 if [ -d "${pfsdir}" ]; then
+  chmod 755 "${pfsdir}"
   cd "${pfsdir}"
 else
   echo "Directory \"${pfsdir}\" not found!" >&2; exit 1
