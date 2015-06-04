@@ -113,11 +113,7 @@ echo "${listpackage}" | while read pack; do
       status=$?
       sync
       if [ ${status} -eq 0 ]; then
-        find "${tmpdir}/files/${namepack}" -type d | while read chfile; do
-          chfp="$(echo "${chfile}" | sed 's#'${tmpdir}'/files/'${namepack}'#'${tmpdir}'/pmount#')"
-          chown "$(ls -ld "${chfp}" | sed -n 's/^[^ ]\+ [^ ]\+ \([^ ]\+\) \([^ ]\+\) .*$/\1:\2/p')" "${chfile}"
-          chmod "$(ls -ld "${chfp}" | sed -n 's/^.\(...\)\(...\)\(...\).*$/u=\1,g=\2,o=\3/; s/-//g; p')" "${chfile}"
-        done
+        find "${tmpdir}/pmount${file}" -type d -printf "[ -e '%p' ] && { chmod %m '%p'; chown %U:%G '%p';}\n" | sed 's#'${tmpdir}'/pmount#'${tmpdir}'/files/'${namepack}'#g' | ash
         if [ "${compression}" = "xz" ]; then
           optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
         fi
