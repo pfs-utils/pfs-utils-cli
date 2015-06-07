@@ -41,7 +41,7 @@ if [ ${status} -eq 0 ]; then
   tar xzf "${instpet}" -C "${tmpdir}" >/dev/null 2>&1
   status=$?
   if [ ${status} -ne 0 ]; then    
-    truncate `stat --format=%s "${instpet}" | expr $(cat) - 32` "${instpet}" >/dev/null 2>&1
+    truncate `stat -c %s "${instpet}" | expr $(cat) - 32` "${instpet}" >/dev/null 2>&1
     status=$?
     if [ ${status} -eq 0 ]; then
       tar xzf "${instpet}" -C "${tmpdir}" >/dev/null 2>&1
