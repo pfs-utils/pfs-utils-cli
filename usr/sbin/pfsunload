@@ -16,37 +16,20 @@ if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") FYLESYSTEM"; exit
 fi
 
-[ -f "${infile}" ] && fsname="`basename $(realpath "${infile}")`" || fsname="$(basename "${infile}")"
-if [ "$(echo "${fsname}" | sed 's/^.*\.//')" = "pfs" ]; then
-  checksfsxz >/dev/null 2>&1
-  if [ $? -gt 0 ]; then
-    echo "Kernel not support PFS!" >&2; exit 1
-  fi
+fsname="$(basename "${infile}")"
+mountpoint="$(grep -ho "/.*${fsname}=r" /sys/fs/aufs/*/br[0-9]*)"
+mountpoint="${mountpoint%=r}"
+
+[ ! "${mountpoint}" ] \
+    && echo "Object \"${fsname}\" not mounted in aufs." && exit 1
+
+mountb -o remount,del:"${mountpoint}" /
+[ $? -ne 0 ] && echo "Unable del ${mountpoint} from aufs" && exit 1
+
+if [ "${fupdate}" != "no" ]; then
+    pfs-update-caches "${mountpoint}"
 fi
 
-mountpoint="/mnt/.${fsname}"
-if [ -d "${mountpoint}" ]; then
-  sync
-  mountb -t aufs -o remount,del:"${mountpoint}"/ aufs / >/dev/null 2>&1
-  stataufs=$?
-  sync
-  if [ "${fupdate}" != "no" ]; then
-    if [ ${stataufs} -eq 0 ]; then 
-      [ "$(find "${mountpoint}/lib/modules" "${mountpoint}/usr/lib/modules" -type f -name "*.ko" 2>/dev/null)" != "" ] && depmod &
-      [ "$(find "${mountpoint}/lib" "${mountpoint}/usr/lib" "${mountpoint}/usr/local/lib" "${mountpoint}/usr/X11R7/lib" -type f -name "*.so" 2>/dev/null)" != "" ] && ldconfig &
-      [ -d "${mountpoint}/usr/share/glib-2.0/schemas/" ] && glib-compile-schemas /usr/share/glib-2.0/schemas/ &
-    fi
-  fi
-  umountb -d "${mountpoint}" >/dev/null 2>&1
-  status=$?
-  sync
-  rmdir "${mountpoint}" 2>/dev/null
-  [ ${status} -eq 0 ] && status=${stataufs}
-  [ ${status} -gt 0 ] && echo "Unmount \"${fsname}\" failed!" >&2
-  sync
-else
-  echo "Object \"${fsname}\" not mounted." >&2
-  status=1
-fi
-
-exit ${status}
+umountb -d "${mountpoint}"
+[ $? -ne 0 ] && echo "Unmount \"${fsname}\" failed!" >&2
+rmdir "${mountpoint}" 2>/dev/null
