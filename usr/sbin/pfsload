@@ -20,19 +20,22 @@ do
   esac
 done
 if [ "${infile}" = "" ]; then
-  echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM${IFS}${IFS}Options:"
-  echo " -u, --upper    Mount filesystem to upper layer (AUFS)."
-  echo " -l, --lower    Mount filesystem to lower layer (AUFS)."; exit
+  echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM [MOUNTDIR]"
+  echo "${IFS}Options:"
+  echo " -u, --upper     Mount filesystem to upper layer (AUFS)."
+  echo " -l, --lower     Mount filesystem to lower layer (AUFS)."
+  echo " -r, --read-only Mount read-only"
+  echo " -n, --no-update Do not check for update caches"
+  echo " --nh, --no-hide Do not hide mountpoint in mount dir"
+  exit
 fi
 
+fsfile="$(realpath "${infile}")"
 if [ -f "${infile}" ]; then
-  fsfile="$(realpath "${infile}")"
   devtype="file"
 elif [ -b "${infile}" ]; then
-  fsfile="${infile}"
   devtype="dev"
 elif [ -d "${infile}" ]; then
-  fsfile="$(realpath "${infile}")"
   devtype="dir"
 else
   echo "Object \"${infile}\" not found!" >&2; exit 1
