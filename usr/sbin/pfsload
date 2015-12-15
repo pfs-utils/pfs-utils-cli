@@ -3,6 +3,9 @@
 #Version 0.21
 #Modify 26.04.2015
 
+mountdir="/mnt"
+hide="."
+
 for arg in "$@"
 do
   case "${arg}" in
@@ -11,8 +14,9 @@ do
     "-n" | "--no-update") fupdate="no";;
     "-r" | "--read-only") romode="yes";;
     "-h" | "--help") infile=""; break;;
+    "--nh"|"--no-hide") hide="";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
-    *) infile="${arg}";;
+    *) [ -z "$infile" ] && infile="${arg}" || mountdir="${arg}";;
   esac
 done
 if [ "${infile}" = "" ]; then
@@ -52,7 +56,8 @@ if [ "$(echo "${fsname##*.}" | tr A-Z a-z)" = "pfs" ]; then
   checksfsxz >/dev/null
   [ $? -gt 0 ] && echo "Kernel not support PFS!" >&2 && exit 1
 fi
-mountpoint="/mnt/.${fsname}"
+
+mountpoint="${mountdir}/${hide}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 [ -d "${mountpoint}" ] && echo "Object \"${fsfile}\" is mounted!" >&2 && exit 1
 
