@@ -1,8 +1,8 @@
 #!/bin/sh
 if [ -f /tmp/.topaufslayer ]; then
- echo "$(cat /tmp/.topaufslayer)"
+    cat /tmp/.topaufslayer
 else
-. /etc/rc.d/PUPSTATE
- [ ${PUPMODE} -ne 13 ] && echo 1 || echo 2
+    [ -f /etc/rc.d/PUPSTATE ] && . /etc/rc.d/PUPSTATE
+    [ "${PUPMODE}" != "13" ] && echo 1 || echo 2
 fi
 exit 0
