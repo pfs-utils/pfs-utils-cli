@@ -88,7 +88,7 @@ case "${devtype}" in
 	      mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" ;;
     "dev" )   [ "${romode}" ] && optmnt="ro" || optmnt="rw"
               mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" ;;
-    "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" ;;
+    "dir" )   rmdir "${mountpoint}" ; mountpoint="${fsfile}" ;;
 esac
 if [ $? -ne 0 ] ; then
     echo "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." >&2
@@ -107,8 +107,9 @@ else
     mountb -o remount,append:"${mountpoint}${optmnt}" /
 fi
 if [ $? -ne 0 ]; then
-    umountb -d "${mountpoint}"
-    rmdir "${mountpoint}"
+    [ "${devtype}" != "dir" ]  && { umountb -d "${mountpoint}"
+                                    rmdir "${mountpoint}"
+                                   }
     [ "$fsfile" == "$copyramdir/$fsname" ] && rm -rf "$fsfile"
     echo "AUFS error!" >&2
     exit 1

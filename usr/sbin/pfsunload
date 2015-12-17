@@ -23,12 +23,6 @@ mountpoint="${mountpoint%=r}"
 [ ! "${mountpoint}" ] \
     && echo "Object \"${fsname}\" not mounted in aufs." && exit 1
 
-fsfile=$(grep "$mountpoint" /proc/mounts | cut -d' ' -f1)
-echo "$fsfile" | grep -q "/dev/loop" \
-  && { fsfile=$(losetupb "$fsfile" | cut -d' ' -f3)
-       fsfile=${fsfile#(} ; fsfile=${fsfile%)}
-      }
-
 mountb -o remount,del:"${mountpoint}" /
 [ $? -ne 0 ] && echo "Unable del ${mountpoint} from aufs" && exit 1
 
@@ -36,9 +30,18 @@ if [ "${fupdate}" != "no" ]; then
     pfs-update-caches "${mountpoint}"
 fi
 
-umountb -d "${mountpoint}"
-[ $? -ne 0 ] && echo "Unmount \"${fsname}\" failed!" >&2
-rmdir "${mountpoint}" 2>/dev/null
+fsfile=$(grep "$mountpoint" /proc/mounts | cut -d' ' -f1)
+echo "$fsfile" | grep -q "/dev/loop" \
+  && { fsfile=$(losetupb "$fsfile" | cut -d' ' -f3)
+       fsfile=${fsfile#(} ; fsfile=${fsfile%)}
+      }
+
+if [ "$fsfile" ] ; then
+    umountb -d "${mountpoint}"
+    [ $? -ne 0 ] && echo "Unmount \"${fsname}\" failed!" >&2
+    rmdir "${mountpoint}" 2>/dev/null
+else fsfile="${mountpoint}"
+fi
 
 [ "$(df -aT "$fsfile" | tail -n 1 | tr -s ' ' | cut -d' ' -f2)" == "tmpfs" ] \
   && rm -rf "$fsfile"
