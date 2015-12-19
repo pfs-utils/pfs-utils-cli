@@ -3,6 +3,8 @@
 #Version 0.21
 #Modify 26.04.2015
 
+hide="."
+
 for arg in "$@"
 do
   case "${arg}" in
@@ -11,24 +13,37 @@ do
     "-n" | "--no-update") fupdate="no";;
     "-r" | "--read-only") romode="yes";;
     "-h" | "--help") infile=""; break;;
+    "--nh"|"--no-hide") hide="";;
+    "-m" | "--memory") copy2ram="yes";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
-    *) infile="${arg}";;
+    *) [ -z "$infile" ] && infile="${arg}" \
+	|| { [ -z "$mountdir" ] && mountdir="${arg}" \
+	      || copyramdir="${arg}"
+	    };;
   esac
 done
+[ "$mountdir" ] || mountdir="/mnt"
+[ "$copyramdir" ] || copyramdir="/tmp/.mountRAM"
+minspace=131072
+
 if [ "${infile}" = "" ]; then
-  echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM${IFS}${IFS}Options:"
-  echo " -u, --upper    Mount filesystem to upper layer (AUFS)."
-  echo " -l, --lower    Mount filesystem to lower layer (AUFS)."; exit
+  echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM [MOUNTDIR [COPYRAMDIR]]"
+  echo "${IFS}Options:"
+  echo " -u, --upper     Mount filesystem to upper layer (AUFS)."
+  echo " -l, --lower     Mount filesystem to lower layer (AUFS)."
+  echo " -r, --read-only Mount read-only"
+  echo " -n, --no-update Do not check for update caches"
+  echo " --nh, --no-hide Do not hide mountpoint in mount dir"
+  echo " -m, --memory    Copy to RAM"
+  exit
 fi
 
+fsfile="$(realpath "${infile}")"
 if [ -f "${infile}" ]; then
-  fsfile="$(realpath "${infile}")"
   devtype="file"
 elif [ -b "${infile}" ]; then
-  fsfile="${infile}"
   devtype="dev"
 elif [ -d "${infile}" ]; then
-  fsfile="$(realpath "${infile}")"
   devtype="dir"
 else
   echo "Object \"${infile}\" not found!" >&2; exit 1
@@ -52,9 +67,19 @@ if [ "$(echo "${fsname##*.}" | tr A-Z a-z)" = "pfs" ]; then
   checksfsxz >/dev/null
   [ $? -gt 0 ] && echo "Kernel not support PFS!" >&2 && exit 1
 fi
-mountpoint="/mnt/.${fsname}"
+
+mountpoint="${mountdir}/${hide}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 [ -d "${mountpoint}" ] && echo "Object \"${fsfile}\" is mounted!" >&2 && exit 1
+
+if [ "$copy2ram" -a "$devtype" != "dev" ] \
+    && [ -d "$copyramdir" ] || mkdir -p "$copyramdir" ; then
+  diskspace=$(df -aT "$copyramdir" | tail -n 1 | tr -s ' ' | cut -d' ' -f5)
+  filesize=$(du -sk "$fsfile" | cut -f1)
+  [ $(expr $diskspace - $filesize) -gt $minspace ] \
+   && cp -a "$fsfile" "$copyramdir" \
+   && fsfile="$copyramdir/$fsname"
+fi
 
 mkdir -p "${mountpoint}"
 case "${devtype}" in
@@ -63,9 +88,13 @@ case "${devtype}" in
 	      mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" ;;
     "dev" )   [ "${romode}" ] && optmnt="ro" || optmnt="rw"
               mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" ;;
-    "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" ;;
-esac 
-[ $? -ne 0 ] && echo "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." >&2 && exit 1
+    "dir" )   rmdir "${mountpoint}" ; mountpoint="${fsfile}" ;;
+esac
+if [ $? -ne 0 ] ; then
+    echo "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." >&2
+    [ "$fsfile" == "$copyramdir/$fsname" ] && rm -rf "$fsfile"
+    exit 1
+fi
 
 [ "${romode}" -o "${fstype}" == "squashfs" ] && optmnt="=rr+wh" || optmnt="=ro+wh"
 if [ "${mntmode}" != "lower" ]; then
@@ -78,8 +107,10 @@ else
     mountb -o remount,append:"${mountpoint}${optmnt}" /
 fi
 if [ $? -ne 0 ]; then
-    umountb -d "${mountpoint}"
-    rmdir "${mountpoint}"
+    [ "${devtype}" != "dir" ]  && { umountb -d "${mountpoint}"
+                                    rmdir "${mountpoint}"
+                                   }
+    [ "$fsfile" == "$copyramdir/$fsname" ] && rm -rf "$fsfile"
     echo "AUFS error!" >&2
     exit 1
 fi

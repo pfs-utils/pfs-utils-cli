@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ -f /tmp/.topaufslayer ]; then
+    cat /tmp/.topaufslayer
+else
+    [ -f /etc/rc.d/PUPSTATE ] && . /etc/rc.d/PUPSTATE
+    [ "${PUPMODE}" != "13" ] && echo 1 || echo 2
+fi
+exit 0
