@@ -4,6 +4,9 @@
 #Modify 26.04.2015
 
 hide="."
+mountdir_default="/mnt"
+copyramdir_default="/tmp/.mountRAM"
+minfreespace=131072
 
 for arg in "$@"
 do
@@ -22,9 +25,8 @@ do
 	    };;
   esac
 done
-[ "$mountdir" ] || mountdir="/mnt"
-[ "$copyramdir" ] || copyramdir="/tmp/.mountRAM"
-minspace=131072
+[ "$mountdir" ] || mountdir="$mountdir_default"
+[ "$copyramdir" ] || copyramdir="$copyramdir_default"
 
 if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM [MOUNTDIR [COPYRAMDIR]]"
@@ -74,9 +76,20 @@ mountpoint="${mountdir}/${hide}${fsname}"
 
 if [ "$copy2ram" -a "$devtype" != "dev" ] \
     && [ -d "$copyramdir" ] || mkdir -p "$copyramdir" ; then
-  diskspace=$(df -aT "$copyramdir" | tail -n 1 | tr -s ' ' | cut -d' ' -f5)
   filesize=$(du -sk "$fsfile" | cut -f1)
-  [ $(expr $diskspace - $filesize) -gt $minspace ] \
+  freeram="$(checkramfree 2>/dev/null)" \
+   || freeram="$(free | grep 'Mem:' | tr -s ' ' | cut -d ' ' -f 4)"
+  if [ "$copyramdir" == "$copyramdir_default" ] \
+      && ! grep -q "$copyramdir" /proc/self/mounts ; then
+    diskspace=$(expr $freeram - $minfreespace)
+    [ $diskspace -gt $filesize ] \
+      && mountb -t tmpfs -o size=${diskspace}k tmpfs "$copyramdir" \
+      || diskspace=0
+  else
+    diskspace=$(df -aT "$copyramdir" | tail -n 1 | tr -s ' ' | cut -d' ' -f5)
+  fi
+  [ $diskspace -gt $filesize ] \
+   && [ $(expr $freeram - $minfreespace) -gt $filesize ] \
    && cp -a "$fsfile" "$copyramdir" \
    && fsfile="$copyramdir/$fsname"
 fi
