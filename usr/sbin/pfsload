@@ -59,7 +59,7 @@ if [ "${devtype}" != "dir" ]; then
 else
   fsinfo="$(df -aT "${fsfile}" | tail -n 1 | tr -s ' ' '_' | cut -d'_' -f 2)"
   case "${fsinfo}" in
-    "ext2"|"ext3"|"ext4"|"squashfs") fstype="${fsinfo}";;
+    "ext2"|"ext3"|"ext4"|"squashfs"|"tmpfs") fstype="${fsinfo}";;
   esac
 fi
 [ "${fstype}" = "" ] && echo "Filesystem not supported!" >&2 && exit 1

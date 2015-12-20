@@ -8,6 +8,7 @@ do
   case "${arg}" in
     "-n" | "--no-update") fupdate="no";;
     "-h" | "--help") infile=""; break;;
+    "--nr" | "--no-remove") noremove="yes";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) infile="${arg}";;
   esac
@@ -17,7 +18,7 @@ if [ "${infile}" = "" ]; then
 fi
 
 fsname="$(basename "${infile}")"
-mountpoint="$(grep -ho "/.*${fsname}=r" /sys/fs/aufs/*/br[0-9]*)"
+mountpoint="$(grep -ho "/.*/\.\?${fsname}=r" /sys/fs/aufs/*/br[0-9]*)"
 mountpoint="${mountpoint%=r}"
 
 [ ! "${mountpoint}" ] \
@@ -43,7 +44,9 @@ if [ "$fsfile" ] ; then
 else fsfile="${mountpoint}"
 fi
 
-[ "$(df -aT "$fsfile" | tail -n 1 | tr -s ' ' | cut -d' ' -f2)" == "tmpfs" ] \
+[ -z "$noremove" ] \
+  && [ "$(df -aT "$fsfile" | tail -n 1 | tr -s ' ' | cut -d' ' -f2)" \
+         == "tmpfs" ] \
   && rm -rf "$fsfile" \
   && copy2ram_fs="$(dirname "$fsfile")" \
   && grep -q "$copy2ram_fs " /proc/self/mounts \
