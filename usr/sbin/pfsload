@@ -83,7 +83,7 @@ if [ "$copy2ram" -a "$devtype" != "dev" ] \
       && ! grep -q "$copyramdir" /proc/self/mounts ; then
     diskspace=$(expr $freeram - $minfreespace)
     [ $diskspace -gt $filesize ] \
-      && mountb -t tmpfs -o size=${diskspace}k tmpfs "$copyramdir" \
+      && mountb -t tmpfs tmpfs "$copyramdir" \
       || diskspace=0
   else
     diskspace=$(df -aT "$copyramdir" | tail -n 1 | tr -s ' ' | cut -d' ' -f5)
@@ -91,7 +91,13 @@ if [ "$copy2ram" -a "$devtype" != "dev" ] \
   [ $diskspace -gt $filesize ] \
    && [ $(expr $freeram - $minfreespace) -gt $filesize ] \
    && cp -a "$fsfile" "$copyramdir" \
-   && fsfile="$copyramdir/$fsname"
+   && fsfile="$copyramdir/$fsname" \
+   || { echo "No space for copy2ram. $fsfile not loaded." >&2
+        grep -q "$copyramdir" /proc/self/mounts \
+         && [ -z "$(ls -A "$copyramdir")" ] \
+         && umountb "$copyramdir"
+        exit 1
+      }
 fi
 
 mkdir -p "${mountpoint}"
