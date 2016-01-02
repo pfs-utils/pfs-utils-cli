@@ -46,11 +46,11 @@ if [ "${infile}" = "" ]; then
 fi
 
 fsfile="$(realpath "${infile}")"
-if [ -f "${infile}" ]; then
+if [ -f "${fsfile}" ]; then
   devtype="file"
-elif [ -b "${infile}" ]; then
+elif [ -b "${fsfile}" ]; then
   devtype="dev"
-elif [ -d "${infile}" ]; then
+elif [ -d "${fsfile}" ]; then
   devtype="dir"
 else
   echo "Object \"${infile}\" not found!" >&2; exit 1
