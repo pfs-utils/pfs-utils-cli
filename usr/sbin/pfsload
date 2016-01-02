@@ -1,12 +1,16 @@
 #!/bin/sh
 #Mount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
-#Version 0.21
-#Modify 26.04.2015
+#Version
+#Modify 02.01.2016
 
 hide="."
 mountdir_default="/mnt"
 copyramdir_default="/tmp/.mountRAM"
 minfreespace=131072
+
+[ -r /etc/pfsutils.conf ] && . /etc/pfsutils.conf
+[ "$hide_mountpoints" != "yes" ] && hide=""
+
 unset infile fupdate romode copy2ram mountdir copyramdir
 
 for arg in "$@"
@@ -31,7 +35,7 @@ done
 
 if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM [MOUNTDIR [COPYRAMDIR]]"
-  echo "${IFS}Options:"
+  echo "Options:"
   echo " -u, --upper     Mount filesystem to upper layer (AUFS)."
   echo " -l, --lower     Mount filesystem to lower layer (AUFS)."
   echo " -r, --read-only Mount read-only"
@@ -130,7 +134,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ "${fupdate}" != "no" ]; then
-    pfs-update-caches "${mountpoint}"
-fi
+[ "${fupdate}" != "no" ] && which pfs-update-caches >/dev/null 2>&1 \
+    && pfs-update-caches "${mountpoint}"
 exit 0
