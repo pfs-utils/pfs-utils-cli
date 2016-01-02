@@ -7,6 +7,7 @@ hide="."
 mountdir_default="/mnt"
 copyramdir_default="/tmp/.mountRAM"
 minfreespace=131072
+unset infile fupdate romode copy2ram mountdir copyramdir
 
 for arg in "$@"
 do
@@ -65,17 +66,12 @@ fi
 [ "${fstype}" = "" ] && echo "Filesystem not supported!" >&2 && exit 1
 
 fsname="$(basename "${fsfile}")"
-if [ "$(echo "${fsname##*.}" | tr A-Z a-z)" = "pfs" ]; then
-  checksfsxz >/dev/null
-  [ $? -gt 0 ] && echo "Kernel not support PFS!" >&2 && exit 1
-fi
-
 mountpoint="${mountdir}/${hide}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 [ -d "${mountpoint}" ] && echo "Object \"${fsfile}\" is mounted!" >&2 && exit 1
 
 if [ "$copy2ram" -a "$devtype" != "dev" ] \
-    && [ -d "$copyramdir" ] || mkdir -p "$copyramdir" ; then
+    && { [ -d "$copyramdir" ] || mkdir -p "$copyramdir"; } ; then
   filesize=$(du -sk "$fsfile" | cut -f1)
   freeram="$(checkramfree 2>/dev/null)" \
    || freeram="$(free | grep 'Mem:' | tr -s ' ' | cut -d ' ' -f 4)"
