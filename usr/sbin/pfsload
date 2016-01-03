@@ -3,13 +3,13 @@
 #Version
 #Modify 02.01.2016
 
-hide="."
+hide_mountpoints="yes"
 mountdir_default="/mnt"
 copyramdir_default="/tmp/.mountRAM"
 minfreespace=131072
 
 [ -r /etc/pfsutils.conf ] && . /etc/pfsutils.conf
-[ "$hide_mountpoints" != "yes" ] && hide=""
+[ "$hide_mountpoints" == "yes" ] && hide="." || hide=""
 
 unset infile fupdate romode copy2ram mountdir copyramdir
 
