@@ -8,6 +8,10 @@ exit
 pidof jwm >/dev/null && J
 
 rm "/home/`sfsusr`/.cache/menus/"* 2>/dev/null
-killall menu-cached && exit
+killall menu-cached 2>/dev/null && exit
 
-pidof xfdesktop >/dev/null && xfdesktop -R
+sudo -u $(sfsusr) sh -c "
+       $(ps -C xfdesktop ewwww --no-headers \
+         |sed -n 's/^.* \(xfdesktop\) \(.*\)$/\2 \1 -R/p')
+       $(ps -C xfce4-panel ewwww --no-headers \
+         |sed -n 's/^.* \(xfce4-panel\) \(.*\)$/\2 \1 -r/p')"
