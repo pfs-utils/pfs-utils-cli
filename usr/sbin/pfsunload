@@ -52,3 +52,5 @@ fi
   && grep -q "$copy2ram_fs " /proc/self/mounts \
   && [ -z "$(ls -A "$copy2ram_fs")" ] \
   && umountb "$copy2ram_fs"
+
+exit 0
