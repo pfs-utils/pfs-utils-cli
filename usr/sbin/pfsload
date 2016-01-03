@@ -30,6 +30,7 @@ do
 	    };;
   esac
 done
+[ "$(basename "$0")" == "pfsramload" ] && copy2ram="yes"
 [ "$mountdir" ] || mountdir="$mountdir_default"
 [ "$copyramdir" ] || copyramdir="$copyramdir_default"
 
