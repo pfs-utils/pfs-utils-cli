@@ -1,9 +1,17 @@
 #!/bin/sh
 #Mount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
-#Version 0.21
-#Modify 26.04.2015
+#Version
+#Modify 02.01.2016
 
-hide="."
+hide_mountpoints="yes"
+mountdir_default="/mnt"
+copyramdir_default="/tmp/.mountRAM"
+minfreespace=131072
+
+[ -r /etc/pfsutils.conf ] && . /etc/pfsutils.conf
+[ "$hide_mountpoints" == "yes" ] && hide="." || hide=""
+
+unset infile fupdate romode copy2ram mountdir copyramdir
 
 for arg in "$@"
 do
@@ -22,13 +30,13 @@ do
 	    };;
   esac
 done
-[ "$mountdir" ] || mountdir="/mnt"
-[ "$copyramdir" ] || copyramdir="/tmp/.mountRAM"
-minspace=131072
+[ "$(basename "$0")" == "pfsramload" ] && copy2ram="yes"
+[ "$mountdir" ] || mountdir="$mountdir_default"
+[ "$copyramdir" ] || copyramdir="$copyramdir_default"
 
 if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM [MOUNTDIR [COPYRAMDIR]]"
-  echo "${IFS}Options:"
+  echo "Options:"
   echo " -u, --upper     Mount filesystem to upper layer (AUFS)."
   echo " -l, --lower     Mount filesystem to lower layer (AUFS)."
   echo " -r, --read-only Mount read-only"
@@ -39,11 +47,11 @@ if [ "${infile}" = "" ]; then
 fi
 
 fsfile="$(realpath "${infile}")"
-if [ -f "${infile}" ]; then
+if [ -f "${fsfile}" ]; then
   devtype="file"
-elif [ -b "${infile}" ]; then
+elif [ -b "${fsfile}" ]; then
   devtype="dev"
-elif [ -d "${infile}" ]; then
+elif [ -d "${fsfile}" ]; then
   devtype="dir"
 else
   echo "Object \"${infile}\" not found!" >&2; exit 1
@@ -57,28 +65,40 @@ if [ "${devtype}" != "dir" ]; then
 else
   fsinfo="$(df -aT "${fsfile}" | tail -n 1 | tr -s ' ' '_' | cut -d'_' -f 2)"
   case "${fsinfo}" in
-    "ext2"|"ext3"|"ext4"|"squashfs") fstype="${fsinfo}";;
+    "ext2"|"ext3"|"ext4"|"squashfs"|"tmpfs") fstype="${fsinfo}";;
   esac
 fi
 [ "${fstype}" = "" ] && echo "Filesystem not supported!" >&2 && exit 1
 
 fsname="$(basename "${fsfile}")"
-if [ "$(echo "${fsname##*.}" | tr A-Z a-z)" = "pfs" ]; then
-  checksfsxz >/dev/null
-  [ $? -gt 0 ] && echo "Kernel not support PFS!" >&2 && exit 1
-fi
-
 mountpoint="${mountdir}/${hide}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 [ -d "${mountpoint}" ] && echo "Object \"${fsfile}\" is mounted!" >&2 && exit 1
 
 if [ "$copy2ram" -a "$devtype" != "dev" ] \
-    && [ -d "$copyramdir" ] || mkdir -p "$copyramdir" ; then
-  diskspace=$(df -aT "$copyramdir" | tail -n 1 | tr -s ' ' | cut -d' ' -f5)
+    && { [ -d "$copyramdir" ] || mkdir -p "$copyramdir"; } ; then
   filesize=$(du -sk "$fsfile" | cut -f1)
-  [ $(expr $diskspace - $filesize) -gt $minspace ] \
+  freeram="$(checkramfree 2>/dev/null)" \
+   || freeram="$(free | grep 'Mem:' | tr -s ' ' | cut -d ' ' -f 4)"
+  if [ "$copyramdir" == "$copyramdir_default" ] \
+      && ! grep -q "$copyramdir" /proc/self/mounts ; then
+    diskspace=$(expr $freeram - $minfreespace)
+    [ $diskspace -gt $filesize ] \
+      && mountb -t tmpfs tmpfs "$copyramdir" \
+      || diskspace=0
+  else
+    diskspace=$(df -aT "$copyramdir" | tail -n 1 | tr -s ' ' | cut -d' ' -f5)
+  fi
+  [ $diskspace -gt $filesize ] \
+   && [ $(expr $freeram - $minfreespace) -gt $filesize ] \
    && cp -a "$fsfile" "$copyramdir" \
-   && fsfile="$copyramdir/$fsname"
+   && fsfile="$copyramdir/$fsname" \
+   || { echo "No space for copy2ram. $fsfile not loaded." >&2
+        grep -q "$copyramdir" /proc/self/mounts \
+         && [ -z "$(ls -A "$copyramdir")" ] \
+         && umountb "$copyramdir"
+        exit 1
+      }
 fi
 
 mkdir -p "${mountpoint}"
@@ -115,7 +135,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ "${fupdate}" != "no" ]; then
-    pfs-update-caches "${mountpoint}"
-fi
+[ "${fupdate}" != "no" ] && which pfs-update-caches >/dev/null 2>&1 \
+    && pfs-update-caches "${mountpoint}"
 exit 0
