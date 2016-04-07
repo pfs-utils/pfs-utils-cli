@@ -1,6 +1,6 @@
 #!/bin/bash
 # Просмотр списка пакетов PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.6, последнее изменение: 16.01.2013
+# Версия 0.7, последнее изменение: 07.04.2016
 
 export DIALOG_INFO="<window title=\"$1\" resizable=\"false\">
 <vbox border-width=\"16\"><text><label>\" Подготовка списка пакетов... \"</label></text></vbox>
@@ -8,12 +8,15 @@ export DIALOG_INFO="<window title=\"$1\" resizable=\"false\">
 gtkdialog3 --program=DIALOG_INFO --center &
 dlgwait=$!
 
+prefixmp="/mnt/."
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+
 # Чтение списка пакетов:
 if [ -f /tmp/permanent_pfs_load.log ]; then
   permanentpacks="`cat /tmp/permanent_pfs_load.log | tr ' ' '_' | while read pfile
   do
-    if [ -d "/mnt/.${pfile}/etc/packages/mount" ]; then
-      echo "$(find /mnt/.${pfile}/etc/packages/mount -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort -f )"              
+    if [ -d "${prefixmp}${pfile}/etc/packages/mount" ]; then
+      echo "$(find "${prefixmp}${pfile}/etc/packages/mount" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort -f )"              
     fi
   done | sort -u`"
 fi

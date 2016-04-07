@@ -1,7 +1,7 @@
 #!/bin/sh
 #Mount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
-#Version 0.21
-#Modify 26.04.2015
+#Version 0.22
+#Modify 07.04.2016
 
 for arg in "$@"
 do
@@ -63,7 +63,9 @@ if [ "$(echo "${fsname}" | awk -F. '{print $NF}' | tr A-Z a-z)" = "pfs" ]; then
   fi
   [ ! "${mntmode}" ] && mntmode="upper"
 fi
-mountpoint="/mnt/.${fsname}"
+prefixmp="/mnt/."
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+mountpoint="${prefixmp}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ -d "${mountpoint}" ]; then
   echo "Object \"${fsfile}\" is mounted!" >&2; exit 1

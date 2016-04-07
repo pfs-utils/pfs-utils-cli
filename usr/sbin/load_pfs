@@ -10,7 +10,9 @@ if [ $# -gt 1 ]; then
 fi
 
 filemnt="$(realpath "$1")"
-mountpoint="/mnt/.$(basename "${filemnt}")"
+prefixmp="/mnt/."
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+mountpoint="${prefixmp}$(basename "${filemnt}")"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ ! -d "${mountpoint}" ]; then
 

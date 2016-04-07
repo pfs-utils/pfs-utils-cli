@@ -10,7 +10,9 @@ if [ $# -gt 1 ]; then
 fi
 
 filemnt="$(realpath "$1")"
-mountpoint="/mnt/.$(basename "${filemnt}")"
+prefixmp="/mnt/."
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+mountpoint="${prefixmp}$(basename "${filemnt}")"
 if [ -d "${mountpoint}" ]; then
 
   export WAIT_DIALOG="<window title=\" Отключение... \" resizable=\"false\"><vbox border-width=\"16\">

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Подключение файловой системы к AUFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.3, последнее изменение: 26.04.2015
+# Версия 0.4, последнее изменение: 07.04.2016
 
 [ ! "$1" ] && exit
 if [ $# -gt 1 ]; then
@@ -51,7 +51,9 @@ export DIALOG_ERROR="<window title=\"$1\" resizable=\"false\" icon-name=\"gtk-st
 
 function TIMEOUT_DIALOG () { sleep 10; ps ax | grep -v -F "grep" | grep -F "$1" | grep -q -F "gtkdialog" && kill $1; }
 
-mountpoint="/mnt/.$(basename "${filemnt}")"
+prefixmp="/mnt/."
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+mountpoint="${prefixmp}$(basename "${filemnt}")"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ ! -d "${mountpoint}" ]; then
 

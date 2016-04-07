@@ -1,6 +1,6 @@
 #!/bin/bash
 # Отключение пакетов PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.6. Последнее изменение: 14.11.2012
+# Версия 0.7. Последнее изменение: 07.04.2016
 
 if [ "$1" != "--all" ];then
   if [ -f /tmp/permanent_pfs_load.log ]; then
@@ -8,11 +8,16 @@ if [ "$1" != "--all" ];then
   fi
 fi
 
+prefixmp="/mnt/."
+ckeckprefmp="/mnt"
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+
 # Подготовка окна диалога:
-listgen="`find /mnt -mindepth 1 -maxdepth 1 -type d -name '.*.pfs' | sort -f | while read pfsfile
+listgen="`find "${ckeckprefmp}" -mindepth 1 -maxdepth 1 -type d -name '*.pfs' | sort -f | while read pfsfile
   do
     if [ "$(ls -A "${pfsfile}")" != "" ]; then
       pfsname="$(basename "${pfsfile}")"
+      [ "${pfsname:0:1}" != "." ] && pfsname=".${pfsname}"
       if [ "$1" != "--all" ];then
         if [ "${permanents}" != "" ]; then
           echo "${permanents}" | grep -q -F "${pfsname:1}"
@@ -57,8 +62,8 @@ else
     </vbox></window>"
     gtkdialog3 --program=UMNT_DIALOG --center &
     dlgwait=$!
-    fm="$(find "/mnt/${EXIT}" 2>/dev/null | grep -ic "desktop$")"
-    [ -d "/mnt/${EXIT}/usr/X11R6/lib/X11/fonts/TTF" -o -d "/mnt/${EXIT}/usr/share/fonts/default/TTF" ] && nf=1 || nf=0
+    fm="$(find "${prefixmp}${EXIT:1}" 2>/dev/null | grep -ic "desktop$")"
+    [ -d "${prefixmp}${EXIT:1}/usr/X11R6/lib/X11/fonts/TTF" -o -d "${prefixmp}${EXIT:1}/usr/share/fonts/default/TTF" ] && nf=1 || nf=0
     
     pfsunload "${EXIT:1}"
     status=$?
