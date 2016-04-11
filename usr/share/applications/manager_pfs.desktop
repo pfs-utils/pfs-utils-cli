@@ -1,10 +1,13 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Просмотр пакетов в системе
+Name=Viewing packages in system
+Name[ru]=Просмотр пакетов в системе
 Icon=mini-doc.xpm
-Comment=Просмотр пакетов в системе
+Comment=Viewing packages in system
+Comment[ru]=Просмотр пакетов в системе
 Exec=manager_pfs
 Terminal=false
 Type=Application
 Categories=X-SystemSchedule
-GenericName=Просмотр пакетов в системе
+GenericName=Viewing packages in system
+GenericName[ru]=Просмотр пакетов в системе
