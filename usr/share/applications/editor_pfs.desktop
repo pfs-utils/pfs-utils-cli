@@ -1,10 +1,13 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Pедактировать PFS-пакет(ы)
+Name=Edit PFS-package(s)
+Name[ru]=Pедактировать PFS-пакет(ы)
 Icon=mini-ray.xpm
-Comment=Pедактировать PFS-пакет(ы)
+Comment=Edit PFS-package(s)
+Comment[ru]=Pедактировать PFS-пакет(ы)
 Exec=editor_pfs
 Terminal=false
 Type=Application
 Categories=X-SetupUtility
-GenericName=Pедактировать PFS-пакет(ы)
+GenericName=Edit PFS-package(s)
+GenericName[ru]=Pедактировать PFS-пакет(ы)
