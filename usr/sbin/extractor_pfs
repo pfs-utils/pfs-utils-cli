@@ -76,7 +76,7 @@ if checksfsxz >/dev/null; then
   if [ "$(disktype "${pack}" | grep -F 'squashfs, version 4')" != "" ];then
     packageslist="$(pfsinfo "${pack}")"
     status=$?  
-    [ ${status} -gt 0 ] && texterror="$(gettext 'Ошибка чтения файла') $(basename "${pack}"."
+    [ ${status} -gt 0 ] && texterror="$(gettext 'Ошибка чтения файла') $(basename "${pack}")."
   else  
     texterror="`eval_gettext "Файл $(basename "${pack}") не является PFS-пакетом."`"
     status=1
