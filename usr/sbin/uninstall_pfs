@@ -1,6 +1,9 @@
 #!/bin/bash
 # Удаление пакетов PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.6. Последнее изменение: 15.01.2013
+# Версия 0.7. Последнее изменение: 19.04.2016
+
+export LOCALDOMAIN="uninstall_pfs"
+. gettext.sh
 
 function export_DIALOG_INFO () {
 export DIALOG_INFO="<window title=\"$1\" resizable=\"false\">
@@ -47,21 +50,21 @@ fi
     
 if [ "${chboxlist}" = "" ]; then
   echo "No installed packages!"
-  export_DIALOG_MESSAGE " Удаление PFS " " Установленные пакеты отсутствуют. "
+  export_DIALOG_MESSAGE "$(gettext ' Удаление PFS ')" "$(gettext ' Установленные пакеты отсутствуют. ')"
   gtkdialog3 --program=DIALOG_MESSAGE --center &
   exit
 fi
         
-export MAIN_DIALOG="<window title=\" Удаление пакетов \">
+export MAIN_DIALOG="<window title=\"$(gettext ' Удаление пакетов ')\">
 <vbox>
  <text><label>\"
-Список установленных пакетов: \"</label></text>
+$(gettext 'Список установленных пакетов: ')\"</label></text>
  <vbox scrollable=\"true\" height=\"410\" width=\"420\"> 
   ${chboxlist}
  </vbox>
   <hbox>
   <button use-stock=\"true\" label=\"gtk-delete\">
-   <label>Удалить</label>
+   <label>$(gettext 'Удалить')</label>
   </button>
   <button cancel>
   </button>  
@@ -73,7 +76,7 @@ REST="`gtkdialog3 --program=MAIN_DIALOG --center`"
 eval "$REST"
 
 # Удаление выбранных пакетов:
-if [ "$EXIT" = "Удалить" ]; then
+if [ "$EXIT" = "$(gettext 'Удалить')" ]; then
   numpack=1
   allpacks=0
   while :;do
@@ -84,11 +87,11 @@ if [ "$EXIT" = "Удалить" ]; then
   done
   if [ ${allpacks} -gt 0 ]; then
   
-    export_DIALOG_QUECTION " Удаление PFS " " Удалить выбранные пакеты (<b>${allpacks}</b>) ? "
+    export_DIALOG_QUECTION "$(gettext ' Удаление PFS ')" "$(gettext ' Удалить выбранные пакеты') (<b>${allpacks}</b>) ? "
     eval "`gtkdialog3 --program=DIALOG_QUECTION --center`"   
     if [ "$EXIT" = "Yes" ]; then 
     
-      export_DIALOG_INFO " Удаление... " " Удаление пакетов... "
+      export_DIALOG_INFO "$(gettext ' Удаление... ')" "$(gettext ' Удаление пакетов... ')"
       gtkdialog3 --program=DIALOG_INFO --center & 
       dlgwait=$!
        
@@ -105,7 +108,7 @@ if [ "$EXIT" = "Удалить" ]; then
             grep -q "/usr/share/fonts/default/TTF" "${package}/pfs.files" && ufont=0
             pfsuninstall "$(basename "${package}")"
             if [ $? -gt 0 ]; then
-              export_DIALOG_ERROR " Ошибка! " "  При удалении пакета <b>$(basename "${package}")</b> произошла ошибка! "
+              export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "`eval_gettext " При удалении пакета <b>$(basename "${package}")</b> произошла ошибка! "`"
               kill ${dlgwait} 2>/dev/null
               gtkdialog3 --program=DIALOG_ERROR --center &
               exit 1
@@ -126,12 +129,12 @@ if [ "$EXIT" = "Удалить" ]; then
           [ "${mfd}" !=  "" ] && "${mfd}" .	
         done
       fi
-      export_DIALOG_MESSAGE " Удаление PFS " " Пакеты удалены. "
+      export_DIALOG_MESSAGE "$(gettext ' Удаление PFS ')" "$(gettext ' Пакеты удалены. ')"
       kill ${dlgwait} 2>/dev/null
       gtkdialog3 --program=DIALOG_MESSAGE --center &
     fi
   else
-    export_DIALOG_MESSAGE " Удаление PFS " " Пакеты не выбраны. "
+    export_DIALOG_MESSAGE "$(gettext ' Удаление PFS ')" "$(gettext ' Пакеты не выбраны. ')"
     gtkdialog3 --program=DIALOG_MESSAGE --center &
   fi
 fi
