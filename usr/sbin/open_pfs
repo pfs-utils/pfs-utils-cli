@@ -1,6 +1,9 @@
 #!/bin/bash
 # Подключение/Установка пакетов PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.21, последнее изменение: 07.04.2016
+# Версия 0.22, последнее изменение: 19.04.2016
+
+export LOCALDOMAIN="open_pfs"
+. gettext.sh
 
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") FILE"; exit 1
@@ -57,7 +60,7 @@ mountpoint="${prefixmp}$(basename "${pack}")"
 if [ ! -d "${mountpoint}" ]; then
 # Файл с таким названием НЕ подключен:
 
-  export_DIALOG_INFO "Чтение..." "Чтение файла..."    
+  export_DIALOG_INFO "$(gettext 'Чтение...')" "$(gettext 'Чтение файла...')"    
   gtkdialog3 --program=DIALOG_INFO --center &
   dlgwait=$!
 
@@ -65,13 +68,13 @@ if [ ! -d "${mountpoint}" ]; then
   if [ "$(disktype "${pack}" | grep -F 'squashfs, version 4')" != "" ];then
     packageslist="$(pfsinfo "${pack}")"
     status=$?  
-    [ ${status} -gt 0 ] && texterror="Ошибка чтения файла $(basename "${pack}")."
+    [ ${status} -gt 0 ] && texterror="$(gettext 'Ошибка чтения файла') $(basename "${pack}")."
   else  
-    texterror="Файл $(basename "${pack}") не является PFS-пакетом."
+    texterror="`eval_gettext "Файл $(basename "${pack}") не является PFS-пакетом."`"
     status=1
   fi
   if [ ${status} -gt 0 ]; then   
-    export_DIALOG_ERROR " Ошибка! " "  ${texterror}"
+    export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "  ${texterror}"
     kill ${dlgwait} 2>/dev/null
     gtkdialog3 --program=DIALOG_ERROR --center &
     echo "Error: Invalid *.pfs file!"; exit ${status}
@@ -81,7 +84,7 @@ if [ ! -d "${mountpoint}" ]; then
   ramloader="$(which pfsramload)"
   if [ "${ramloader}" != "" ]; then
     [ "${pfs_loader}" != "" ] && rmldvis="enabled" || rmldvis="disabled"
-    RAMLD="<checkbox tooltip-text=\"PFS-файл будет скопирован в оперативную память. После этого можно размонтировать и извлечь носитель, не отключая PFS-файл. \">${IFS}<label>(Копировать пакеты в ОЗУ)</label>${IFS}<variable>CHECKBOX_RAMLOAD</variable>${IFS}<default>no</default>${IFS}<visible>${rmldvis}</visible>${IFS}</checkbox>"
+    RAMLD="<checkbox tooltip-text=\"$(gettext 'PFS-файл будет скопирован в оперативную память. После этого можно размонтировать и извлечь носитель, не отключая PFS-файл. ')\">${IFS}<label>(Копировать пакеты в ОЗУ)</label>${IFS}<variable>CHECKBOX_RAMLOAD</variable>${IFS}<default>no</default>${IFS}<visible>${rmldvis}</visible>${IFS}</checkbox>"
   else
     CHECKBOX_RAMLOAD="false"
   fi
@@ -103,14 +106,14 @@ if [ ! -d "${mountpoint}" ]; then
       visibleoff="<visible>disabled</visible>"
     fi
   else
-    chboxlist="<text><label>\"${IFS} ( Пакеты отсутствуют ) ${IFS}\"</label></text>"
+    chboxlist="<text><label>\"${IFS} ( $(gettext 'Пакеты отсутствуют') ) ${IFS}\"</label></text>"
     visibleoff="<visible>disabled</visible>"
   fi
     
-  export MAIN_DIALOG="<window title=\"Подключение / Установка PFS\">
+  export MAIN_DIALOG="<window title=\"$(gettext 'Подключение / Установка PFS')\">
 <vbox>
  <hbox homogeneous=\"true\" border-width=\"5\">
-  <text><label>\"Подключение или установка пакетов: \"</label></text>
+  <text><label>\"$(gettext 'Подключение или установка пакетов: ')\"</label></text>
  </hbox>
  <vbox scrollable=\"true\" height=\"250\" width=\"400\"> 
   ${chboxlist}
@@ -120,13 +123,13 @@ if [ ! -d "${mountpoint}" ]; then
    <hbox>
     <vbox>
      <hbox>
-      <radiobutton tooltip-text=\"Подключить PFS-файл в корневую файловую систему. Пакеты сразу становятся доступны для использования. \">
-       <label>Подключить  </label>
+      <radiobutton tooltip-text=\"$(gettext 'Подключить PFS-файл в корневую файловую систему. Пакеты сразу становятся доступны для использования. ')\">
+       <label>$(gettext 'Подключить  ')</label>
        <variable>RADIOBUTTON_MOUNT</variable>
        ${visibleon}
       </radiobutton>
-      <radiobutton tooltip-text=\"Установить выбранные пакеты в систему. \">
-       <label>Установить   </label>
+      <radiobutton tooltip-text=\"$(gettext 'Установить выбранные пакеты в систему. ')\">
+       <label>$(gettext 'Установить   ')</label>
        <variable>RADIOBUTTON_SETUP</variable>
        ${visibleoff}
       </radiobutton>
@@ -134,8 +137,8 @@ if [ ! -d "${mountpoint}" ]; then
     ${RAMLD}
     </vbox>
      <vbox> 
-      <checkbox tooltip-text=\"Имеющиеся в системе файлы не будут заменены файлами из пакетов. \">
-       <label>(в безопасном режиме)</label>
+      <checkbox tooltip-text=\"$(gettext 'Имеющиеся в системе файлы не будут заменены файлами из пакетов. ')\">
+       <label>$(gettext '(в безопасном режиме)')</label>
        <variable>CHECKBOX_LOWER</variable>
        <default>no</default>
       </checkbox>
@@ -161,7 +164,7 @@ if [ ! -d "${mountpoint}" ]; then
 
   # Подключение пакета:
   if [ "$RADIOBUTTON_MOUNT" = "true" ]; then      
-    export_DIALOG_INFO "Подключение..." "Подключение пакета..."
+    export_DIALOG_INFO "$(gettext 'Подключение...')" "$(gettext 'Подключение пакета...')"
     gtkdialog3 --program=DIALOG_INFO --center &
     dlgwait=$!
       
@@ -196,18 +199,18 @@ if [ ! -d "${mountpoint}" ]; then
         depslistall="`eval ${pfs_depends} -m $(echo "${packageslist}" | sed 's/^/\"/;s/$/\"/' | tr '\n' ' ' )`"
         if [ "${depslistall}" != "" ]; then
           wdepslist="$(echo "${depslistall}" | grep . | sed 's/^/<text><label> /;s/$/ <\/label><\/text>/')"
-          [ "${wdepslist}" != "" ] && LOAD_DEPS="<hseparator></hseparator><text use-markup=\"true\"><label>\"${IFS} В системе не найдены cледующие пакеты-зависимости: \"</label></text><vbox scrollable=\"true\" height=\"120\"> ${wdepslist} </vbox>"
+          [ "${wdepslist}" != "" ] && LOAD_DEPS="<hseparator></hseparator><text use-markup=\"true\"><label>\"${IFS} $(gettext 'В системе не найдены cледующие пакеты-зависимости: ')\"</label></text><vbox scrollable=\"true\" height=\"120\"> ${wdepslist} </vbox>"
         fi
       fi
       if [ -f "${mountpoint}/tmp/.pfs/.command" ]; then
         cmd="$(cat "${mountpoint}/tmp/.pfs/.command")"
         if [ -x "$(which "${cmd}")" ]; then
-          LOAD_CMDQ="<hseparator></hseparator><text use-markup=\"true\"><label>\"${IFS}Команда запуска программы: <b>${cmd}</b>${IFS}Выполнить команду сейчас? \"</label></text>"
+          LOAD_CMDQ="<hseparator></hseparator><text use-markup=\"true\"><label>\"`eval_gettext '${IFS}Команда запуска программы: <b>${cmd}</b>${IFS}Выполнить команду сейчас? '`\"</label></text>"
           LOAD_BUTTONS="<hbox homogeneous=\"true\"><hbox><button yes></button><button no></button></hbox></hbox>"
         fi
       fi
-      export LOAD_OK="<window title=\"Подключение PFS\" resizable=\"false\"><vbox><vbox border-width=\"12\"><hbox><vbox>
-      <text use-markup=\"true\"><label>\"Пакет <b>$(basename "${pack}")</b> успешно подключен!\"</label></text>${LOAD_DEPS}${LOAD_CMDQ}</vbox></hbox></vbox>${LOAD_BUTTONS}</vbox></window>"
+      export LOAD_OK="<window title=\"$(gettext 'Подключение PFS')\" resizable=\"false\"><vbox><vbox border-width=\"12\"><hbox><vbox>
+      <text use-markup=\"true\"><label>\"`eval_gettext "Пакет <b>$(basename "${pack}")</b> успешно подключен!"`\"</label></text>${LOAD_DEPS}${LOAD_CMDQ}</vbox></hbox></vbox>${LOAD_BUTTONS}</vbox></window>"
       kill ${dlgwait} 2>/dev/null
       if [ "${LOAD_CMDQ}" != "" ]; then
         eval "`gtkdialog3 --program=LOAD_OK --center`"
@@ -218,7 +221,7 @@ if [ ! -d "${mountpoint}" ]; then
       fi
     else
       kill ${dlgwait} 2>/dev/null
-      export_DIALOG_ERROR "Ошибка!" "Не удалось подключить файл <b>$(basename "${pack}")</b>!"
+      export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'Не удалось подключить файл') <b>$(basename "${pack}")</b>!"
       gtkdialog3 --program=DIALOG_ERROR --center & 
     fi
     exit ${status} 
@@ -228,7 +231,7 @@ if [ ! -d "${mountpoint}" ]; then
   if [ "$RADIOBUTTON_SETUP" = "true" ]; then
     instpacklist="`echo "${packageslist}" | while read package; do varpack="PACKAGE_${numpack}"; [ "${!varpack}" = "true" ] && echo -n \""${package}"\"" "; numpack="$(expr ${numpack} + 1)"; done`"
     if [ "${instpacklist}" != "" ]; then
-      export_DIALOG_INFO "Установка..." "Идет процесс установки пакетов. ${IFS} Пожалуйста, подождите..."
+      export_DIALOG_INFO "$(gettext 'Установка...')" "`eval_gettext 'Идет процесс установки пакетов. ${IFS} Пожалуйста, подождите...'`"
       gtkdialog3 --program=DIALOG_INFO --center &
       dlgwait=$!
         
@@ -258,17 +261,17 @@ if [ ! -d "${mountpoint}" ]; then
             [ "${wdepslist}" != "" ] && LOAD_DEPS="<hseparator></hseparator><text use-markup=\"true\"><label>\"${IFS} В системе не найдены cледующие пакеты-зависимости: \"</label></text><vbox scrollable=\"true\" height=\"120\"> ${wdepslist} </vbox>"
           fi
         fi
-        export LOAD_OK="<window title=\" Установка PFS \" resizable=\"false\"><vbox><vbox border-width=\"12\"><hbox><vbox>
-        <text use-markup=\"true\"><label>\"Пакеты успешно установлены!\"</label></text>${LOAD_DEPS}</vbox></hbox></vbox><hbox homogeneous=\"true\"><button ok></button></hbox></vbox></window>"
+        export LOAD_OK="<window title=\"$(gettext ' Установка PFS ')\" resizable=\"false\"><vbox><vbox border-width=\"12\"><hbox><vbox>
+        <text use-markup=\"true\"><label>\"$(gettext 'Пакеты успешно установлены!')\"</label></text>${LOAD_DEPS}</vbox></hbox></vbox><hbox homogeneous=\"true\"><button ok></button></hbox></vbox></window>"
         kill ${dlgwait} 2>/dev/null
         gtkdialog3 --program=LOAD_OK --center &
       else                   
-        export_DIALOG_ERROR "Ошибка!" "При установке пакета произошла ошибка!"
+        export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'При установке пакета произошла ошибка!')"
         kill ${dlgwait} 2>/dev/null
         gtkdialog3 --program=DIALOG_ERROR --center & 
       fi
     else
-      export_DIALOG_MESSAGE "Установка PFS" "Пакеты не выбраны."
+      export_DIALOG_MESSAGE "$(gettext 'Установка PFS')" "$(gettext 'Пакеты не выбраны.')"
       gtkdialog3 --program=DIALOG_MESSAGE --center &
     fi  
     exit ${status}
@@ -277,11 +280,11 @@ if [ ! -d "${mountpoint}" ]; then
 else
 # Файл с таким названием подключен:
   
-  export_DIALOG_QUECTION "Отключение PFS" "Пакет <b>$(basename "${pack}")</b> подключен.${IFS}Отключить его сейчас?"
+  export_DIALOG_QUECTION "$(gettext 'Отключение PFS')" "`eval_gettext "Пакет <b>$(basename "${pack}")</b> подключен.${IFS}Отключить его сейчас?"`"
   eval "`gtkdialog3 --program=DIALOG_QUECTION --center`"
 
   if [ "$EXIT" = "Yes" ]; then  
-    export_DIALOG_INFO " Отключение... " " Отключение пакета... "
+    export_DIALOG_INFO "$(gettext ' Отключение... ')" "$(gettext ' Отключение пакета... ')"
     gtkdialog3 --program=DIALOG_INFO --center &
     dlgwait=$!
           
@@ -312,11 +315,11 @@ else
       sfsevent="$(which sfs_event_rem)"
       [ "${sfsevent}" != "" ] && "${sfsevent}" "${pack}" &
       ###;
-      export_DIALOG_MESSAGE "Отключение PFS" "Пакет <b>$(basename "${pack}")</b> отключен."
+      export_DIALOG_MESSAGE "$(gettext 'Отключение PFS')" "`eval_gettext "Пакет <b>$(basename "${pack}")</b> отключен."`"
       gtkdialog3 --program=DIALOG_MESSAGE --center &
       TIMEOUT_DIALOG $! &
     else
-      export_DIALOG_ERROR "Ошибка!" "ОШИБКА! Пакет <b>$(basename "${pack}")</b> не удалось отключить!"
+      export_DIALOG_ERROR "$(gettext 'Ошибка!')" "`eval_gettext "ОШИБКА! Пакет <b>$(basename "${pack}")</b> не удалось отключить!"`"
       gtkdialog3 --program=DIALOG_ERROR --center &
     fi
     exit ${status}
