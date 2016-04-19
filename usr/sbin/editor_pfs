@@ -1,6 +1,8 @@
 #!/bin/bash
 # Редактирование PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.8, последнее изменение: 20.10.2013
+# Версия 0.9, последнее изменение: 19.04.2016
+export LOCALDOMAIN="editor_pfs"
+. gettext.sh
 
 function export_DIALOG_INFO () {
 export DIALOG_INFO="<window title=\"$1\" resizable=\"false\">
@@ -28,7 +30,7 @@ export DIALOG_ERROR="<window title=\"$1\" resizable=\"false\" icon-name=\"gtk-st
 # Проверка версии ядра Linux:
 checksfsxz >/dev/null
 if [ $? -gt 0 ]; then
-  export_DIALOG_ERROR "Ошибка!" "Используемое ядро Linux не поддерживает PFS."
+  export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'Используемое ядро Linux не поддерживает PFS.')"
   gtkdialog3 --program=DIALOG_ERROR --center &
   exit 1
 fi
@@ -36,13 +38,13 @@ fi
 if [ $# -eq 0 ]; then
   funcopen() {
   echo "<hbox>
-<entry fs-action=\"file\" fs-folder=\"/\" fs-filters=\"*.pfs\" fs-title=\"Выберите PFS-файл\"><variable>ent${1}</variable></entry>
+<entry fs-action=\"file\" fs-folder=\"/\" fs-filters=\"*.pfs\" fs-title=\"$(gettext 'Выберите PFS-файл')\"><variable>ent${1}</variable></entry>
 <button><input file stock=\"gtk-open\"></input><action>fileselect:ent${1}</action></button>
 </hbox>"
   }
-  export OPEN_DIALOG="<window title=\" Редактирование PFS \">
+  export OPEN_DIALOG="<window title=\" $(gettext 'Редактирование PFS') \">
 <vbox>
- <frame  Выберите один или несколько PFS-файлов: >
+ <frame  $(gettext 'Выберите один или несколько PFS-файлов:') >
   "$(funcopen 0)"
   "$(funcopen 1)"
   "$(funcopen 2)"
@@ -54,9 +56,9 @@ if [ $# -eq 0 ]; then
   "$(funcopen 8)"
   "$(funcopen 9)"
  </frame>
- <frame  Или укажите каталог с PFS-файлами: >
+ <frame  $(gettext 'Или укажите каталог с PFS-файлами:') >
   <hbox>
-   <entry fs-action=\"folder\" fs-folder=\"/\" fs-title=\"Выберите PFS-файл\">
+   <entry fs-action=\"folder\" fs-folder=\"/\" fs-title=\"$(gettext 'Выберите PFS-файл')\">
    <variable>entDir</variable>
    </entry>
    <button>
@@ -79,7 +81,7 @@ if [ $# -eq 0 ]; then
 fi  
 status=0
  
-export_DIALOG_INFO "Чтение..." "Чтение файлов..."    
+export_DIALOG_INFO "$(gettext 'Чтение...')" "$(gettext 'Чтение файлов...')"    
 gtkdialog3 --program=DIALOG_INFO --center &
 dlgwait=$!
   
@@ -108,18 +110,18 @@ do
       packageslist="${packageslist}$(pfsinfo "${arg}")${IFS}"
       if [ $? -gt 0 ]; then
         if [ "$(disktype "${arg}" | grep -F 'squashfs, version 4')" = "" ];then
-          texterror="Файл $(basename "${arg}") не является PFS-пакетом."
+          texterror="$(gettext 'Файл $(basename "${arg}") не является PFS-пакетом.')"
         else
-          texterror="Ошибка чтения файла $(basename "${arg}")."
+          texterror="$(gettext 'Ошибка чтения файла') $(basename "${arg}")."
         fi   
-        export_DIALOG_ERROR "Ошибка!" "${texterror}"
+        export_DIALOG_ERROR "$(gettext 'Ошибка!')" "${texterror}"
         kill ${dlgwait} 2>/dev/null
         gtkdialog3 --program=DIALOG_ERROR --center &
         echo "Error: Invalid *.pfs file!"; exit ${status}
       fi
     else
       if [ ! -d "${arg}" ]; then
-        export_DIALOG_MESSAGE "Редактор PFS" "Файл <b>${arg}</b> не найден!"
+        export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "$(gettext 'Файл <b>${arg}</b> не найден!')"
         kill ${dlgwait} 2>/dev/null
         gtkdialog3 --program=DIALOG_MESSAGE --center &
         echo "$(basename "$0"): File \"${arg}\" not found!"; exit 1
@@ -135,7 +137,7 @@ if [ "${listpfs}" = "" ]; then
 fi
 if [ $(echo "${listpfs}" | wc -l) -gt 126 ]; then
   kill ${dlgwait} 2>/dev/null
-  export_DIALOG_ERROR "Ошибка!" "Нельзя редактировать более чем 126 PFS-файлов одновременно."
+  export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'Нельзя редактировать более чем 126 PFS-файлов одновременно.')"
   gtkdialog3 --program=DIALOG_ERROR --center &
   exit
 fi
@@ -145,11 +147,11 @@ if [ "$(echo "${packageslist}" | sort )" != "$(echo "${packageslist}" | sort -u 
   export DUP_DIALOG="<window title=\" Ошибка! \" resizable=\"false\" icon-name=\"gtk-stop\">
   <vbox>
    <vbox border-width=\"12\">
-    <text><label>\"В выбранных PFS-файлах были обнаружены ${IFS}следующие пакеты с одинаковыми названиями:\"</label></text>   
+    <text><label>\"$(gettext 'В выбранных PFS-файлах были обнаружены ${IFS}следующие пакеты с одинаковыми названиями:')'\"</label></text>   
     <vbox border-width=\"12\" scrollable=\"true\" height=\"180\" width=\"340\"> 
      <text><label>\"$(echo "${packageslist}" | sort | uniq -d | sort -f) \"</label></text>
     </vbox>
-    <text><label>\"Прежде чем продолжить работу необходимо ${IFS}удалить повторяющиеся пакеты из PFS-файлов ${IFS}(c помощью этого редактора).\"</label></text> 
+    <text><label>\"$(gettext 'Прежде чем продолжить работу необходимо ${IFS}удалить повторяющиеся пакеты из PFS-файлов ${IFS}(c помощью этого редактора).')\"</label></text> 
     </vbox>
     <hbox homogeneous=\"true\"><button ok></button></hbox>
    </vbox>
@@ -171,35 +173,35 @@ if [ "${packageslist}" != "" ]; then
     done`"
 fi    
 if [ ! "${chboxlist}" ]; then
-  export_DIALOG_ERROR "Ошибка!" "В выбранных файлах и/или каталогах отсутствуют пакеты!"
+  export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'В выбранных файлах и/или каталогах отсутствуют пакеты!')"
   kill ${dlgwait} 2>/dev/null
   gtkdialog3 --program=DIALOG_ERROR --center &
   exit 1    
 fi
       
-export MAIN_DIALOG="<window title=\"Редактирование PFS\">
+export MAIN_DIALOG="<window title=\"$(gettext 'Редактирование PFS')\">
 <vbox>
- <frame  Исходные файлы: >
+ <frame  $(gettext 'Исходные файлы:') >
   <tree selection-mode=\"0\" headers-visible=\"false\">
    <height>68</height>
    <width>450</width>
    ${listpfs}
   </tree>
  </frame>
- <frame  Список пакетов: >
+ <frame  $(gettext 'Список пакетов:') >
   <vbox scrollable=\"true\" height=\"250\" width=\"450\"> 
    ${chboxlist}
   </vbox>
  </frame>
  <vbox>
- <frame  Команда запуска (необязательно): >  
+ <frame  $(gettext 'Команда запуска (необязательно):') >  
   <entry>
    <variable>CMDRUN</variable>
   </entry>
  </frame>
  </vbox>
  <vbox>
- <frame  Новый файл: >  
+ <frame  $(gettext 'Новый файл:') >  
   <hbox>
    <entry accept=\"savefilename\" fs-folder=\"$(dirname "$1")\">
     <variable>ENTFILE</variable>
@@ -213,7 +215,7 @@ export MAIN_DIALOG="<window title=\"Редактирование PFS\">
  </vbox>
  <hbox homogeneous=\"true\" border-width=\"3\">
   <button>
-   <label>\"    Создать PFS    \"</label>
+   <label>\"    $(gettext 'Создать PFS')    \"</label>
    <action type=\"exit\">MERGE</action>
   </button>
  </hbox>
@@ -229,7 +231,7 @@ eval "${REST}"
 if [ "$EXIT" = "MERGE" ]; then
 
   if [ "${ENTFILE}" = "" ]; then
-    export_DIALOG_MESSAGE "Редактор PFS" "Укажите название для нового файла."
+    export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "$(gettext 'Укажите название для нового файла.')"
     gtkdialog3 --program=DIALOG_MESSAGE --center   
     eval '"$0" "$@" &'
     exit 1
@@ -237,7 +239,7 @@ if [ "$EXIT" = "MERGE" ]; then
     
   outpfs="$(dirname ${ENTFILE})/$(basename ${ENTFILE} .pfs).pfs"
   if [ -f "${outpfs}" ]; then
-    export_DIALOG_MESSAGE "Редактор PFS" "Файл <b>${outpfs}</b> уже существует! ${IFS} Укажите другое название для нового файла.\n"
+    export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "$(gettext 'Файл <b>${outpfs}</b> уже существует! ${IFS} Укажите другое название для нового файла.')\n"
     gtkdialog3 --program=DIALOG_MESSAGE --center 
     eval '"$0" "$@" &'
     exit 1
@@ -256,7 +258,7 @@ if [ "$EXIT" = "MERGE" ]; then
       fi
     done`"
   if [ "${checknopacks}" = "" ]; then
-    export_DIALOG_MESSAGE "Извлечение PFS" "Пакеты не выбраны."
+    export_DIALOG_MESSAGE "$(gettext 'Извлечение PFS')" "$(gettext 'Пакеты не выбраны.')"
     gtkdialog3 --program=DIALOG_MESSAGE --center
     eval '"$0" "$@" &'
     exit 1
@@ -271,7 +273,7 @@ if [ "$EXIT" = "MERGE" ]; then
       fi
     done`"
 
-  export_DIALOG_INFO "Создание PFS..." "Создание PFS-файла. ${IFS}Пожалуйста, подождите..."    
+  export_DIALOG_INFO "$(gettext 'Создание PFS...')" "$(gettext 'Создание PFS-файла. ${IFS}Пожалуйста, подождите...')"    
   gtkdialog3 --program=DIALOG_INFO --center &
     
   dlgwait=$!
@@ -285,10 +287,10 @@ if [ "$EXIT" = "MERGE" ]; then
       
   kill ${dlgwait} 2>/dev/null  
   if [ ${status} -eq 0 ]; then
-    export_DIALOG_MESSAGE "Редактор PFS" "Файл успешно создан!"
+    export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "$(gettext 'Файл успешно создан!')"
     gtkdialog3 --program=DIALOG_MESSAGE --center &
   else
-    export_DIALOG_ERROR "Ошибка!" "При создании файла произошла ошибка!"
+    export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'При создании файла произошла ошибка!')"
     gtkdialog3 --program=DIALOG_ERROR --center
   fi
 
