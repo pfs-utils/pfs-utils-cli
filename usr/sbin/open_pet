@@ -1,19 +1,22 @@
 #!/bin/bash
 # Установка PET-пакета или конвертация его в PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.5, последнее изменение: 09.12.2012
+# Версия 0.6, последнее изменение: 19.04.2016
+
+export LOCALDOMAIN="open_pet"
+. gettext.sh
 
 [ ! "$1" ] && exit 1
 
-export MAIN_DIALOG="<window title=\" PET-пакет \" resizable=\"false\">
+export MAIN_DIALOG="<window title=\"$(gettext 'PET-пакет ')\" resizable=\"false\">
  <vbox border-width=\"3\">
-  <frame  Выберите действие: >
+  <frame  $(gettext 'Выберите действие:') >
    <vbox border-width=\"5\">
     <button>
-     <label>\"   Установить пакет в систему  \"</label>
+     <label>\"$(gettext '   Установить пакет в систему  ')\"</label>
      <action type=\"exit\">INSTALL</action>
     </button>
     <button>
-     <label>\"   Конвертировать PET в PFS   \"</label>
+     <label>\"$(gettext '   Конвертировать PET в PFS   ')\"</label>
      <action type=\"exit\">CONVERT</action>
     </button>
    </vbox>
@@ -27,8 +30,8 @@ eval "$REST"
 case "${EXIT}" in
   "INSTALL") 
   
-    export WAIT_DIALOG="<window title=\" Установка... \" resizable=\"false\"><vbox border-width=\"16\">
-    <text><label>\"Пакет устанавливается.${IFS}Пожалуйста, подождите...\"</label></text>
+    export WAIT_DIALOG="<window title=\"$(gettext ' Установка... ')\" resizable=\"false\"><vbox border-width=\"16\">
+    <text><label>\"`eval_gettext 'Пакет устанавливается.${IFS}Пожалуйста, подождите...'`\"</label></text>
     </vbox></window>"
     gtkdialog3 --program=WAIT_DIALOG --center &
     dlgwait=$!
@@ -50,13 +53,13 @@ case "${EXIT}" in
     kill ${dlgwait} 2>/dev/null
     
     if [ ${status} -eq 0 ]; then
-      Xdialog --title " Установка PET " --msgbox " Пакет успешно установлен! \n" 6 0
+      Xdialog --title "$(gettext ' Установка PET ')" --msgbox "$(gettext ' Пакет успешно установлен! \n')" 6 0
     else
-      export ERROR_DIALOG="<window title=\" Ошибка! \" resizable=\"false\" icon-name=\"gtk-stop\">
+      export ERROR_DIALOG="<window title=\"$(gettext ' Ошибка! ')\" resizable=\"false\" icon-name=\"gtk-stop\">
       <vbox>
        <vbox border-width=\"12\"><hbox>
         <pixmap icon_size=\"3\"><input file stock=\"gtk-stop\"></input></pixmap>
-        <text><label>\"  При установке пакета произошла ошибка! \"</label></text>
+        <text><label>\"$(gettext '  При установке пакета произошла ошибка! ')\"</label></text>
        </hbox></vbox>
        <hbox homogeneous=\"true\"><button ok></button></hbox>
       </vbox>
@@ -67,8 +70,8 @@ case "${EXIT}" in
     
   "CONVERT")
   
-    export WAIT_DIALOG="<window title=\" PET > PFS ... \" resizable=\"false\"><vbox border-width=\"16\">
-    <text><label>\"Пожалуйста, подождите...\"</label></text>
+    export WAIT_DIALOG="<window title=\"$(gettext ' PET > PFS ... ')\" resizable=\"false\"><vbox border-width=\"16\">
+    <text><label>\"$(gettext 'Пожалуйста, подождите...')\"</label></text>
     </vbox></window>"
     gtkdialog3 --program=WAIT_DIALOG --center &
     dlgwait=$!
@@ -78,13 +81,13 @@ case "${EXIT}" in
     
     kill ${dlgwait} 2>/dev/null
     if [ ${status} -eq 0 ]; then
-      Xdialog --title " PET " --msgbox " Файл \"$(basename "$1" .pet).pfs\" успешно создан! \n" 6 0
+      Xdialog --title " PET " --msgbox "`eval_gettext ' Файл \"$(basename "$1" .pet).pfs\" успешно создан! \n'`" 6 0
     else
-      export ERROR_DIALOG="<window title=\" Ошибка! \" resizable=\"false\" icon-name=\"gtk-stop\">
+      export ERROR_DIALOG="<window title=\"$(gettext ' Ошибка! ')\" resizable=\"false\" icon-name=\"gtk-stop\">
       <vbox>
        <vbox border-width=\"12\"><hbox>
         <pixmap icon_size=\"3\"><input file stock=\"gtk-stop\"></input></pixmap>
-        <text><label>\"  Не удалось создать PFS-пакет! \"</label></text>
+        <text><label>\"$(gettext '  Не удалось создать PFS-пакет! ')\"</label></text>
        </hbox></vbox>
        <hbox homogeneous=\"true\"><button ok></button></hbox>
       </vbox>
