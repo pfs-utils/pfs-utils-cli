@@ -1,6 +1,9 @@
 #!/bin/bash
 # Установка пакетов PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.5, последнее изменение: 16.01.2013
+# Версия 0.6, последнее изменение: 19.04.2016
+
+export LOCALDOMAIN="install_pfs"
+. gettext.sh
 
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") FILE"; exit 1
@@ -12,15 +15,15 @@ else
 fi
 status=0
 
-export WAIT_DIALOG="<window title=\" Установка... \" resizable=\"false\"><vbox border-width=\"16\">
-<text><label>\"Идет процесс установки пакетов.${IFS}Пожалуйста, подождите...\"</label></text>
+export WAIT_DIALOG="<window title=\"$(gettext 'Установка... ')\" resizable=\"false\"><vbox border-width=\"16\">
+<text><label>\"`eval_gettext 'Идет процесс установки пакетов.${IFS}Пожалуйста, подождите...'`\"</label></text>
 </vbox></window>"
 
 # Проверка версии ядра Linux:
 if checksfsxz >/dev/null; then
   
-  export READ_DIALOG="<window title=\" Чтение... \" resizable=\"false\">
-  <vbox border-width=\"16\"><text><label>\"Чтение файла...\"</label></text></vbox>
+  export READ_DIALOG="<window title=\"$(gettext ' Чтение... ')\" resizable=\"false\">
+  <vbox border-width=\"16\"><text><label>\"$(gettext 'Чтение файла...')\"</label></text></vbox>
   </window>"
   gtkdialog3 --program=READ_DIALOG --center &
   dlgwait=$!
@@ -29,13 +32,13 @@ if checksfsxz >/dev/null; then
   if [ "$(disktype "${pack}" | grep -F 'squashfs, version 4')" != "" ];then
     packageslist="$(pfsinfo "${pack}")"
     status=$?  
-    [ ${status} -gt 0 ] && texterror="Ошибка чтения файла $(basename "${pack}")."
+    [ ${status} -gt 0 ] && texterror="`eval_gettext 'Ошибка чтения файла $(basename "${pack}").'`"
   else  
-    texterror="Файл $(basename "${pack}") не является PFS-пакетом."
+    texterror="`eval_gettext 'Файл $(basename "${pack}") не является PFS-пакетом.'`"
     status=1
   fi
   if [ ${status} -gt 0 ]; then   
-    export STOP_DIALOG="<window title=\" Ошибка! \" resizable=\"false\" icon-name=\"gtk-stop\">
+    export STOP_DIALOG="<window title=\"$(gettext ' Ошибка! ')\" resizable=\"false\" icon-name=\"gtk-stop\">
     <vbox>
      <vbox border-width=\"12\"><hbox>
       <pixmap icon_size=\"3\"><input file stock=\"gtk-stop\"></input></pixmap>
@@ -59,20 +62,20 @@ if checksfsxz >/dev/null; then
       done`"
   else
     kill ${dlgwait} 2>/dev/null
-    Xdialog --title " Установка PFS " --msgbox " Пакеты не найдены! \n" 6 0
+    Xdialog --title "$(gettext ' Установка PFS ')" --msgbox "$(gettext ' Пакеты не найдены! \n')" 6 0
     exit 1
   fi
     
-  export MAIN_DIALOG="<window title=\" Установка PFS \">
+  export MAIN_DIALOG="<window title=\"$(gettext ' Установка PFS ')\">
 <vbox>
  <text><label>\"
-Установка пакетов: \"</label></text>
+$(gettext 'Установка пакетов: ')\"</label></text>
  <vbox scrollable=\"true\" height=\"250\" width=\"400\"> 
   ${chboxlist}
  </vbox>
   <hbox homogeneous=\"true\">
    <checkbox>
-    <label>Установить в безопасном режиме </label>
+    <label>$(gettext 'Установить в безопасном режиме ')</label>
     <variable>CHECKBOX_LOWER</variable>
     <default>no</default>
    </checkbox>
@@ -125,13 +128,13 @@ if checksfsxz >/dev/null; then
     kill ${dlgwait} 2>/dev/null
         
     if [ ${status} -eq 0 ]; then
-      Xdialog --title " Установка PFS " --msgbox " Все пакеты успешно установлены! \n" 6 0
+      Xdialog --title "$(gettext ' Установка PFS ')" --msgbox "$(gettext ' Все пакеты успешно установлены! \n')" 6 0
     else
-      export ERRORINSTALL_DIALOG="<window title=\" Ошибка! \" resizable=\"false\" icon-name=\"gtk-stop\">
+      export ERRORINSTALL_DIALOG="<window title=\"$(gettext ' Ошибка! ')\" resizable=\"false\" icon-name=\"gtk-stop\">
       <vbox>
        <vbox border-width=\"12\"><hbox>
         <pixmap icon_size=\"3\"><input file stock=\"gtk-stop\"></input></pixmap>
-        <text><label>\"  При установке пакета произошла ошибка! \"</label></text>
+        <text><label>\"$(gettext '  При установке пакета произошла ошибка! ')\"</label></text>
        </hbox></vbox>
        <hbox homogeneous=\"true\"><button ok></button></hbox>
       </vbox>
@@ -139,14 +142,14 @@ if checksfsxz >/dev/null; then
       gtkdialog3 --program=ERRORINSTALL_DIALOG --center & 
     fi
   else
-    Xdialog --title " Установка PFS " --msgbox " Пакеты не выбраны. \n"  6 0
+    Xdialog --title "$(gettext ' Установка PFS ')" --msgbox "$(gettext ' Пакеты не выбраны. \n')"  6 0
   fi  
   exit ${status}
   
 else
 
   # Установка пакета (если используется ядро старее чем 2.6.38.x):
-  Xdialog --title " PFS " --yesno " Установить пакет? \n" 6 0
+  Xdialog --title " PFS " --yesno "$(gettext ' Установить пакет? \n')" 6 0
   if [ $? -eq 0 ]; then
     gtkdialog3 --program=WAIT_DIALOG --center &
     dlgwait=$!
@@ -168,13 +171,13 @@ else
     kill ${dlgwait} 2>/dev/null
     
     if [ ${status} -eq 0 ]; then
-      Xdialog --title " Установка PFS " --msgbox " Пакет успешно установлен! \n" 6 0
+      Xdialog --title "$(gettext ' Установка PFS ')" --msgbox "$(gettext ' Пакет успешно установлен! \n')" 6 0
     else
-      export ERRORINSTALL_DIALOG="<window title=\" Ошибка! \" resizable=\"false\" icon-name=\"gtk-stop\">
+      export ERRORINSTALL_DIALOG="<window title=\"$(gettext ' Ошибка! ')\" resizable=\"false\" icon-name=\"gtk-stop\">
       <vbox>
        <vbox border-width=\"12\"><hbox>
         <pixmap icon_size=\"3\"><input file stock=\"gtk-stop\"></input></pixmap>
-        <text><label>\"  При установке пакета произошла ошибка! \"</label></text>
+        <text><label>\"$(gettext '  При установке пакета произошла ошибка! ')\"</label></text>
        </hbox></vbox>
        <hbox homogeneous=\"true\"><button ok></button></hbox>
       </vbox>
