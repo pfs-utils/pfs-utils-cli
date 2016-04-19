@@ -90,16 +90,16 @@ if [ ! -d "${mountpoint}" ]; then
     fi
     ###;
     kill ${dlgwait} 2>/dev/null
-    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'Файл \"$(basename "${filemnt}")\" подключен. \n'`"  6 0
+    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext "Файл \"$(basename "${filemnt}")\" подключен. \n"`"  6 0
   else
     kill ${dlgwait} 2>/dev/null
     rmdir "${mntpoint}"
-    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось подключить! \n'`"  6 0
+    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext "ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось подключить! \n"`"  6 0
     exit 1
   fi
 else
   kill ${dlgwait} 2>/dev/null
-  Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'Файл \"$(basename "${filemnt}")\" уже подключен. \n'`"  6 0
+  Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext "Файл \"$(basename "${filemnt}")\" уже подключен. \n"`"  6 0
 fi
 
 exit 0
