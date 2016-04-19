@@ -2,6 +2,9 @@
 # GUI Load SquashFS (for PuppyRus), by Zay, GPL v3.
 # Supported extensions: ".pfs", ".xzm", ".sfs".
 
+export LOCALDOMAIN="load_pfs"
+. gettext.sh
+
 [ ! -f "$1" ] && exit 1
 if [ $# -gt 1 ]; then
   for arg in "$@"; do
@@ -16,8 +19,8 @@ mountpoint="${prefixmp}$(basename "${filemnt}")"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ ! -d "${mountpoint}" ]; then
 
-  export MNT_DIALOG="<window title=\" Подключение... \" resizable=\"false\"><vbox border-width=\"16\">
-  <text><label>\"Подключение файла...\"</label></text>
+  export MNT_DIALOG="<window title=\"$(gettext 'Подключение... ')\" resizable=\"false\"><vbox border-width=\"16\">
+  <text><label>\"$(gettext 'Подключение файла...')\"</label></text>
   </vbox></window>"
   gtkdialog3 --program=MNT_DIALOG --center &
   dlgwait=$!
@@ -28,7 +31,7 @@ if [ ! -d "${mountpoint}" ]; then
     "PFS" | "XZM") checksfsxz 2>/dev/null
            if [ $? -gt 0 ]; then
              kill ${dlgwait} 2>/dev/null
-             Xdialog --title " Подключение ${checkext} " --msgbox " ВНИМАНИЕ: Подключение ${checkext}-файла невозможно! \n Ядра Linux 2.6.37 и более ранних версий не поддерживают ${checkext}-файлы. \n" 6 0
+             Xdialog --title "`eval_gettext 'Подключение ${checkext} '`" --msgbox "`eval_gettext 'ВНИМАНИЕ: Подключение ${checkext}-файла невозможно! \n Ядра Linux 2.6.37 и более ранних версий не поддерживают ${checkext}-файлы. \n'`" 6 0
              exit 1
            fi ;;
     "SFS") dt="$(disktype "${filemnt}" 2>/dev/null)"
@@ -51,9 +54,9 @@ if [ ! -d "${mountpoint}" ]; then
              if [ "$(echo "${dt}" | grep "${sfsver}")" = "" ];then
                kill ${dlgwait} 2>/dev/null
                if [ "${sfsver}" = "squashfs, version 4" ];then
-                 Xdialog --title " Подключение SFS " --msgbox " ВНИМАНИЕ: Это файл SquashFS 3.x старой версии, и его не возможно использовать. \n Все ядра Linux 2.6.29.x или более поздних версий используют SquashFS 4.x файлы. \n" 6 0
+                 Xdialog --title "$(gettext ' Подключение SFS ')" --msgbox "$(gettext ' ВНИМАНИЕ: Это файл SquashFS 3.x старой версии, и его не возможно использовать. \n Все ядра Linux 2.6.29.x или более поздних версий используют SquashFS 4.x файлы. \n')" 6 0
                else
-                 Xdialog --title " Подключение SFS " --msgbox " ВНИМАНИЕ: Это SquashFS 4.x файл новой версии, и его не возможно использовать. \n Все ядра Linux 2.6.28.x или более ранних версий используют SquashFS 3.x файлы. \n" 6 0
+                 Xdialog --title "$(gettext ' Подключение SFS ')" --msgbox "$(gettext ' ВНИМАНИЕ: Это SquashFS 4.x файл новой версии, и его не возможно использовать. \n Все ядра Linux 2.6.28.x или более ранних версий используют SquashFS 3.x файлы. \n')" 6 0
                fi
                exit 1
              fi
@@ -87,16 +90,16 @@ if [ ! -d "${mountpoint}" ]; then
     fi
     ###;
     kill ${dlgwait} 2>/dev/null
-    Xdialog --title " Подключение файла " --msgbox " Файл \"$(basename "${filemnt}")\" подключен. \n"  6 0
+    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'Файл \"$(basename "${filemnt}")\" подключен. \n'`"  6 0
   else
     kill ${dlgwait} 2>/dev/null
     rmdir "${mntpoint}"
-    Xdialog --title " Подключение файла " --msgbox " ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось подключить! \n"  6 0
+    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось подключить! \n'`"  6 0
     exit 1
   fi
 else
   kill ${dlgwait} 2>/dev/null
-  Xdialog --title " Подключение файла " --msgbox " Файл \"$(basename "${filemnt}")\" уже подключен. \n"  6 0
+  Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'Файл \"$(basename "${filemnt}")\" уже подключен. \n'`"  6 0
 fi
 
 exit 0
