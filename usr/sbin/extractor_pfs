@@ -1,9 +1,12 @@
 #!/bin/bash
 # Извлечение пакетов PFS (PuppyRus), by Zay, GPL v3.
-# Версия 0.4, последнее изменение: 15.01.2013
+# Версия 0.5, последнее изменение: 19.04.2016
+
+export LOCALDOMAIN="extractor_pfs"
+. gettext.sh
 
 if [ ! "$1" ]; then
-  export CHOOSER_DIALOG="<window title=\"Выберите файл PFS\" resizable=\"false\">
+  export CHOOSER_DIALOG="<window title=\"$(gettext 'Выберите файл PFS')\" resizable=\"false\">
 <vbox>
  <chooser>
   <variable>CHOOSER</variable>
@@ -65,7 +68,7 @@ status=0
 # Проверка версии ядра Linux:
 if checksfsxz >/dev/null; then
   
-  export_DIALOG_INFO " Чтение... " " Чтение файла... "    
+  export_DIALOG_INFO "$(gettext ' Чтение... ')" "$(gettext ' Чтение файла... ')"    
   gtkdialog3 --program=DIALOG_INFO --center &
   dlgwait=$!
  
@@ -73,13 +76,13 @@ if checksfsxz >/dev/null; then
   if [ "$(disktype "${pack}" | grep -F 'squashfs, version 4')" != "" ];then
     packageslist="$(pfsinfo "${pack}")"
     status=$?  
-    [ ${status} -gt 0 ] && texterror="Ошибка чтения файла $(basename "${pack}")."
+    [ ${status} -gt 0 ] && texterror="`eval_gettext 'Ошибка чтения файла $(basename "${pack}".'`"
   else  
-    texterror="Файл $(basename "${pack}") не является PFS-пакетом."
+    texterror="`eval_gettext 'Файл $(basename "${pack}") не является PFS-пакетом.'`"
     status=1
   fi
   if [ ${status} -gt 0 ]; then   
-    export_DIALOG_ERROR " Ошибка! " "  ${texterror}"
+    export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "  ${texterror}"
     kill ${dlgwait} 2>/dev/null
     gtkdialog3 --program=DIALOG_ERROR --center &
     echo "Error: Invalid *.pfs file!"; exit ${status}
@@ -94,20 +97,20 @@ if checksfsxz >/dev/null; then
         numpack="$(expr ${numpack} + 1)"
       done`"
   else
-    export_DIALOG_ERROR " Извлечение PFS " " Пакеты не найдены! "
+    export_DIALOG_ERROR "$(gettext ' Извлечение PFS ')" "$(gettext ' Пакеты не найдены! ')"
     kill ${dlgwait} 2>/dev/null
     gtkdialog3 --program=DIALOG_ERROR --center &
     exit 1
   fi
   startpath="$(echo "${pack}" | sed 's/.pfs/_pfs/g')"
     
-  export MAIN_DIALOG="<window title=\" Извлечение пакетов из PFS \">
+  export MAIN_DIALOG="<window title=\"$(gettext ' Извлечение пакетов из PFS ')\">
 <vbox>
  <vbox scrollable=\"true\" height=\"374\" width=\"374\"> 
   ${chboxlist}
  </vbox>
  <hbox>
-  <entry fs-action=\"newfolder\" fs-title=\"Укажите каталог для извлечения\" fs-folder=\"$(dirname "${infile}")\">
+  <entry fs-action=\"newfolder\" fs-title=\"$(gettext 'Укажите каталог для извлечения')\" fs-folder=\"$(dirname "${infile}")\">
    <default>\"${startpath}\"</default>
    <variable>ENTDIR</variable>
   </entry>			
@@ -118,7 +121,7 @@ if checksfsxz >/dev/null; then
  </hbox>
  <hbox homogeneous=\"true\" border-width=\"3\">
   <button>
-   <label>\"    Извлечь выбранные пакеты    \"</label>
+   <label>\"$(gettext '    Извлечь выбранные пакеты    ')\"</label>
    <action type=\"exit\">EXTRACT</action>
   </button>
  </hbox>
@@ -144,7 +147,7 @@ if checksfsxz >/dev/null; then
           if [ "$(ls -A "${ENTDIR}" 2>/dev/null)" = "" ]; then
             outdir="${ENTDIR}"
           else
-            export_DIALOG_ERROR " Ошибка! " " Каталог <b>${ENTDIR}</b> не пуст! ${IFS} Укажите другой каталог. "
+            export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "`eval_gettext ' Каталог <b>${ENTDIR}</b> не пуст! ${IFS} Укажите другой каталог. '`"
             gtkdialog3 --program=DIALOG_ERROR --center
             "$0" "${infile}" &
             exit 1
@@ -154,14 +157,14 @@ if checksfsxz >/dev/null; then
         fi
       else
         if [ "$(ls -A "${ENTDIR}" 2>/dev/null)" != "" ]; then
-          export_DIALOG_ERROR " Ошибка! " " Каталог <b>${ENTDIR}</b> не пуст! ${IFS} Укажите другой каталог. "
+          export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "`eval_gettext ' Каталог <b>${ENTDIR}</b> не пуст! ${IFS} Укажите другой каталог. '`"
           gtkdialog3 --program=DIALOG_ERROR --center
           "$0" "${infile}" &
           exit 1
         fi        
       fi
      
-      export_DIALOG_INFO " Извлечение... " " Извлечение пакетов. ${IFS} Пожалуйста, подождите... "      
+      export_DIALOG_INFO "$(gettext ' Извлечение... ')" "`eval_gettext ' Извлечение пакетов. ${IFS} Пожалуйста, подождите... '`"      
       gtkdialog3 --program=DIALOG_INFO --center &
       dlgwait=$!
         
@@ -170,14 +173,14 @@ if checksfsxz >/dev/null; then
       
       kill ${dlgwait} 2>/dev/null  
       if [ ${status} -eq 0 ]; then
-        export_DIALOG_MESSAGE " Извлечение PFS " " Пакеты успешно извлечены! "
+        export_DIALOG_MESSAGE "$(gettext ' Извлечение PFS ')" "$(gettext ' Пакеты успешно извлечены! ')"
         gtkdialog3 --program=DIALOG_MESSAGE --center &
       else
-        export_DIALOG_ERROR " Ошибка! " " При извлечении пакета произошла ошибка! "
+        export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "$(gettext ' При извлечении пакета произошла ошибка! ')"
         gtkdialog3 --program=DIALOG_ERROR --center
       fi
     else
-      export_DIALOG_MESSAGE " Извлечение PFS " " Пакеты не выбраны. "
+      export_DIALOG_MESSAGE "$(gettext ' Извлечение PFS ')" "$(gettext ' Пакеты не выбраны. ')"
       gtkdialog3 --program=DIALOG_MESSAGE --center
       "$0" "${infile}" &
       exit
@@ -188,7 +191,7 @@ if checksfsxz >/dev/null; then
     exit
   fi
 else
-  export_DIALOG_ERROR " Ошибка! " "  Используемое ядро Linux не поддерживает PFS. "
+  export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "$(gettext '  Используемое ядро Linux не поддерживает PFS. ')"
   gtkdialog3 --program=DIALOG_ERROR --center &
   exit 1
 fi
