@@ -2,6 +2,9 @@
 # GUI Unload SquashFS (for PuppyRus), by Zay, GPL v3.
 # Supported extensions: ".pfs", ".xzm", ".sfs".
 
+export LOCALDOMAIN="unload_pfs"
+. gettext.sh
+
 [ ! -f "$1" ] && exit 1
 if [ $# -gt 1 ]; then
   for arg in "$@"; do
@@ -15,8 +18,8 @@ prefixmp="/mnt/."
 mountpoint="${prefixmp}$(basename "${filemnt}")"
 if [ -d "${mountpoint}" ]; then
 
-  export WAIT_DIALOG="<window title=\" Отключение... \" resizable=\"false\"><vbox border-width=\"16\">
-  <text><label>\"Отключение файла...\"</label></text>
+  export WAIT_DIALOG="<window title=\"$(gettext ' Отключение... ')\" resizable=\"false\"><vbox border-width=\"16\">
+  <text><label>\"$(gettext 'Отключение файла...')\"</label></text>
   </vbox></window>"
   gtkdialog3 --program=WAIT_DIALOG --center &
   dlgwait=$!
@@ -49,15 +52,15 @@ if [ -d "${mountpoint}" ]; then
       basename "$0" | grep -q -F "nomenu" && "${sfsevent}" "${filemnt}" &
     fi
     ###;
-    Xdialog --title " Отключение файла " --msgbox " Файл \"$(basename "${filemnt}")\" отключен. \n"  6 0
+    Xdialog --title "$(gettext ' Отключение файла ')" --msgbox "`eval_gettext " Файл \"$(basename "${filemnt}")\" отключен. \n"`"  6 0
   else
     kill ${dlgwait} 2>/dev/null
-    Xdialog --title " Отключение файла " --msgbox " ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось отключить! \n"  6 0
+    Xdialog --title "$(gettext ' Отключение файла ')" --msgbox "`eval_gettext " ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось отключить! \n"`"  6 0
     exit 1
   fi
 else
   kill ${dlgwait} 2>/dev/null	
-  Xdialog --title " Отключение файла  " --msgbox " Файл \"$(basename "${filemnt}")\" не подключен. \n"  6 0
+  Xdialog --title "$(gettext ' Отключение файла  ')" --msgbox "`eval_gettext " Файл \"$(basename "${filemnt}")\" не подключен. \n"`"  6 0
 fi
 
 exit 0
