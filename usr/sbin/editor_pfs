@@ -110,9 +110,9 @@ do
       packageslist="${packageslist}$(pfsinfo "${arg}")${IFS}"
       if [ $? -gt 0 ]; then
         if [ "$(disktype "${arg}" | grep -F 'squashfs, version 4')" = "" ];then
-          texterror="$(gettext 'Файл $(basename "${arg}") не является PFS-пакетом.')"
+          texterror="`eval_gettext 'Файл $(basename "${arg}") не является PFS-пакетом.'`"
         else
-          texterror="$(gettext 'Ошибка чтения файла') $(basename "${arg}")."
+          texterror="`eval_gettext 'Ошибка чтения файла $(basename "${arg}").'`"
         fi   
         export_DIALOG_ERROR "$(gettext 'Ошибка!')" "${texterror}"
         kill ${dlgwait} 2>/dev/null
@@ -121,7 +121,7 @@ do
       fi
     else
       if [ ! -d "${arg}" ]; then
-        export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "$(gettext 'Файл <b>${arg}</b> не найден!')"
+        export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "`eval_gettext 'Файл <b>${arg}</b> не найден!'`"
         kill ${dlgwait} 2>/dev/null
         gtkdialog3 --program=DIALOG_MESSAGE --center &
         echo "$(basename "$0"): File \"${arg}\" not found!"; exit 1
@@ -147,11 +147,11 @@ if [ "$(echo "${packageslist}" | sort )" != "$(echo "${packageslist}" | sort -u 
   export DUP_DIALOG="<window title=\" Ошибка! \" resizable=\"false\" icon-name=\"gtk-stop\">
   <vbox>
    <vbox border-width=\"12\">
-    <text><label>\"$(gettext 'В выбранных PFS-файлах были обнаружены ${IFS}следующие пакеты с одинаковыми названиями:')'\"</label></text>   
+    <text><label>\"`eval_gettext 'В выбранных PFS-файлах были обнаружены ${IFS}следующие пакеты с одинаковыми названиями:'`\"</label></text>   
     <vbox border-width=\"12\" scrollable=\"true\" height=\"180\" width=\"340\"> 
      <text><label>\"$(echo "${packageslist}" | sort | uniq -d | sort -f) \"</label></text>
     </vbox>
-    <text><label>\"$(gettext 'Прежде чем продолжить работу необходимо ${IFS}удалить повторяющиеся пакеты из PFS-файлов ${IFS}(c помощью этого редактора).')\"</label></text> 
+    <text><label>\"`eval_gettext 'Прежде чем продолжить работу необходимо ${IFS}удалить повторяющиеся пакеты из PFS-файлов ${IFS}(c помощью этого редактора).'`\"</label></text> 
     </vbox>
     <hbox homogeneous=\"true\"><button ok></button></hbox>
    </vbox>
@@ -239,7 +239,7 @@ if [ "$EXIT" = "MERGE" ]; then
     
   outpfs="$(dirname ${ENTFILE})/$(basename ${ENTFILE} .pfs).pfs"
   if [ -f "${outpfs}" ]; then
-    export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "$(gettext 'Файл <b>${outpfs}</b> уже существует! ${IFS} Укажите другое название для нового файла.')\n"
+    export_DIALOG_MESSAGE "$(gettext 'Редактор PFS')" "`eval_gettext 'Файл <b>${outpfs}</b> уже существует! ${IFS} Укажите другое название для нового файла.'`\n"
     gtkdialog3 --program=DIALOG_MESSAGE --center 
     eval '"$0" "$@" &'
     exit 1
@@ -273,7 +273,7 @@ if [ "$EXIT" = "MERGE" ]; then
       fi
     done`"
 
-  export_DIALOG_INFO "$(gettext 'Создание PFS...')" "$(gettext 'Создание PFS-файла. ${IFS}Пожалуйста, подождите...')"    
+  export_DIALOG_INFO "$(gettext 'Создание PFS...')" "`eval_gettext 'Создание PFS-файла. ${IFS}Пожалуйста, подождите...'`"    
   gtkdialog3 --program=DIALOG_INFO --center &
     
   dlgwait=$!
