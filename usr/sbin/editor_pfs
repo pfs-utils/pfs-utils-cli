@@ -110,9 +110,9 @@ do
       packageslist="${packageslist}$(pfsinfo "${arg}")${IFS}"
       if [ $? -gt 0 ]; then
         if [ "$(disktype "${arg}" | grep -F 'squashfs, version 4')" = "" ];then
-          texterror="`eval_gettext 'Файл $(basename "${arg}") не является PFS-пакетом.'`"
+          texterror="`eval_gettext "Файл $(basename "${arg}") не является PFS-пакетом."`"
         else
-          texterror="`eval_gettext 'Ошибка чтения файла $(basename "${arg}").'`"
+          texterror="$(gettext 'Ошибка чтения файла') $(basename "${arg}")."
         fi   
         export_DIALOG_ERROR "$(gettext 'Ошибка!')" "${texterror}"
         kill ${dlgwait} 2>/dev/null
