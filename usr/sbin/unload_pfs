@@ -13,9 +13,10 @@ if [ $# -gt 1 ]; then
 fi
 
 filemnt="$(realpath "$1")"
+base_name="$(basename "${filemnt}")"
 prefixmp="/mnt/."
 [ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
-mountpoint="${prefixmp}$(basename "${filemnt}")"
+mountpoint="${prefixmp}${base_name}"
 if [ -d "${mountpoint}" ]; then
 
   export WAIT_DIALOG="<window title=\"$(gettext ' Отключение... ')\" resizable=\"false\"><vbox border-width=\"16\">
@@ -52,15 +53,15 @@ if [ -d "${mountpoint}" ]; then
       basename "$0" | grep -q -F "nomenu" && "${sfsevent}" "${filemnt}" &
     fi
     ###;
-    Xdialog --title "$(gettext ' Отключение файла ')" --msgbox "`eval_gettext " Файл \"$(basename "${filemnt}")\" отключен. \n"`"  6 0
+    Xdialog --title "$(gettext ' Отключение файла ')" --msgbox "`eval_gettext ' Файл ${base_name} отключен. \n'`"  6 0
   else
     kill ${dlgwait} 2>/dev/null
-    Xdialog --title "$(gettext ' Отключение файла ')" --msgbox "`eval_gettext " ОШИБКА! Файл \"$(basename "${filemnt}")\" не удалось отключить! \n"`"  6 0
+    Xdialog --title "$(gettext ' Отключение файла ')" --msgbox "`eval_gettext ' ОШИБКА! Файл ${base_name} не удалось отключить! \n'`"  6 0
     exit 1
   fi
 else
   kill ${dlgwait} 2>/dev/null	
-  Xdialog --title "$(gettext ' Отключение файла  ')" --msgbox "`eval_gettext " Файл \"$(basename "${filemnt}")\" не подключен. \n"`"  6 0
+  Xdialog --title "$(gettext ' Отключение файла  ')" --msgbox "`eval_gettext ' Файл ${base_name} не подключен. \n'`"  6 0
 fi
 
 exit 0
