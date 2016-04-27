@@ -35,6 +35,8 @@ if [ $? -gt 0 ]; then
   exit 1
 fi
 
+base_name="$(basename "${arg}")"
+
 if [ $# -eq 0 ]; then
   funcopen() {
   echo "<hbox>
@@ -110,9 +112,9 @@ do
       packageslist="${packageslist}$(pfsinfo "${arg}")${IFS}"
       if [ $? -gt 0 ]; then
         if [ "$(disktype "${arg}" | grep -F 'squashfs, version 4')" = "" ];then
-          texterror="`eval_gettext "Файл $(basename "${arg}") не является PFS-пакетом."`"
+          texterror="`eval_gettext 'Файл ${base_name} не является PFS-пакетом.'`"
         else
-          texterror="$(gettext 'Ошибка чтения файла') $(basename "${arg}")."
+          texterror="$(gettext 'Ошибка чтения файла') ${base_name}."
         fi   
         export_DIALOG_ERROR "$(gettext 'Ошибка!')" "${texterror}"
         kill ${dlgwait} 2>/dev/null
