@@ -35,8 +35,6 @@ if [ $? -gt 0 ]; then
   exit 1
 fi
 
-base_name="$(basename "${arg}")"
-
 if [ $# -eq 0 ]; then
   funcopen() {
   echo "<hbox>
@@ -107,6 +105,7 @@ for arg in "$@"
 do
   if [ "${arg}" != "" ]; then
     if [ -f "${arg}" ]; then
+    base_name="$(basename "${arg}")"
       listpfs="${listpfs}<item>$(realpath "${arg}")</item>${IFS}"
       # Получение списка встроенных пакетов:
       packageslist="${packageslist}$(pfsinfo "${arg}")${IFS}"
