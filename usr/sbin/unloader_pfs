@@ -35,7 +35,7 @@ listgen="`find "${ckeckprefmp}" -mindepth 1 -maxdepth 1 -type d -name '*.pfs' | 
       else
         PACKLST="${IFS}<text>${IFS}<label>$(gettext ' (Пакеты отсутствуют) ')</label>${IFS}</text>${IFS}"
       fi
-      echo -n "<vbox>${IFS}<text>${IFS}<label>"'  '"${pfsname:1}"'  '"</label>${IFS}</text>${IFS}<hbox "'homogeneous=\"true\"'">${IFS}<vbox>${IFS} ${PACKLST} ${IFS}</vbox>${IFS}<vbox "'homogeneous=\"true\"'">${IFS}<button>${IFS}<label>"'\"$(gettext '  Отключить  ')\"'"</label>${IFS}<action "'type=\"exit\"'">""${pfsname}""</action>${IFS}</button>${IFS}</vbox>${IFS}</hbox>${IFS}</vbox>${IFS}<hseparator></hseparator>${IFS}"
+      echo -n "<vbox>${IFS}<text>${IFS}<label>"'  '"${pfsname:1}"'  '"</label>${IFS}</text>${IFS}<hbox "'homogeneous=\"true\"'">${IFS}<vbox>${IFS} ${PACKLST} ${IFS}</vbox>${IFS}<vbox "'homogeneous=\"true\"'">${IFS}<button>${IFS}<label>"\"$(gettext '  Отключить  ')\""</label>${IFS}<action "'type=\"exit\"'">""${pfsname}""</action>${IFS}</button>${IFS}</vbox>${IFS}</hbox>${IFS}</vbox>${IFS}<hseparator></hseparator>${IFS}"
     fi
   done`"
 
@@ -91,9 +91,9 @@ else
     if [ $status -eq 0 ]; then
       sfsevent="$(which sfs_event_rem)"
       [ "${sfsevent}" != "" ] && "${sfsevent}" "${EXIT:1}" &
-      Xdialog --title "$(gettext ' Отключение PFS ')" --msgbox "`eval_gettext " Пакет \"${EXIT:1}\" отключен. \n"`"  6 0
+      Xdialog --title "$(gettext ' Отключение PFS ')" --msgbox "`eval_gettext ' Пакет \"${EXIT:1}\" отключен. \n'`"  6 0
     else
-      Xdialog --title "$(gettext ' Ошибка! ')" --msgbox "`eval_gettext " ОШИБКА! Пакет \"${EXIT:1}\" не удалось отключить! "`"  6 0
+      Xdialog --title "$(gettext ' Ошибка! ')" --msgbox "`eval_gettext ' ОШИБКА! Пакет \"${EXIT:1}\" не удалось отключить! '`"  6 0
     fi
     [ "${SHOWALL}" != "" ] && "$0" || "$0" --all
   fi
