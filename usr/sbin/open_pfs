@@ -10,6 +10,7 @@ if [ ! "$1" ]; then
 fi
 if [ -f "$1" ]; then
   pack="$(realpath "$1")"
+  base_name="$(basename "${pack}")"
 else
   echo "$(basename "$0"): File \"$1\" not found!"; exit 1
 fi
@@ -54,7 +55,7 @@ function TIMEOUT_DIALOG () { sleep 10; ps ax | grep -v -F "grep" | grep -F "$1" 
 
 prefixmp="/mnt/."
 [ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
-mountpoint="${prefixmp}$(basename "${pack}")"
+mountpoint="${prefixmp}${base_name}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 
 if [ ! -d "${mountpoint}" ]; then
@@ -68,9 +69,9 @@ if [ ! -d "${mountpoint}" ]; then
   if [ "$(disktype "${pack}" | grep -F 'squashfs, version 4')" != "" ];then
     packageslist="$(pfsinfo "${pack}")"
     status=$?  
-    [ ${status} -gt 0 ] && texterror="$(gettext 'Ошибка чтения файла') $(basename "${pack}")."
+    [ ${status} -gt 0 ] && texterror="$(gettext 'Ошибка чтения файла') ${base_name}."
   else  
-    texterror="`eval_gettext "Файл $(basename "${pack}") не является PFS-пакетом."`"
+    texterror="`eval_gettext 'Файл ${base_name} не является PFS-пакетом.'`"
     status=1
   fi
   if [ ${status} -gt 0 ]; then   
@@ -210,7 +211,7 @@ if [ ! -d "${mountpoint}" ]; then
         fi
       fi
       export LOAD_OK="<window title=\"$(gettext 'Подключение PFS')\" resizable=\"false\"><vbox><vbox border-width=\"12\"><hbox><vbox>
-      <text use-markup=\"true\"><label>\"`eval_gettext "Пакет <b>$(basename "${pack}")</b> успешно подключен!"`\"</label></text>${LOAD_DEPS}${LOAD_CMDQ}</vbox></hbox></vbox>${LOAD_BUTTONS}</vbox></window>"
+      <text use-markup=\"true\"><label>\"`eval_gettext 'Пакет <b>${base_name}</b> успешно подключен!'`\"</label></text>${LOAD_DEPS}${LOAD_CMDQ}</vbox></hbox></vbox>${LOAD_BUTTONS}</vbox></window>"
       kill ${dlgwait} 2>/dev/null
       if [ "${LOAD_CMDQ}" != "" ]; then
         eval "`gtkdialog3 --program=LOAD_OK --center`"
@@ -221,7 +222,7 @@ if [ ! -d "${mountpoint}" ]; then
       fi
     else
       kill ${dlgwait} 2>/dev/null
-      export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'Не удалось подключить файл') <b>$(basename "${pack}")</b>!"
+      export_DIALOG_ERROR "$(gettext 'Ошибка!')" "$(gettext 'Не удалось подключить файл') <b>${base_name}</b>!"
       gtkdialog3 --program=DIALOG_ERROR --center & 
     fi
     exit ${status} 
@@ -280,7 +281,7 @@ if [ ! -d "${mountpoint}" ]; then
 else
 # Файл с таким названием подключен:
   
-  export_DIALOG_QUECTION "$(gettext 'Отключение PFS')" "`eval_gettext "Пакет <b>$(basename "${pack}")</b> подключен.${IFS}Отключить его сейчас?"`"
+  export_DIALOG_QUECTION "$(gettext 'Отключение PFS')" "`eval_gettext 'Пакет <b>${base_name}</b> подключен.${IFS}Отключить его сейчас?'`"
   eval "`gtkdialog3 --program=DIALOG_QUECTION --center`"
 
   if [ "$EXIT" = "Yes" ]; then  
@@ -315,11 +316,11 @@ else
       sfsevent="$(which sfs_event_rem)"
       [ "${sfsevent}" != "" ] && "${sfsevent}" "${pack}" &
       ###;
-      export_DIALOG_MESSAGE "$(gettext 'Отключение PFS')" "`eval_gettext "Пакет <b>$(basename "${pack}")</b> отключен."`"
+      export_DIALOG_MESSAGE "$(gettext 'Отключение PFS')" "`eval_gettext 'Пакет <b>${base_name}</b> отключен.'`"
       gtkdialog3 --program=DIALOG_MESSAGE --center &
       TIMEOUT_DIALOG $! &
     else
-      export_DIALOG_ERROR "$(gettext 'Ошибка!')" "`eval_gettext "ОШИБКА! Пакет <b>$(basename "${pack}")</b> не удалось отключить!"`"
+      export_DIALOG_ERROR "$(gettext 'Ошибка!')" "`eval_gettext 'ОШИБКА! Пакет <b>${base_name}</b> не удалось отключить!'`"
       gtkdialog3 --program=DIALOG_ERROR --center &
     fi
     exit ${status}
