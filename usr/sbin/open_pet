@@ -76,12 +76,13 @@ case "${EXIT}" in
     gtkdialog3 --program=WAIT_DIALOG --center &
     dlgwait=$!
     
+    base_name="$(basename "$1" .pet)"
     pet2pfs "$1" -no-progress
     status=$?
     
     kill ${dlgwait} 2>/dev/null
     if [ ${status} -eq 0 ]; then
-      Xdialog --title " PET " --msgbox "`eval_gettext " Файл \"$(basename "$1" .pet).pfs\" успешно создан! \n"`" 6 0
+      Xdialog --title " PET " --msgbox "`eval_gettext ' Файл \"${base_name}.pfs\" успешно создан! \n'`" 6 0
     else
       export ERROR_DIALOG="<window title=\"$(gettext ' Ошибка! ')\" resizable=\"false\" icon-name=\"gtk-stop\">
       <vbox>
