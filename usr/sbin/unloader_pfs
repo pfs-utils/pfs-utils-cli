@@ -91,9 +91,9 @@ else
     if [ $status -eq 0 ]; then
       sfsevent="$(which sfs_event_rem)"
       [ "${sfsevent}" != "" ] && "${sfsevent}" "${EXIT:1}" &
-      Xdialog --title "$(gettext ' Отключение PFS ')" --msgbox "`eval_gettext ' Пакет \"${EXIT:1}\" отключен. \n'`"  6 0
+      Xdialog --title "$(gettext ' Отключение PFS ')" --msgbox "`eval_gettext ' Пакет отключен. \n'`"  6 0
     else
-      Xdialog --title "$(gettext ' Ошибка! ')" --msgbox "`eval_gettext ' ОШИБКА! Пакет \"${EXIT:1}\" не удалось отключить! '`"  6 0
+      Xdialog --title "$(gettext ' Ошибка! ')" --msgbox "`eval_gettext ' ОШИБКА! Пакет не удалось отключить! '`"  6 0
     fi
     [ "${SHOWALL}" != "" ] && "$0" || "$0" --all
   fi
