@@ -103,12 +103,13 @@ if [ "$EXIT" = "$(gettext 'Удалить')" ]; then
         varpack="PACKAGE_${numpack}"
         if [ "${!varpack}" = "true" ]; then
           if [ -f "${package}/pfs.files" ]; then   
+            base_name="$(basename "${package}")"
             grep -q ".desktop" "${package}/pfs.files" && udesk=0
             grep -q "/usr/X11R6/lib/X11/fonts/TTF" "${package}/pfs.files" && ufont=0
             grep -q "/usr/share/fonts/default/TTF" "${package}/pfs.files" && ufont=0
-            pfsuninstall "$(basename "${package}")"
+            pfsuninstall "${base_name}"
             if [ $? -gt 0 ]; then
-              export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "`eval_gettext " При удалении пакета <b>$(basename "${package}")</b> произошла ошибка! "`"
+              export_DIALOG_ERROR "$(gettext ' Ошибка! ')" "`eval_gettext ' При удалении пакета <b>${base_name}</b> произошла ошибка! '`"
               kill ${dlgwait} 2>/dev/null
               gtkdialog3 --program=DIALOG_ERROR --center &
               exit 1
