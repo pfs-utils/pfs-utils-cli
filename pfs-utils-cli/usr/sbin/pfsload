@@ -1,0 +1,145 @@
+#!/bin/sh
+#Mount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
+#Version 0.22
+#Modify 07.04.2016
+
+for arg in "$@"
+do
+  case "${arg}" in
+    "-u" | "--upper") mntmode="upper";;
+    "-l" | "--lower") mntmode="lower";;
+    "-n" | "--no-update") fupdate="no";;
+    "-r" | "--read-only") romode="yes";;
+    "-h" | "--help") infile=""; break;;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
+    *) infile="${arg}";;
+  esac
+done
+if [ "${infile}" = "" ]; then
+  echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM${IFS}${IFS}Options:"
+  echo " -u, --upper    Mount filesystem to upper layer (AUFS)."
+  echo " -l, --lower    Mount filesystem to lower layer (AUFS)."; exit
+fi
+
+if [ -f "${infile}" ]; then
+  fsfile="$(realpath "${infile}")"
+  devtype="file"
+elif [ -b "${infile}" ]; then
+  fsfile="${infile}"
+  devtype="dev"
+elif [ -d "${infile}" ]; then
+  fsfile="$(realpath "${infile}")"
+  devtype="dir"
+else
+  echo "Object \"${infile}\" not found!" >&2; exit 1
+fi
+
+if [ "${devtype}" != "dir" ]; then
+  diskinfo="$(disktype "${fsfile}" 2>/dev/null)"
+  fstype=""
+  if echo "${diskinfo}" | grep -q -F "squashfs"; then
+    fstype='squashfs'
+  elif echo "${diskinfo}" | grep -q -F "Ext2"; then
+    fstype='ext2'
+  elif echo "${diskinfo}" | grep -q -F "Ext3"; then
+    fstype='ext3'
+  elif echo "${diskinfo}" | grep -q -F "Ext4"; then
+    fstype='ext4'
+  fi
+else
+  fsinfo="$(df -aT "${fsfile}" | tail -n 1 | tr -s ' ' '_' | cut -d'_' -f 2)"
+  case "${fsinfo}" in
+    "ext2"|"ext3"|"ext4"|"squashfs") fstype="${fsinfo}";;
+  esac
+fi
+if [ "${fstype}" = "" ]; then
+  echo "Filesystem not supported!" >&2; exit 1
+fi
+fsname="$(basename "${fsfile}")"
+if [ "$(echo "${fsname}" | awk -F. '{print $NF}' | tr A-Z a-z)" = "pfs" ]; then
+  checksfsxz >/dev/null
+  if [ $? -gt 0 ]; then
+    echo "Kernel not support PFS!" >&2; exit 1
+  fi
+  [ ! "${mntmode}" ] && mntmode="upper"
+fi
+prefixmp="/mnt/."
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+mountpoint="${prefixmp}${fsname}"
+[ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
+if [ -d "${mountpoint}" ]; then
+  echo "Object \"${fsfile}\" is mounted!" >&2; exit 1
+fi
+
+if [ "${devtype}:${fstype}" = "file:squashfs" ]; then
+  sync
+  freeloop=0
+  looplist="$(losetupb -a)"
+  while true ; do
+    echo "${looplist}" | grep -q -F "/dev/loop${freeloop}" && freeloop="$(expr ${freeloop} + 1)" || break
+  done
+  if [ ! -b /dev/loop${freeloop} ]; then
+    mknod -m660 /dev/loop${freeloop} b 7 ${freeloop}
+    chown root.root /dev/loop${freeloop}
+    sync
+  fi
+  if [ ! -b /dev/loop${freeloop} ]; then
+    echo "Error! Free loop devices is not found!" >&2; exit 1
+  fi
+  losetupb /dev/loop${freeloop} "${fsfile}"
+  status=$?
+else
+  status=0
+fi
+
+if [ ${status} -eq 0 ]; then
+  mkdir -p "${mountpoint}"
+  sync
+  case "${devtype}" in
+    "file" )  if [ "${fstype}" = "squashfs" ]; then
+                mountb -t squashfs -o ro /dev/loop${freeloop} "${mountpoint}" >/dev/null 2>&1
+              else
+                [ "${romode}" ] && optmnt="loop,ro" || optmnt="loop"
+                mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1
+              fi;;
+    "dev" )   [ "${romode}" ] && optmnt="ro" || optmnt="rw"
+              mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
+    "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
+  esac 
+  status=$?
+  if [ ${status} -eq 0 ]; then
+    sync
+    if [ "${mntmode}" = "upper" ]; then
+      aufslayer="$(topaufslayer 2>/dev/null)"
+      case "${aufslayer}" in
+        ''|*[!0-9]*) aufslayer=1;;
+      esac
+      mountb -o remount,add:${aufslayer}:"${mountpoint}"=ro / >/dev/null 2>&1
+    else
+      mountb -o remount,append:"${mountpoint}"=ro / >/dev/null 2>&1
+    fi
+    status=$?
+    sync
+    if [ ${status} -eq 0 ]; then
+      if [ "${fupdate}" != "no" ]; then
+        [ "$(find "${mountpoint}/lib/modules" "${mountpoint}/usr/lib/modules" -type f -name "*.ko" 2>/dev/null)" != "" ] && depmod &
+        [ "$(find "${mountpoint}/lib" "${mountpoint}/usr/lib" "${mountpoint}/usr/local/lib" "${mountpoint}/usr/X11R7/lib" -type f -name "*.so" 2>/dev/null)" != "" ] && ldconfig &
+        [ -d "${mountpoint}/usr/share/glib-2.0/schemas/" ] && glib-compile-schemas /usr/share/glib-2.0/schemas/ &
+      fi
+    else
+      umountb -d "${mountpoint}" >/dev/null
+	  rmdir "${mountpoint}" >/dev/null
+	  echo "AUFS error!" >&2; exit ${status}
+    fi
+  else
+    losetupb -d /dev/loop${freeloop}
+    rmdir "${mountpoint}" >/dev/null
+	echo "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." >&2; exit ${status}
+  fi
+else
+  rmdir "${mountpoint}" 2>/dev/null
+  echo "Mount error!" >&2; exit ${status}
+fi
+sync
+
+exit 0

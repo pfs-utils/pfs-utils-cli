@@ -1,0 +1,64 @@
+#!/bin/sh
+#Make .pfs (for PuppyRus), by Zay, GPL v3.
+#Version 0.19
+#Modify 26.04.2015
+
+compression="xz"
+for arg in "$@"
+do
+  case "${arg}" in
+    "-o" | "--out-file") onuserout="on";;
+    "-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
+    "-n" | "--no-dirs-empty") dirs="off";;
+    "-m" | "--md5") md5cr="on";;
+    "-e" | "--empty" | "--no-md5") ;;
+    "-no-progress" | "--no-progress") noprogress="-no-progress";;
+    "-processors" | "--processors" ) numproc="on";;
+    "--gzip") compression="gzip";;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
+    *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
+       elif [ "${onuserout}" = "on" ]; then userout="${arg}"
+       elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
+       else pfsdir="${arg}"; fi
+       onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
+  esac
+done
+pwddir="$(pwd)"
+[ "${pfsdir}" = "" ] && pfsdir="${pwddir}"
+if [ -d "${pfsdir}" ]; then
+  chmod 755 "${pfsdir}"
+  cd "${pfsdir}"
+else
+  echo "Directory \"${pfsdir}\" not found!" >&2; exit 1
+fi
+[ "${packname}" != "" ] && pfsname="${packname}" || pfsname="$(basename "${pfsdir}")"
+echo "${pfsname}"
+
+mkdir -p "./etc/packages/mount/${pfsname}"
+[ $? -gt 0 ] && exit 1
+[ "$(pwd)" != "/" ] && find "./etc/packages/mount/" -mindepth 1 -maxdepth 1 -type d ! -name "${pfsname}" -exec rm -rf "{}" \;
+[ ! -f "./etc/packages/mount/${pfsname}/pfs.specs" ] && echo "name=\"${pfsname}\"" >"./etc/packages/mount/${pfsname}/pfs.specs"
+
+allfiles="$(find . ! -type d | grep -v -F './etc/packages/' | cut -f2- -d'.' | sort -f)"
+if [ "${allfiles}" = "" ]; then
+  echo "Files not found!" >&2; exit 1
+fi
+echo "${allfiles}" >"./etc/packages/mount/${pfsname}/pfs.files"
+[ $? -gt 0 ] && exit 1
+
+[ "${dirs}" != "off" ] && dirsempty="$(find . -type d -empty | cut -f2- -d'.' | sort -f)" 
+[ "${dirs}" = "off" -o "${dirsempty}" = "" ] && [ -f "./etc/packages/mount/${pfsname}/pfs.dirs.empty" ] && rm -f "./etc/packages/mount/${pfsname}/pfs.dirs.empty"
+[ "${dirsempty}" != "" ] && echo "${dirsempty}" >"./etc/packages/mount/${pfsname}/pfs.dirs.empty"
+
+[ "${md5cr}" = "on" ] && md5s="$(find . -type f -exec md5sum "{}" \; | grep -v -F './etc/packages/' | sed 's/\.//' | sort -k 2 -f)"
+[ "${md5cr}" != "on" -o "${md5s}" = "" ] && [ -f "./etc/packages/mount/${pfsname}/pfs.md5sums" ] && rm -f "./etc/packages/mount/${pfsname}/pfs.md5sums"
+[ "${md5s}" != "" ] && echo "${md5s}" >"./etc/packages/mount/${pfsname}/pfs.md5sums"
+
+[ "${pfsdir}" = "${pwddir}" ] && cd ../ || cd "${pwddir}"
+[ "${userout}" = "" ] && userout="./${pfsname}.pfs"
+if [ "${compression}" = "xz" ]; then
+  optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
+fi
+mksquashfs "${pfsdir}" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
+
+exit $?

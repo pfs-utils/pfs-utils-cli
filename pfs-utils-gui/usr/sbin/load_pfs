@@ -1,0 +1,106 @@
+#!/bin/sh
+# GUI Load SquashFS (for PuppyRus), by Zay, GPL v3.
+# Supported extensions: ".pfs", ".xzm", ".sfs".
+
+export LOCALDOMAIN="load_pfs"
+. gettext.sh
+
+[ ! -f "$1" ] && exit 1
+if [ $# -gt 1 ]; then
+  for arg in "$@"; do
+    "$0" "${arg}"
+  done; exit
+fi
+
+filemnt="$(realpath "$1")"
+base_name="$(basename "${filemnt}")"
+prefixmp="/mnt/."
+[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
+mountpoint="${prefixmp}${base_name}"
+[ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
+if [ ! -d "${mountpoint}" ]; then
+
+  export MNT_DIALOG="<window title=\"$(gettext 'Подключение... ')\" resizable=\"false\"><vbox border-width=\"16\">
+  <text><label>\"$(gettext 'Подключение файла...')\"</label></text>
+  </vbox></window>"
+  gtkdialog3 --program=MNT_DIALOG --center &
+  dlgwait=$!
+
+  # Проверка версии ядра (Check kernel version):
+  checkext="$(basename "${filemnt}" | awk -F. '{print $NF}' | tr a-z A-Z)"
+  case "${checkext}" in
+    "PFS" | "XZM") checksfsxz 2>/dev/null
+           if [ $? -gt 0 ]; then
+             kill ${dlgwait} 2>/dev/null
+             Xdialog --title "`eval_gettext 'Подключение ${checkext} '`" --msgbox "`eval_gettext 'ВНИМАНИЕ: Подключение ${checkext}-файла невозможно! \n Ядра Linux 2.6.37 и более ранних версий не поддерживают ${checkext}-файлы. \n'`" 6 0
+             exit 1
+           fi ;;
+    "SFS") dt="$(disktype "${filemnt}" 2>/dev/null)"
+           if [ "$(echo "${dt}" | grep "squashfs")" != "" ];then
+             kerneluname="$(uname -r)"
+             kernel1ver="$(echo -n "${kerneluname}" | cut -f 1 -d '.' | cut -f 1 -d '-')"
+             #kernel2ver="$(echo -n "${kerneluname}" | cut -f 2 -d '.' | cut -f 1 -d '-')"
+             kernel3ver="$(echo -n "${kerneluname}" | cut -f 3 -d '.' | cut -f 1 -d '-')"
+             kernel4ver="$(echo -n "${kerneluname}" | cut -f 4 -d '.' | cut -f 1 -d '-')"
+             sfsver="squashfs, version 4"
+             if [ ${kernel1ver} -lt 3 ];then
+               if [ ${kernel3ver} -lt 29 ];then
+                 if [ ${kernel3ver} -eq 27 ];then
+                   [ ${kernel4ver} -lt 47 ] && sfsver="squashfs, version 3"
+	             else
+	               sfsver="squashfs, version 3"
+	             fi
+               fi
+             fi
+             if [ "$(echo "${dt}" | grep "${sfsver}")" = "" ];then
+               kill ${dlgwait} 2>/dev/null
+               if [ "${sfsver}" = "squashfs, version 4" ];then
+                 Xdialog --title "$(gettext ' Подключение SFS ')" --msgbox "$(gettext ' ВНИМАНИЕ: Это файл SquashFS 3.x старой версии, и его не возможно использовать. \n Все ядра Linux 2.6.29.x или более поздних версий используют SquashFS 4.x файлы. \n')" 6 0
+               else
+                 Xdialog --title "$(gettext ' Подключение SFS ')" --msgbox "$(gettext ' ВНИМАНИЕ: Это SquashFS 4.x файл новой версии, и его не возможно использовать. \n Все ядра Linux 2.6.28.x или более ранних версий используют SquashFS 3.x файлы. \n')" 6 0
+               fi
+               exit 1
+             fi
+           fi ;;    
+  esac
+
+  # Монтирование (Mount):
+  if [ "$(basename "$0" | grep -E "ram")" = "" ]; then
+    pfsload "${filemnt}"
+  else
+    pfsramload "${filemnt}"
+  fi
+  status=$?
+
+  if [ ${status} -eq 0 ]; then
+    [ `find "${mountpoint}" | grep -ic "desktop$"` -gt 0 ] && fixmenus
+    mfs="$(which mkfontscale)"
+    mfd="$(which mkfontdir)"
+    for fontdir in "/usr/X11R6/lib/X11/fonts/TTF" "/usr/share/fonts/default/TTF"
+    do
+      if [ -d "${mountpoint}/${fontdir}" ]; then
+        cd "${fontdir}"
+        [ "${mfs}" !=  "" ] && "${mfs}" .
+        [ "${mfd}" !=  "" ] && "${mfd}" .
+      fi
+    done
+    ### SFS_event support:
+    sfsevent="$(which sfs_event_add)"
+    if [ "${sfsevent}" != "" ]; then
+      basename "$0" | grep -q -F "nomenu" && "${sfsevent}" "${filemnt}" &
+    fi
+    ###;
+    kill ${dlgwait} 2>/dev/null
+    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'Файл \"${base_name}\" подключен. \n'`"  6 0
+  else
+    kill ${dlgwait} 2>/dev/null
+    rmdir "${mntpoint}"
+    Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'ОШИБКА! Файл \"${base_name}\" не удалось подключить! \n'`"  6 0
+    exit 1
+  fi
+else
+  kill ${dlgwait} 2>/dev/null
+  Xdialog --title "$(gettext ' Подключение файла ')" --msgbox "`eval_gettext 'Файл \"${base_name}\" уже подключен. \n'`"  6 0
+fi
+
+exit 0

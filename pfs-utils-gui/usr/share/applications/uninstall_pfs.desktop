@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Remove package(s)
+Name[ru]=Удалить пакет(ы)
+Icon=mini-ray.xpm
+Comment=Remove user diffened package(s)
+Comment[ru]=Удалить пакет(ы)
+Exec=uninstall_pfs
+Terminal=false
+Type=Application
+Categories=X-SetupUtility
+GenericName=Remove package(s)
+GenericName[ru]=Удалить пакет(ы)

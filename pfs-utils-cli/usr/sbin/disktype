@@ -1,0 +1,27 @@
+#!/bin/bash
+ftest=$(file $1)
+if $(echo $ftest |egrep -qi cannot.*open) ; then
+echo $ftest
+exit 1
+
+elif $(echo $ftest |grep -qi directory) ;then
+echo "$1 Is a directory"
+exit
+
+elif $(echo $ftest |grep -qi squashfs) ;then
+echo "$1 Linux squashfs"
+exit
+
+elif $(echo $ftest |egrep -qi block.*special) ;then
+echo block device
+echo $(blkid -s TYPE $1)
+exit
+
+elif $(echo $ftest |egrep -qi 9660) ; then
+echo $ftest
+exit
+fi
+
+echo "unknown disk type"
+exit 2
+
