@@ -5,7 +5,7 @@
 
 if [ -x "$(which losetup-FULL)" ]; then
   losetup-FULL $@
-else
-  [ -x "$(which losetup)" ] losetup $@ || exit 1
-fi
+elif   [ -x "$(which losetup)" ] ; then
+	losetup $@ || exit 1
+fi 2>/dev/null
 exit $?
