@@ -2,6 +2,7 @@
 #Extract .pfs (for PuppyRus), by Zay & «sfs», GPL v3.
 #Version 0.17
 #Modify 26.04.2015
+. /usr/lib/libpfs
 
 checksfsxz >/dev/null 2>&1
 if [ $? -gt 0 ]; then

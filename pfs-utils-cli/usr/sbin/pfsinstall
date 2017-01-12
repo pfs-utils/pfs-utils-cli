@@ -2,6 +2,7 @@
 #Install .pfs (for PuppyRus), by Zay, GPL v3.
 #Version 0.13
 #Modify 21.04.2015
+. /usr/lib/libpfs  
 
 if [ "$1" ]; then
   instfile="$1"

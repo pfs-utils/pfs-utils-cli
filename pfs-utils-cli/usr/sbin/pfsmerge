@@ -2,6 +2,7 @@
 #Merge .pfs (for PuppyRus), by Zay, GPL v3.
 #Version 0.18
 #Modify 26.04.2015
+. /usr/lib/libpfs
 
 checksfsxz >/dev/null 2>&1
 if [ $? -gt 0 ]; then

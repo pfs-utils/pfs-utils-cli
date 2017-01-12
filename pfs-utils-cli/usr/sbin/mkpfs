@@ -2,6 +2,7 @@
 #Make .pfs (for PuppyRus), by Zay, GPL v3.
 #Version 0.19
 #Modify 26.04.2015
+. /usr/lib/libpfs
 
 compression="xz"
 for arg in "$@"

@@ -2,6 +2,7 @@
 #Mount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
 #Version 0.22
 #Modify 07.04.2016
+. /usr/lib/libpfs
 
 for arg in "$@"
 do

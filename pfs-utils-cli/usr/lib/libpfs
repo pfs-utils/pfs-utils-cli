@@ -1,0 +1,112 @@
+#!/bin/sh
+#library for pfs-utils, by betcher, GPL v3.
+#Version 0.1
+#Modify 12.01.2017 
+
+function fileinpack () {
+case "$1" in 
+  "") echo "Usage: $(basename "$0") FILE"; exit 1;;
+  "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo $1 | tr -d '-')'" >&2; exit 1;;
+  *) findname="$1";;
+esac
+
+find "/etc/packages" -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | cut -f2- -d'/' | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e "s/^/`echo "${listfiles}" | cut -f5 -d'/'`/"; done | grep -F "${findname}" | cut -f1 -d'/' | sort -uf
+return 0
+}
+
+function checksfsxz () {
+kerneluname="$(uname -r)"
+kernel1ver="$(echo -n "${kerneluname}" | cut -f 1 -d '.' | cut -f 1 -d '-')"
+if [ ${kernel1ver} -lt 3 ];then
+  kernel2ver="$(echo -n "${kerneluname}" | cut -f 2 -d '.' | cut -f 1 -d '-')"
+  if [ ${kernel2ver} -lt 6 ];then
+    echo "Kernel does not support SquashFS compressed XZ!" >&2; exit 1
+  else
+    kernel3ver="$(echo -n "${kerneluname}" | cut -f 3 -d '.' | cut -f 1 -d '-')"
+    if [ ${kernel3ver} -lt 38 ]; then
+      echo "Kernel does not support SquashFS compressed XZ!" >&2; exit 1
+    fi
+  fi
+fi
+return 0
+}
+
+function disktype () {
+ftest=$(file $1)
+if $(echo $ftest |egrep -qi cannot.*open) ; then
+echo $ftest
+return 1
+
+elif $(echo $ftest |grep -qi directory) ;then
+echo "$1 Is a directory"
+return 0
+
+elif $(echo $ftest |grep -qi squashfs) ;then
+echo "$1 Linux squashfs"
+return 0
+
+elif $(echo $ftest |egrep -qi block.*special) ;then
+echo block device
+echo $(blkid -s TYPE $1)
+return 0
+
+elif $(echo $ftest |egrep -qi 9660) ; then
+echo $ftest
+return 0
+fi
+
+echo "unknown disk type"
+return 2
+}
+
+function lddcheck () {
+[ "${1}" != "" ] && rootdir="${1}" || rootdir="./"
+if [ ! -d "${rootdir}" ]; then
+  echo "Directory \"${rootdir}\" not found!" >&2; exit 1
+fi
+alllibs="$(find "${rootdir}" ! -type d -name "*.so*")" 
+find "${rootdir}" -type f -executable | while read chfile; do [ "$(file --brief "${chfile}" | grep -E "LSB executable|shared object")" ] && ldd "${chfile}" 2>/dev/null; done | grep -E '\.so$|\.so\.[0-9]' | sed 's/(..........)/()/' | sort -u | sed 's/[ \t]*//;s/.* =>  ()//;s/ => .*$//;s/ ()//' | while read exlib; do echo "${alllibs}" | grep -q -F "${exlib}" || echo "${exlib}"; done | grep -v -F "linux-gate.so" | sort -uf
+return 0
+}
+
+function losetupb () {
+	if [ -x "$(which losetup-FULL)" ]; then
+  losetup-FULL $@
+elif   [ -x "$(which losetup)" ] ; then
+	losetup $@ || exit 1
+fi 2>/dev/null
+return $?
+}
+
+function mountb () {
+if [ -x "$(which busybox)" ]; then
+  if busybox --list | grep -q -F mount; then
+    busybox mount $@
+  else
+    [ -x "$(which mount)" ] && mount $@ || return 1
+  fi
+else
+  [ -x "$(which mount)" ] && mount $@ || return 1
+fi
+return $?
+}
+
+function umountb () {
+if [ -x "$(which busybox)" ]; then
+  if busybox --list | grep -q -F umount; then
+    busybox umount $@
+  else
+    [ -x "$(which umount)" ] && umount $@ || return 1
+  fi
+else
+  [ -x "$(which umount)" ] && umount $@ || return 1
+fi
+return $?
+}
+
+function prefixmount () {
+	[ -f "/etc/initvars" ] && . "/etc/initvars" 2>/dev/null
+[ "${SYSMNT}" ] && echo "${SYSMNT}/bundles/" || echo "/mnt/."
+return  0
+}
+

@@ -2,8 +2,11 @@
 #Copy to RAM & Mount SquashFS to AUFS (for PuppyRus), by «sfs» & Zay, GPL v3.
 #Version 0.14
 #Modify 07.04.2016
+. /usr/lib/libpfs
+copyramdir=/tmp/.copyRAM
+. /etc/initvars && copyramdir="${SYSMNT}/copy2ram"
 
-copyramdir="/tmp/.mountRAM"
+
 
 for arg in "$@"
 do

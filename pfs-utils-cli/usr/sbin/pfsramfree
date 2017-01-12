@@ -2,6 +2,7 @@
 #Free RAM, by «sfs» & Zay, GPL v3.
 #Version 0.10
 #Modify 26.04.2015
+. /usr/lib/libpfs
 
 copyramdir="/tmp/.mountRAM"
 
