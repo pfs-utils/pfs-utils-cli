@@ -3,8 +3,8 @@
 #Version 0.10
 #Modify 26.04.2015
 . /usr/lib/libpfs
-
-copyramdir="/tmp/.mountRAM"
+copyramdir=/tmp/.mountRAM
+. /etc/initvars && copyramdir="${SYSMNT}/copy2ram"
 
 if [ "$1" ]; then
   [ -f "$1" ] && fsname="`basename $(realpath "$1")`" || fsname="$(basename "$1")"

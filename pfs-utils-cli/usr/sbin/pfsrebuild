@@ -2,45 +2,51 @@
 #rebuild loaded or installed pfs, by betcher, GPL v3.
 #Version 0.1
 #Modify 12.01.2017
+. /etc/initvars 2>/dev/null
 
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") PACKAGE" >&2; exit 1
 fi
 
-fileslist="/etc/packages/install/$1/pfs.files"
-[ -f $fileslist ] || fileslist="/etc/packages/mount/$1/pfs.files"
+package_name=$(echo $1 |sed 's/.pfs//')
+
+fileslist="/etc/packages/install/$package_name/pfs.files"
+[ -f $fileslist ] || fileslist="/etc/packages/mount/$package_name/pfs.files"
 dirsempty=$(echo $fileslist | sed 's/pfs.files/pfs.dirs.empty/')
 
-if [ -f "${fileslist}" ]; then 
-  buildir=build_$1
-  # если удалять сборочный каталог в конце скрипта, то этот кусок не нужен
-  if [ -d $buildir ] ; then 
-  echo "Directory \"$buildir\" already exist"
-  echo "Please enter \"d\" to clear this dir, \"e\" to exit, or press \"enter\" to continue"
-  read ans
-	if [ "$ans" == "d" ]; then 
-		rm -rf $buildir
-	elif [ "$ans" == "e" ] ; then
-		exit 
+# find pfs.files in pfs contaners
+if ! [ -f $fileslist ] ;then
+	package_list=$(ls ${SYSMNT}/bundles/${package_name}.pfs/etc/packages/mount/)
+	if [[ -n $package_list ]] ; then
+		pfs_in_contaner=''
+		for pack in $package_list ; do
+			pfsrebuild $pack
+			pfs_in_contaner="$pfs_in_contaner ./${pack}.pfs"
+		done
+		pfsmerge $pfs_in_contaner ${package_name}.pfs 
+		exit 0
 	fi
-  fi
-  #########################################################################
+fi
+
+if [[ -f ${fileslist} ]]; then 
+  buildir=build_$package_name
   mkdir -p $buildir
-  
-  listfiles="$(cat "$fileslist" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g')"
+  listfiles="$(cat $fileslist | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g')"
   echo "${listfiles}" | while read file; do 
   mkdir -p ${buildir}$(dirname $file)
   cp "${file}" ${buildir}${file}; done
-  if [ -f $dirsempty ] ; then
-	listdirs="$(cat "$dirsempty" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g')"
+  
+  if [[ -f  ${dirsempty} ]] ; then
+	listdirs="$(cat $dirsempty | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g')"
 	echo "${listdirs}" | while read file; do 
 	mkdir -p ${buildir}${file}
 	done
   fi
-  mkpfs --name $1 --out-file ${1}.pfs ${buildir}
-  #rm -rf buildir
+  # --nopfs parametr - make build dir and exit 
+  echo "$@" | grep -q "\-\-nopfs" && exit 0
+  mkpfs --name $package_name --out-file ${package_name}.pfs ${buildir}
+  rm -rf $buildir
   else
   echo "Package \"$1\" is not installed!" >&2; exit 1
 fi
-
 exit 0

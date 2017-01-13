@@ -3,7 +3,7 @@
 #Version 0.14
 #Modify 07.04.2016
 . /usr/lib/libpfs
-copyramdir=/tmp/.copyRAM
+copyramdir=/tmp/.mountRAM
 . /etc/initvars && copyramdir="${SYSMNT}/copy2ram"
 
 
