@@ -35,32 +35,32 @@ do
     *) [ "${upacklist}" = "yes" ] && listpackage="${listpackage}${arg}$IFS";;
   esac
 done
-[ "${listpackage}" = "" ] && listpackage="$(unsquashfs -l "${instfile}" 2>/dev/null | grep '/etc/packages/mount/' | cut -f5 -d'/' | sort -uf)"
+[ "${listpackage}" = "" ] && listpackage="$(unsquashfs -l "${instfile}" 2>/dev/null | grep '${PFSDIR}/mount/' | cut -f5 -d'/' | sort -uf)"
 
 allfiles="`echo "${listpackage}" | while read pack; do
-  unsquashfs -l "${instfile}" 2>/dev/null | grep -q "/etc/packages/mount/${pack}/pfs.files"
+  unsquashfs -l "${instfile}" 2>/dev/null | grep -q "${PFSDIR}/mount/${pack}/pfs.files"
   [ $? -gt 0 ] && continue
-  unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "/etc/packages/mount/${pack}/pfs.files" -n >/dev/null 2>&1
+  unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "${PFSDIR}/mount/${pack}/pfs.files" -n >/dev/null 2>&1
   if [ $? -eq 0 ]; then
-    [ -f "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.files" ] && cat "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.files" 2>/dev/null | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g'
+    [ -f "/tmp/.pfs/install/${bsname}/${pack}${PFSDIR}/mount/${pack}/pfs.files" ] && cat "/tmp/.pfs/install/${bsname}/${pack}${PFSDIR}/mount/${pack}/pfs.files" 2>/dev/null | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g'
   fi
   rm -rf "/tmp/.pfs/install/${bsname}/${pack}" 2>/dev/null
-  unsquashfs -l "${instfile}" 2>/dev/null | grep -q "/etc/packages/mount/${pack}/pfs.dirs.empty"
+  unsquashfs -l "${instfile}" 2>/dev/null | grep -q "${PFSDIR}/mount/${pack}/pfs.dirs.empty"
   if [ $? -eq 0 ]; then
-    unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "/etc/packages/mount/${pack}/pfs.dirs.empty" -n >/dev/null 2>&1
+    unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "${PFSDIR}/mount/${pack}/pfs.dirs.empty" -n >/dev/null 2>&1
     if [ $? -eq 0 ]; then
-      if [ -f "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.dirs.empty" ]; then
-        cat "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}/pfs.dirs.empty" 2>/dev/null | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g' -e 's:[/*]$::g' | while read dirempty; do mkdir -p "${dirempty}"; done
+      if [ -f "/tmp/.pfs/install/${bsname}/${pack}${PFSDIR}/mount/${pack}/pfs.dirs.empty" ]; then
+        cat "/tmp/.pfs/install/${bsname}/${pack}${PFSDIR}/mount/${pack}/pfs.dirs.empty" 2>/dev/null | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g' -e 's:[/*]$::g' | while read dirempty; do mkdir -p "${dirempty}"; done
       fi
     fi
   fi
   rm -rf "/tmp/.pfs/install/${bsname}/${pack}" 2>/dev/null
-  unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "/etc/packages/mount/${pack}" -n >/dev/null 2>&1
+  unsquashfs -d "/tmp/.pfs/install/${bsname}/${pack}" "${instfile}" -ef "${PFSDIR}/mount/${pack}" -n >/dev/null 2>&1
   if [ $? -eq 0 ]; then
-    if [ -d "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}" ]; then
-      [ -d "/etc/packages/install/${pack}" ] && rm -rf "/etc/packages/install/${pack}"
-      mkdir -p "/etc/packages/install" 
-      cp -a "/tmp/.pfs/install/${bsname}/${pack}/etc/packages/mount/${pack}" "/etc/packages/install/${pack}"
+    if [ -d "/tmp/.pfs/install/${bsname}/${pack}${PFSDIR}/mount/${pack}" ]; then
+      [ -d "${PFSDIR}/install/${pack}" ] && rm -rf "${PFSDIR}/install/${pack}"
+      mkdir -p "${PFSDIR}/install" 
+      cp -a "/tmp/.pfs/install/${bsname}/${pack}${PFSDIR}/mount/${pack}" "${PFSDIR}/install/${pack}"
     fi
   fi
   rm -rf "/tmp/.pfs/install/${bsname}/${pack}" 2>/dev/null

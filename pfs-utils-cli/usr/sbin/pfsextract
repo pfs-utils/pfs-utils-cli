@@ -21,7 +21,7 @@ do
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${upacklist}" != "yes" ]; then [ ! "${pfsname}" ] && pfsname="${arg}" || outdir="${arg}" 
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
-       else listpackage="${listpackage}/tmp/.pfs/extract/$(basename "${pfsname}")/pmount/etc/packages/mount/${arg}$IFS"
+       else listpackage="${listpackage}/tmp/.pfs/extract/$(basename "${pfsname}")/pmount${PFSDIR}/mount/${arg}$IFS"
        fi;;  
   esac
 done
@@ -83,7 +83,7 @@ fi
 sync
 
 if [ ! "${listpackage}" ]; then
-  listpackage="$(find "${tmpdir}/pmount/etc/packages/mount/" -mindepth 1 -maxdepth 1 -type d | while read package
+  listpackage="$(find "${tmpdir}/pmount${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d | while read package
   do
     echo -n "${package}$IFS"
   done)"
@@ -109,8 +109,8 @@ echo "${listpackage}" | while read pack; do
           break
         fi
       done
-      mkdir -p "${tmpdir}/files/${namepack}/etc/packages/mount"
-      cp -a "${tmpdir}/pmount/etc/packages/mount/${namepack}" "${tmpdir}/files/${namepack}/etc/packages/mount"
+      mkdir -p "${tmpdir}/files/${namepack}${PFSDIR}/mount"
+      cp -a "${tmpdir}/pmount${PFSDIR}/mount/${namepack}" "${tmpdir}/files/${namepack}${PFSDIR}/mount"
       status=$?
       sync
       if [ ${status} -eq 0 ]; then

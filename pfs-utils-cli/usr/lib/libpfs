@@ -3,6 +3,10 @@
 #Version 0.1
 #Modify 12.01.2017 
 
+copyramdir=/tmp/.mountRAM
+SYSMNT=/mnt
+PFSDIR=/etc/packages
+
 function fileinpack () {
 case "$1" in 
   "") echo "Usage: $(basename "$0") FILE"; exit 1;;
@@ -10,7 +14,7 @@ case "$1" in
   *) findname="$1";;
 esac
 
-find "/etc/packages" -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | cut -f2- -d'/' | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e "s/^/`echo "${listfiles}" | cut -f5 -d'/'`/"; done | grep -F "${findname}" | cut -f1 -d'/' | sort -uf
+find "${PFSDIR}" -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | cut -f2- -d'/' | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e "s/^/`echo "${listfiles}" | cut -f5 -d'/'`/"; done | grep -F "${findname}" | cut -f1 -d'/' | sort -uf
 return 0
 }
 
@@ -105,7 +109,7 @@ return $?
 }
 
 function prefixmount () {
-	[ -f "/etc/initvars" ] && . "/etc/initvars" 2>/dev/null
+[ -f "/etc/initvars" ] && . "/etc/initvars" 2>/dev/null
 [ "${SYSMNT}" ] && echo "${SYSMNT}/bundles/" || echo "/mnt/."
 return  0
 }

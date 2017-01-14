@@ -2,20 +2,21 @@
 #Uninstall .pfs (for PuppyRus), by Zay, GPL v3.
 #Version 0.9
 #Modify 28.12.2013
+. /usr/lib/libpfs
 
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") PACKAGE" >&2; exit 1
 fi
 
-fileslist="/etc/packages/install/$1/pfs.files"
+fileslist="${PFSDIR}/install/$1/pfs.files"
 if [ -f "${fileslist}" ]; then 
   if [ -d "/tmp/.pfs/uninstall/$1" ]; then
     echo "Progress is already running!" >&2; exit 1    
   fi
   mkdir -p "/tmp/.pfs/uninstall/$1"
   mv "${fileslist}" "/tmp/.pfs/uninstall/$1"
-  rm -rf "/etc/packages/install/$1/" 
-  finded="$(find /etc/packages/ -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | sed -e 's:[\]:\\\\\\\\:g'; done)"
+  rm -rf "${PFSDIR}/install/$1/" 
+  finded="$(find ${PFSDIR}/ -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | sed -e 's:[\]:\\\\\\\\:g'; done)"
   listfiles="$(cat "/tmp/.pfs/uninstall/$1/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g')"
   echo "${listfiles}" | while read file; do echo "${finded}" | grep -q -F "${file}" || rm -f "${file}" 2>/dev/null; done
   echo "${listfiles}" | grep -q -F "/lib/modules" && depmod &

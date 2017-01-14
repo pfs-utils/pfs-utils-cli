@@ -132,7 +132,7 @@ fi
 if [ ${status} -eq 0 ]; then
   listpackall="`find . -mindepth 1 -maxdepth 1 -type d -name '*_mp' | while read mpoint
   do
-    [ -d "${mpoint}/etc/packages/mount" ] && echo "$(find "${mpoint}/etc/packages/mount" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | grep -v "^[[:space:]]*$")"
+    [ -d "${mpoint}${PFSDIR}/mount" ] && echo "$(find "${mpoint}${PFSDIR}/mount" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | grep -v "^[[:space:]]*$")"
   done | sort -f`"
   packsdub="$(echo "${listpackall}" | uniq -d)"
   if [ "${packsdub}" = "" ]; then
@@ -148,16 +148,16 @@ if [ ${status} -eq 0 ]; then
     echo "${delpacks}" | while read delpack
     do
       if [ "${delpack}" != "" ]; then
-        if [ -f "./pfs/etc/packages/mount/${delpack}/pfs.files" ]; then
+        if [ -f "./pfs${PFSDIR}/mount/${delpack}/pfs.files" ]; then
           delbase="$(basename "${delpack}")"
-          otherfiles="`find "./pfs/etc/packages/mount" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read readpack; do
+          otherfiles="`find "./pfs${PFSDIR}/mount" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read readpack; do
             [ "$(basename "${readpack}")" != "${delbase}" ] && [ -f "${readpack}/pfs.files" ] && echo "$(cat "${readpack}/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g')"
           done | sort -u`${IFS}"
-          dubfiles="`echo "$(cat "./pfs/etc/packages/mount/${delpack}/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g')${IFS}${otherfiles}" | sort | uniq -d`"
-          echo "$(cat "./pfs/etc/packages/mount/${delpack}/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g')${IFS}${dubfiles}" | sed -e 's:[[:space:]]*$::g' | sort | uniq -u | while read delfile; do
+          dubfiles="`echo "$(cat "./pfs${PFSDIR}/mount/${delpack}/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g')${IFS}${otherfiles}" | sort | uniq -d`"
+          echo "$(cat "./pfs${PFSDIR}/mount/${delpack}/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g')${IFS}${dubfiles}" | sed -e 's:[[:space:]]*$::g' | sort | uniq -u | while read delfile; do
             [ "${delfile}" != "" ] && rm -f "/tmp/.pfs/merge/${outbasename}/pfs${delfile}"
           done
-          rm -rf "/tmp/.pfs/merge/${outbasename}/pfs/etc/packages/mount/${delpack}"
+          rm -rf "/tmp/.pfs/merge/${outbasename}/pfs${PFSDIR}/mount/${delpack}"
           echo "Package \"${delpack}\" deleted."
         else
           echo "Warning! Package \"${delpack}\" not found."
@@ -165,7 +165,7 @@ if [ ${status} -eq 0 ]; then
       fi
     done
   fi
-  if [ ! -d "/tmp/.pfs/merge/${outbasename}/pfs/etc/packages/mount" ]; then
+  if [ ! -d "/tmp/.pfs/merge/${outbasename}/pfs${PFSDIR}/mount" ]; then
     echo "Packages not found!" >&2; status=1
   fi
 fi
@@ -173,21 +173,21 @@ fi
 if [ ${status} -eq 0 ]; then
   if [ "${clean}" = "yes" ]; then
     echo "Cleaning..."
-    allfiles="`find "./pfs/etc/packages/mount" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read readpack; do
+    allfiles="`find "./pfs${PFSDIR}/mount" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read readpack; do
       [ -f "${readpack}/pfs.files" ] && echo "$(cat "${readpack}/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g')"
     done | sort -u`${IFS}"
-    findfiles="$(find ./pfs ! -type d 2>/dev/null | grep -v -F '/etc/packages/' | cut -f2- -d's' | sort -u | sed -e 's:[\]:\\\\:g')${IFS}"
+    findfiles="$(find ./pfs ! -type d 2>/dev/null | grep -v -F '${PFSDIR}/' | cut -f2- -d's' | sort -u | sed -e 's:[\]:\\\\:g')${IFS}"
     echo "${allfiles}${findfiles}" | sort | uniq -u | while read delfile; do
       [ -f "/tmp/.pfs/merge/${outbasename}/pfs${delfile}" ] && rm -f "/tmp/.pfs/merge/${outbasename}/pfs${delfile}"
     done
-    pfsdirsempty="`find "./pfs/etc/packages/mount" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read readpack; do
+    pfsdirsempty="`find "./pfs${PFSDIR}/mount" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read readpack; do
       [ -f "${readpack}/pfs.dirs.empty" ] && echo "$(cat "${readpack}/pfs.dirs.empty" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\\\\\:g' -e 's:[/*]$::g')${IFS}"
     done | sort -u`"
     dirsempty="`echo "${pfsdirsempty}" | while read dirempty; do
       [ -d "./pfs${dirempty}" ] && [ "$(ls -A "./pfs${dirempty}" 2>/dev/null)" = "" ] && echo "${dirempty}"
     done | sort -u | sed -e 's:[\]:\\\\\\\\:g'`"
     while :; do
-      listdirs="$(find ./pfs -type d -empty 2>/dev/null | grep -v -F '/etc/packages/' | cut -f2- -d's' | sort -u | sed -e 's:[\]:\\\\:g')"
+      listdirs="$(find ./pfs -type d -empty 2>/dev/null | grep -v -F '${PFSDIR}/' | cut -f2- -d's' | sort -u | sed -e 's:[\]:\\\\:g')"
       restlist="$(echo "${dirsempty}${IFS}${listdirs}" | sed -e 's:[[:space:]]*$::g' | sort | uniq -u | grep . | grep -v "^[[:space:]]*$")"
       [ "${restlist}" = "" ] && break
       [ "${restlist}" = "${oldrestlist}" ] && break
