@@ -4,6 +4,7 @@
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") FILE" >&2; exit 1
 fi
+
 [ -f "$1" ] && mntfile="$(realpath "$1")" || mntfile="$1"
 mntpoint=/mnt/$(echo "${mntfile}" | tr ' ' '_' | sed "s#^\.##g" | sed "s#/#+#g")
 status=0

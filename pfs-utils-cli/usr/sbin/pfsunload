@@ -25,9 +25,7 @@ if [ "$(echo "${fsname}" | sed 's/^.*\.//')" = "pfs" ]; then
   fi
 fi
 
-prefixmp="/mnt/."
-[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
-mountpoint="${prefixmp}${fsname}"
+mountpoint="$(prefixmount 2>/dev/null)${fsname}"
 if [ -d "${mountpoint}" ]; then
   sync
   mountb -t aufs -o remount,del:"${mountpoint}"/ aufs / #>/dev/null 2>&1

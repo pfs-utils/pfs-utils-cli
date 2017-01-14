@@ -2,6 +2,7 @@
 #Read depends of PFS packages (for PuppyRus), by Zay, GPL v3.
 #Version 0.5
 #Modify 28.12.2013
+. /usr/lib/libpfs
 
 for arg in "$@"
 do
@@ -22,25 +23,25 @@ if [ "${infile}" ]; then
     echo "File \"${infile}\" not found!" >&2; exit 1
   fi
 fi
-[ -d "/etc/packages/mount/" ] && packslistM="$(find "/etc/packages/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null)"
-[ -d "/etc/packages/install/" ] && packslistI="$(find "/etc/packages/install/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null)"
+[ -d "${PFSDIR}/mount/" ] && packslistM="$(find "${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null)"
+[ -d "${PFSDIR}/install/" ] && packslistI="$(find "${PFSDIR}/install/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null)"
 
 if [ "${fsfile}" ]; then
   disktype "${fsfile}" | grep -q -F "squashfs, version 4"
   if [ $? -gt 0 ]; then
     echo "File \"${fsfile}\" is not PFS!" >&2; exit 1
   fi
-  packslistF="$(unsquashfs -l "${pack}" 2>/dev/null | grep '/etc/packages/mount/' | cut -f5 -d'/' | sort -uf)"
+  packslistF="$(unsquashfs -l "${pack}" 2>/dev/null | grep '${PFSDIR}/mount/' | cut -f5 -d'/' | sort -uf)"
   tmpdir="$(mktemp -d)"
   mkdir -p "${tmpdir}"
-  depslist="`unsquashfs -l "${fsfile}" | grep '/etc/packages/mount/.*/pfs.depends' | cut -f5 -d'/' | while read pack
+  depslist="`unsquashfs -l "${fsfile}" | grep '${PFSDIR}/mount/.*/pfs.depends' | cut -f5 -d'/' | while read pack
   do 
-    unsquashfs -d "${tmpdir}/${pack}" "${fsfile}" -ef "/etc/packages/mount/${pack}/pfs.depends" -n >/dev/null 2>&1
-    echo "$(cat "${tmpdir}/${pack}/etc/packages/mount/${pack}/pfs.depends" 2>/dev/null)"
-    rm -f "${tmpdir}/${pack}/etc/packages/mount/${pack}/pfs.depends" 2>/dev/null
-    rmdir "${tmpdir}/${pack}/etc/packages/mount/${pack}" 2>/dev/null
-    rmdir "${tmpdir}/${pack}/etc/packages/mount" 2>/dev/null
-    rmdir "${tmpdir}/${pack}/etc/packages" 2>/dev/null
+    unsquashfs -d "${tmpdir}/${pack}" "${fsfile}" -ef "${PFSDIR}/mount/${pack}/pfs.depends" -n >/dev/null 2>&1
+    echo "$(cat "${tmpdir}/${pack}${PFSDIR}/mount/${pack}/pfs.depends" 2>/dev/null)"
+    rm -f "${tmpdir}/${pack}${PFSDIR}/mount/${pack}/pfs.depends" 2>/dev/null
+    rmdir "${tmpdir}/${pack}${PFSDIR}/mount/${pack}" 2>/dev/null
+    rmdir "${tmpdir}/${pack}${PFSDIR}/mount" 2>/dev/null
+    rmdir "${tmpdir}/${pack}${PFSDIR}" 2>/dev/null
     rmdir "${tmpdir}/${pack}/etc" 2>/dev/null
     rmdir "${tmpdir}/${pack}" 2>/dev/null
   done | sed 's/[ \t]*$//' | sort -u`"
@@ -55,7 +56,7 @@ else
       readlistM="${packslistM}"
     fi
     dplistM="`echo "${readlistM}" | while read package; do
-      [ -f "/etc/packages/mount/${package}/pfs.depends" ] && echo "$(cat "/etc/packages/mount/${package}/pfs.depends")"
+      [ -f "${PFSDIR}/mount/${package}/pfs.depends" ] && echo "$(cat "${PFSDIR}/mount/${package}/pfs.depends")"
     done`"
   fi
   if [ "${readdir}" != "mount" ]; then
@@ -65,7 +66,7 @@ else
       readlistI="${packslistI}"
     fi
     dplistI="`echo "${readlistI}" | while read package; do
-      [ -f "/etc/packages/install/${package}/pfs.depends" ] && echo "$(cat "/etc/packages/install/${package}/pfs.depends")"
+      [ -f "${PFSDIR}/install/${package}/pfs.depends" ] && echo "$(cat "${PFSDIR}/install/${package}/pfs.depends")"
     done`"
   fi
   depslist="$(echo "${dplistM}${IFS}${dplistI}" | sed 's/[ \t]*$//' | sort -u)"

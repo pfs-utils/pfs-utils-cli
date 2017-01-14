@@ -2,6 +2,7 @@
 #Find dynamic libraries from all packages (for PuppyRus), by Zay, GPL v3.
 #Version 0.1
 #Modify 28.12.2013
+. /usr/lib/libpfs
 
 for arg in "$@"
 do
@@ -18,7 +19,7 @@ fi
 
 alllibs="$(lddcheck "${rootdir}")"
 if [ "${alllibs}" != "" ]; then
-  allpackslib="$(find /etc/packages/ -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do namepack="$(echo "${listfiles}" | cut -f5 -d'/')"; listpack="$(cat "${listfiles}" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' | grep -E '\.so$|\.so\.[0-9]' | tr -d '\n')"; [ "${listpack}" != "" ] && echo "${namepack}${listpack}"; done)"
+  allpackslib="$(find ${PFSDIR}/ -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do namepack="$(echo "${listfiles}" | cut -f5 -d'/')"; listpack="$(cat "${listfiles}" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' | grep -E '\.so$|\.so\.[0-9]' | tr -d '\n')"; [ "${listpack}" != "" ] && echo "${namepack}${listpack}"; done)"
   packageslist="`echo "${alllibs}" | while read chlib; do packlib="$(echo "${allpackslib}" | grep -F "${chlib}" | cut -f1 -d'/')"; if [ "${packlib}" != "" ]; then [ "${shortnames}" = "on" ] && packlib="$(echo "${packlib}" | sed 's/-i[0-9][0-9][0-9]//;s/-[0-9]*\..*//')"; echo "$(echo "${packlib}" | sort -u | sed 's/$/ \/ /' | tr -d '\n' | sed 's/ \/ $//')"; else echo "/${chlib}"; fi; done | grep .`"
   if [ "${packageslist}" != "" ]; then
     showpacklist="$(echo "${packageslist}" | grep -v -E '^/' | grep -v '^[[:space:],\t]*$' | sort -uf)"

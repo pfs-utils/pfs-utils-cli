@@ -6,7 +6,6 @@
 . /etc/initvars && copyramdir="${SYSMNT}/copy2ram"
 
 
-
 for arg in "$@"
 do
   case "${arg}" in
@@ -31,9 +30,8 @@ else
 fi
 
 fsname="$(basename "${fsfile}")"
-prefixmp="/mnt/."
-[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
-mountpoint="${prefixmp}${fsname}"
+
+mountpoint="$(prefixmount 2>/dev/null)${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ -d "${mountpoint}" ]; then
   echo "File \"${fsname}\" is mounted!" >&2; exit 1

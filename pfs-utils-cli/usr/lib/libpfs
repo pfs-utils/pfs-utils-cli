@@ -3,9 +3,18 @@
 #Version 0.1
 #Modify 12.01.2017 
 
-copyramdir=/tmp/.mountRAM
+copyramdir="/tmp/.mountRAM"
+prefixmp="/mnt/."
 SYSMNT=/mnt
 PFSDIR=/etc/packages
+
+function prefixmount () {
+if . "/etc/initvars"  ; then
+	echo "${SYSMNT}/bundles/" 
+else 
+	echo "$prefixmp"
+fi 2>/dev/null
+}
 
 function fileinpack () {
 case "$1" in 

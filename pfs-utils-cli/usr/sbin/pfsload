@@ -64,9 +64,8 @@ if [ "$(echo "${fsname}" | awk -F. '{print $NF}' | tr A-Z a-z)" = "pfs" ]; then
   fi
   [ ! "${mntmode}" ] && mntmode="upper"
 fi
-prefixmp="/mnt/."
-[ -x "$(which 'prefixmount')" ] && ckeckprefmp="$(prefixmount 2>/dev/null)" && [ -d "${ckeckprefmp}" ] && prefixmp="${ckeckprefmp}"
-mountpoint="${prefixmp}${fsname}"
+
+mountpoint="$(prefixmount 2>/dev/null)${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ -d "${mountpoint}" ]; then
   echo "Object \"${fsfile}\" is mounted!" >&2; exit 1

@@ -2,6 +2,7 @@
 #Read list PFS packages (for PuppyRus), by Zay, GPL v3.
 #Version 0.12
 #Modify 28.12.2013
+. /usr/lib/libpfs
 
 for arg in "$@"
 do
@@ -26,10 +27,10 @@ if [ "${pack}" ]; then
   if [ $? -gt 0 ]; then
     echo "File \"$1\" is not PFS!" >&2; exit 1
   fi
-  unsquashfs -l "${pack}" 2>/dev/null | grep -F 'squashfs-root/etc/packages/mount/' | cut -f5 -d'/' | sort -uf
+  unsquashfs -l "${pack}" 2>/dev/null | grep -F 'squashfs-root${PFSDIR}/mount/' | cut -f5 -d'/' | sort -uf
 else
-  [ "${readdir}" != "install" ] && [ -d "/etc/packages/mount" ] && echo "$(find "/etc/packages/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"
-  [ "${readdir}" != "mount" ] && [ -d "/etc/packages/install" ] && echo "$(find "/etc/packages/install/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"
+  [ "${readdir}" != "install" ] && [ -d "${PFSDIR}/mount" ] && echo "$(find "${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"
+  [ "${readdir}" != "mount" ] && [ -d "${PFSDIR}/install" ] && echo "$(find "${PFSDIR}/install/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"
 fi
 
 exit 0
