@@ -13,7 +13,7 @@ if . "/etc/initvars"  ; then
 	echo "${SYSMNT}/bundles/" 
 else 
 	echo "$prefixmp"
-fi 2>/dev/null
+fi
 }
 
 function fileinpack () {
