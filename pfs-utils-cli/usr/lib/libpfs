@@ -117,9 +117,9 @@ fi
 return $?
 }
 
-function prefixmount () {
-[ -f "/etc/initvars" ] && . "/etc/initvars" 2>/dev/null
-[ "${SYSMNT}" ] && echo "${SYSMNT}/bundles/" || echo "/mnt/."
-return  0
-}
+#function prefixmount () {
+#[ -f "/etc/initvars" ] && . "/etc/initvars" 2>/dev/null
+#[ "${SYSMNT}" ] && echo "${SYSMNT}/bundles/" || echo "/mnt/."
+#return  0
+#}
 
