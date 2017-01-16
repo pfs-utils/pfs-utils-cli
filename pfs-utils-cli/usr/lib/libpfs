@@ -13,18 +13,7 @@ if . "/etc/initvars"  ; then
 	echo "${SYSMNT}/bundles/" 
 else 
 	echo "$prefixmp"
-fi
-}
-
-function fileinpack () {
-case "$1" in 
-  "") echo "Usage: $(basename "$0") FILE"; exit 1;;
-  "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo $1 | tr -d '-')'" >&2; exit 1;;
-  *) findname="$1";;
-esac
-
-find "${PFSDIR}" -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | cut -f2- -d'/' | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e "s/^/`echo "${listfiles}" | cut -f5 -d'/'`/"; done | grep -F "${findname}" | cut -f1 -d'/' | sort -uf
-return 0
+fi 2>/dev/null
 }
 
 function checksfsxz () {
@@ -45,31 +34,31 @@ return 0
 }
 
 function disktype () {
-ftest=$(file $1)
-if $(echo $ftest |egrep -qi cannot.*open) ; then
-echo $ftest
-return 1
-
-elif $(echo $ftest |grep -qi directory) ;then
-echo "$1 Is a directory"
-return 0
-
-elif $(echo $ftest |grep -qi squashfs) ;then
-echo "$1 Linux squashfs"
-return 0
-
-elif $(echo $ftest |egrep -qi block.*special) ;then
-echo block device
-echo $(blkid -s TYPE $1)
-return 0
-
-elif $(echo $ftest |egrep -qi 9660) ; then
-echo $ftest
-return 0
-fi
-
-echo "unknown disk type"
-return 2
+if [[ -x $(which disktype) ]] ; then
+	disktype $1 
+	return $?
+else
+	ftest=$(file $1)
+	if $(echo $ftest |egrep -qi cannot.*open) ; then
+		echo $ftest
+		return 1
+	elif $(echo $ftest |grep -qi directory) ;then
+		echo "$1 Is a directory"
+		return 0
+	elif $(echo $ftest |grep -qi squashfs) ;then
+		echo "$1 Linux squashfs"
+		return 0
+	elif $(echo $ftest |egrep -qi block.*special) ;then
+		echo block device
+		echo $(blkid -s TYPE $1)
+		return 0
+	elif $(echo $ftest |egrep -qi 9660) ; then
+		echo $ftest
+		return 0
+	fi
+	echo "unknown disk type"
+	return 2
+fi 2>/dev/null
 }
 
 function lddcheck () {

@@ -53,6 +53,7 @@ else
     "ext2"|"ext3"|"ext4"|"squashfs") fstype="${fsinfo}";;
   esac
 fi
+
 if [ "${fstype}" = "" ]; then
   echo "Filesystem not supported!" >&2; exit 1
 fi
