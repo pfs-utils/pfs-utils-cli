@@ -6,8 +6,6 @@
      -r - занято tmpfs
      -u - % экономии памяти от занятой
      -p - % занятой памяти" && exit
-#rdisk="`df -t tmpfs|tail -n +3| awk '!/\/mnt\/rw$/ { SUM += $2} END { print SUM }'`"
-#rdisk="`df -t tmpfs|tail -n +3| awk '!/\/mnt\/rw$/ && !/\/dev\/shm$/ && !/\/sys\/fs\/cgroup$/ && !/\/tmp$/ { SUM += $2} END { print SUM+0 }'`"
 rdisk="`df -t tmpfs|tail -n +2| awk '!/\/mnt\/rw$/   { SUM += $3} END { print SUM+0 }'`"
 t="`cat /proc/meminfo| awk '/^MemTotal:/ {print $2}'`"
 f="`cat /proc/meminfo| awk '/^MemFree:/ {print $2}'`"
@@ -16,14 +14,11 @@ c="`cat /proc/meminfo| awk '/^Cached:/ {print $2}'`"
 let used=$t-$f-$b-$c
 let free=$t-$rdisk-$b-$c-$used
 p="`echo $t| awk '{print int(100/($1/('$used'+'$rdisk'))+0.5)}'`"
-#echo used=$used free=$free t=$t rdisk=$rdisk
-#let free=($t-$rdisk-$b-$c-$used)/1024
-#let uksm="`uksmstat -sm`"/$used/1024*100
-#[ "$1" = "-u" ] && uksmstat -sm | awk '{print int($1*1024/('$used'+'$rdisk')*100)}' && exit
+
 [ "$1" = "-u" ] && uksmstat -sm | awk '{print int($1*1024/'$used'*100)}' && exit
 [ "$1" = "-r" ] && echo $((($rdisk)/1))Mb && exit
 [ "$1" = "-p" ] && echo $p  && exit
 [ "$1" != "-f" ] && echo $free || echo \
 "    Всего: $(($t/1024))Mb-$((($used+$rdisk)/1024))Mb(Система:$(($used/1024))+RAMдиски:$(($rdisk/1024)))|
     Свободно: $(( $t/1024-($used+$rdisk)/1024 ))Mb ($((100-$p))%)"
-#    Used:$(($used/1024))+$(($rdisk/1024))RAMdisks=$((($used+$rdisk)/1024))Mb/Total:$(($t/1024))Mb\($p%\)
+
