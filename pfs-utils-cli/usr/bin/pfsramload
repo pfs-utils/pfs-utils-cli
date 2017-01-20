@@ -1,10 +1,8 @@
 #!/bin/sh
 #Copy to RAM & Mount SquashFS to AUFS (for PuppyRus), by «sfs» & Zay, GPL v3.
 #Version 0.14
-#Modify 07.04.2016
+#Modify 170118 sfs
 . /usr/lib/libpfs
-. /etc/initvars && copyramdir="${SYSMNT}/copy2ram"
-
 
 for arg in "$@"
 do
@@ -22,6 +20,8 @@ if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") [OPTIONS] FILE${IFS}${IFS}Options:"
   echo " -u, --upper    Copy file to RAM & Mount to upper layer (AUFS)."
   echo " -l, --lower    Copy file to RAM & Mount to lower layer (AUFS)."; exit
+  echo " -r, --read-only Mount read-only"
+  echo " -n, --no-update Do not check for update caches"
 fi
 if [ -f "${infile}" ]; then
   fsfile="$(realpath "${infile}")"
@@ -31,13 +31,13 @@ fi
 
 fsname="$(basename "${fsfile}")"
 
-mountpoint="$(prefixmount 2>/dev/null)${fsname}"
+mountpoint="${prefixmp}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ -d "${mountpoint}" ]; then
   echo "File \"${fsname}\" is mounted!" >&2; exit 1
 fi
 
-freeram="$(checkramfree 2>/dev/null)"
+freeram="$(checkramfreeb 2>/dev/null)"
 case ${freeram} in
   ''|*[!0-9]*) freeram="$(free | grep 'Mem:' | tr -s ' ' | cut -f 4 -d ' ')";;
 esac

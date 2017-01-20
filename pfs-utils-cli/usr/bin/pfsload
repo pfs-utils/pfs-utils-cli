@@ -1,8 +1,9 @@
 #!/bin/sh
 #Mount filesystem to AUFS (for PuppyRus), by Zay, GPL v3.
 #Version 0.22
-#Modify 07.04.2016
+#Modify 170118 sfs
 . /usr/lib/libpfs
+unset infile fupdate romode copy2ram mountdir copyramdir
 
 for arg in "$@"
 do
@@ -20,6 +21,8 @@ if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM${IFS}${IFS}Options:"
   echo " -u, --upper    Mount filesystem to upper layer (AUFS)."
   echo " -l, --lower    Mount filesystem to lower layer (AUFS)."; exit
+  echo " -r, --read-only Mount read-only"
+  echo " -n, --no-update Do not check for update caches"
 fi
 
 if [ -f "${infile}" ]; then
@@ -36,7 +39,7 @@ else
 fi
 
 if [ "${devtype}" != "dir" ]; then
-  diskinfo="$(disktype "${fsfile}" 2>/dev/null)"
+  diskinfo="$(disktypeb "${fsfile}" 2>/dev/null)"
   fstype=""
   if echo "${diskinfo}" | grep -q -F "squashfs"; then
     fstype='squashfs'
@@ -59,14 +62,14 @@ if [ "${fstype}" = "" ]; then
 fi
 fsname="$(basename "${fsfile}")"
 if [ "$(echo "${fsname}" | awk -F. '{print $NF}' | tr A-Z a-z)" = "pfs" ]; then
-  checksfsxz >/dev/null
+  checksfsxzb >/dev/null
   if [ $? -gt 0 ]; then
     echo "Kernel not support PFS!" >&2; exit 1
   fi
   [ ! "${mntmode}" ] && mntmode="upper"
 fi
 
-mountpoint="$(prefixmount 2>/dev/null)${fsname}"
+mountpoint="${prefixmp}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 if [ -d "${mountpoint}" ]; then
   echo "Object \"${fsfile}\" is mounted!" >&2; exit 1
@@ -122,11 +125,7 @@ if [ ${status} -eq 0 ]; then
     status=$?
     sync
     if [ ${status} -eq 0 ]; then
-      if [ "${fupdate}" != "no" ]; then
-        [ "$(find "${mountpoint}/lib/modules" "${mountpoint}/usr/lib/modules" -type f -name "*.ko" 2>/dev/null)" != "" ] && depmod &
-        [ "$(find "${mountpoint}/lib" "${mountpoint}/usr/lib" "${mountpoint}/usr/local/lib" "${mountpoint}/usr/X11R7/lib" -type f -name "*.so" 2>/dev/null)" != "" ] && ldconfig &
-        [ -d "${mountpoint}/usr/share/glib-2.0/schemas/" ] && glib-compile-schemas /usr/share/glib-2.0/schemas/ &
-      fi
+      [ "${fupdate}" != "no" ] && pfs-update-caches "${mountpoint}"
     else
       umountb -d "${mountpoint}" >/dev/null
 	  rmdir "${mountpoint}" >/dev/null

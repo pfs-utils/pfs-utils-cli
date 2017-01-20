@@ -3,7 +3,6 @@
 #Version 0.1
 #Modify 12.01.2017
 . /usr/lib/libpfs
-. /etc/initvars 2>/dev/null
 
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") PACKAGE" >&2; exit 1
@@ -15,7 +14,7 @@ fileslist="${PFSDIR}/install/$package_name/pfs.files"
 [ -f $fileslist ] || fileslist="${PFSDIR}/mount/$package_name/pfs.files"
 dirsempty=$(echo $fileslist | sed 's/pfs.files/pfs.dirs.empty/')
 
-# find pfs.files in pfs contaners
+# find pfs files in pfs contaners
 if ! [ -f $fileslist ] ;then
 	package_list=$(ls ${SYSMNT}/bundles/${package_name}.pfs${PFSDIR}/mount/)
 	if [[ -n $package_list ]] ; then

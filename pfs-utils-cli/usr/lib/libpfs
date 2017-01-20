@@ -1,22 +1,26 @@
 #!/bin/sh
 #library for pfs-utils, by betcher, GPL v3.
-#Version 0.1
-#Modify 12.01.2017 
+#Version 0.2
+#Modify 18.01.2017 sfs
+
+PFSDIR=/etc/packages
+TMPFSLIMIT=100
 
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
-SYSMNT=/mnt
-PFSDIR=/etc/packages
 
-function prefixmount () {
-if . "/etc/initvars"  ; then
-	echo "${SYSMNT}/bundles/" 
-else 
-	echo "$prefixmp"
-fi 2>/dev/null
-}
+if . /etc/initvars ; then
+	copyramdir=${SYSMNT}/copy2ram/
+	prefixmp=${SYSMNT}/bundles/
+fi
 
-function checksfsxz () {
+[ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0)
+
+#TODO
+#function checkramfreeb () { true }
+#
+
+function checksfsxzb () {
 kerneluname="$(uname -r)"
 kernel1ver="$(echo -n "${kerneluname}" | cut -f 1 -d '.' | cut -f 1 -d '-')"
 if [ ${kernel1ver} -lt 3 ];then
@@ -33,7 +37,7 @@ fi
 return 0
 }
 
-function disktype () {
+function disktypeb () {
 if [[ -x $(which disktype) ]] ; then
 	disktype $1 
 	return $?
@@ -105,10 +109,3 @@ else
 fi
 return $?
 }
-
-#function prefixmount () {
-#[ -f "/etc/initvars" ] && . "/etc/initvars" 2>/dev/null
-#[ "${SYSMNT}" ] && echo "${SYSMNT}/bundles/" || echo "/mnt/."
-#return  0
-#}
-
