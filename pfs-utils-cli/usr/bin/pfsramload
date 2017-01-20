@@ -3,6 +3,7 @@
 #Version 0.14
 #Modify 170118 sfs
 . /usr/lib/libpfs
+allow_only_root
 
 for arg in "$@"
 do
@@ -37,7 +38,7 @@ if [ -d "${mountpoint}" ]; then
   echo "File \"${fsname}\" is mounted!" >&2; exit 1
 fi
 
-freeram="$(checkramfreeb 2>/dev/null)"
+freeram="$(checkramfreeb)"
 case ${freeram} in
   ''|*[!0-9]*) freeram="$(free | grep 'Mem:' | tr -s ' ' | cut -f 4 -d ' ')";;
 esac

@@ -4,7 +4,7 @@
 #Modify 18.01.2017 sfs
 
 PFSDIR=/etc/packages
-TMPFSLIMIT=100
+TMPFSLIMIT=100000
 
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
@@ -16,9 +16,25 @@ fi
 
 [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0)
 
-#TODO
-#function checkramfreeb () { true }
-#
+
+function checkramfreeb () {
+	local free  
+if [[ -x $(which checkramfree) ]] ; then
+	echo $(checkramfree) 
+else
+   free=$(expr $(df $copyramdir -B 1024 |grep tmpfs |awk '{print $4}') -  $TMPFSLIMIT)
+   echo $free
+fi
+	 
+	}
+
+
+function allow_only_root()
+{
+    if [ "0$UID" -ne 0 ]; then
+        echo "Only root can run" "$(basename $0)"; exit 1
+    fi
+}
 
 function checksfsxzb () {
 kerneluname="$(uname -r)"
@@ -39,7 +55,7 @@ return 0
 
 function disktypeb () {
 if [[ -x $(which disktype) ]] ; then
-	disktype $1 
+	echo $(disktype $1) 
 	return $?
 else
 	ftest=$(file $1)
@@ -66,6 +82,7 @@ fi 2>/dev/null
 }
 
 function lddcheck () {
+	local rootdir alllibs
 [ "${1}" != "" ] && rootdir="${1}" || rootdir="./"
 if [ ! -d "${rootdir}" ]; then
   echo "Directory \"${rootdir}\" not found!" >&2; exit 1

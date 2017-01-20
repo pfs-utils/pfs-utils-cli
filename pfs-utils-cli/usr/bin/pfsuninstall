@@ -3,6 +3,7 @@
 #Version 0.9
 #Modify 28.12.2013
 . /usr/lib/libpfs
+allow_only_root
 
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") PACKAGE" >&2; exit 1

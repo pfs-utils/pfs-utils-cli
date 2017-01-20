@@ -4,7 +4,7 @@
 #Modify 26.04.2015
 . /usr/lib/libpfs
 
-checksfsxz >/dev/null 2>&1
+checksfsxzb >/dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo "Kernel not support PFS!" >&2; exit 1
 fi

@@ -3,6 +3,7 @@
 #Version 0.17
 #Modify 170118 sfs
 . /usr/lib/libpfs
+allow_only_root
 
 for arg in "$@"
 do

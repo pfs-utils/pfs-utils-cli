@@ -3,6 +3,7 @@
 #Version 0.13
 #Modify 21.04.2015
 . /usr/lib/libpfs  
+allow_only_root
 
 if [ "$1" ]; then
   instfile="$1"

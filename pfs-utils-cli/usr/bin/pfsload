@@ -3,6 +3,8 @@
 #Version 0.22
 #Modify 170118 sfs
 . /usr/lib/libpfs
+allow_only_root
+
 unset infile fupdate romode copy2ram mountdir copyramdir
 
 for arg in "$@"

@@ -1,2 +1,42 @@
 #!/bin/bash
-# скрипт для самотестирования утилит
+# скрипт для самотестирования утилит pfs
+# пока основные только
+PFSLOAD=false
+PFSUNLOAD=false
+PFSRAMLOAD=false
+PFSREBUILD=false
+PFSMERGE=false
+
+mkdir -p ./first/111 ./second/222
+: > ./first/111/file
+: > ./second/111/file
+mkpfs ./first && mkpfs ./second && MKPFS=OK
+echo mkpfs=$MKPFS ; [ "$MKPFS" != "OK" ] && exit 
+rm -rf ./first
+rm -rf ./second
+
+pfsmerge ./first.pfs ./second.pfs testmodule.pfs && PFSMERGE=OK
+echo pfsmerge=$PFSMERGE ; [ "$PFSMERGE" != "OK" ] && exit
+
+rm -f ./first.pfs
+rm -f  ./second.pfs
+
+pfsload ./testmodule.pfs && PFSLOAD=OK
+echo pfsload=$PFSLOAD ; [ "$PFSLOAD" != "OK" ] && exit
+
+pfsunload ./testmodule.pfs && PFSUNLOAD=OK
+echo pfsunload=$PFSUNLOAD ; [ "$PFSUNLOAD" != "OK" ] && exit
+
+pfsramload ./testmodule.pfs && PFSRAMLOAD=OK
+echo pfsramload=$PFSRAMLOAD ; [ "$PFSRAMLOAD" != "OK" ] && exit
+
+rm -f ./testmodule.pfs
+
+pfsrebuild testmodule.pfs && PFSREBUILD=OK
+echo pfsrebuild=$PFSREBUILD ; [ "$PFSREBUILD" != "OK" ] && exit
+
+pfsunload ./testmodule.pfs
+rm -f ./first.pfs
+rm -f  ./second.pfs
+rm -f testmodule.pfs
+echo "all OK"

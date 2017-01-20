@@ -3,7 +3,7 @@
 #Version 0.10
 #Modify 170118 sfs
 . /usr/lib/libpfs
-#. /etc/initvars && copyramdir="${SYSMNT}/copy2ram"
+allow_only_root
 
 if [ "$1" ]; then
   [ -f "$1" ] && fsname="`basename $(realpath "$1")`" || fsname="$(basename "$1")"
