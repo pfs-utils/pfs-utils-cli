@@ -1,7 +1,8 @@
 #!/bin/sh
-#Find file in mounted or installed .pfs packages (for PuppyRus), by Zay, GPL v3.
-#Version 0.8
-#Modify 25.10.2015
+#Find file in mounted or installed .pfs packages (for PuppyRus), by Zay.
+#Version 0.7
+#Modify 30.11.2013
+#170121 sfs
 . /usr/lib/libpfs
 
 case "$1" in 
@@ -10,6 +11,17 @@ case "$1" in
   *) findname="$1";;
 esac
 
-find "${PFSDIR}" -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | cut -f2- -d'/' | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e "s/^/`echo "${listfiles}" | cut -f5 -d'/'`/"; done | grep -F "${findname}" | cut -f1 -d'/' | sort -uf
+find "${PFSDIR}" -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do 
+    cat "${listfiles}" | cut -f2- -d'/' \
+	| sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e "s/^/`echo "${listfiles}" | cut -f5 -d'/'`/"
+done | grep -F "${findname}" | cut -f1 -d'/' | sort -uf
 
+###sfs (
+p=/mnt/live/memory/images/
+[ -d $p ] || exit 0
+f="`basename "$1"`"
+echo "
+--------------- in meta.pfs : ------------------\
+"
+find "$p" \( -type f -o -type l \) -name "$f" |sed 's#^'$p'## ; s/'$f'$//' 
 exit 0
