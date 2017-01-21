@@ -1,7 +1,5 @@
 #!/bin/sh
-#Extract .pfs (for PuppyRus), by Zay & «sfs», GPL v3.
-#Version 0.17
-#Modify 26.04.2015
+#Extract .pfs , by Zay , GPL v3.
 . /usr/lib/libpfs
 
 checksfsxz >/dev/null 2>&1
@@ -10,21 +8,43 @@ if [ $? -gt 0 ]; then
 fi
 status=0
 
+HLP(){
+[ "`echo $LANG| egrep '^ru_RU'`" ] || return
+echo "\
+pfsextract извлекает отдельные пакеты из многопакетных файлов .pfs.
+Использование:
+
+    pfsextract /file.pfs - создать каталог «/file_pfs» с отдельными файлами .pfs из «/file.pfs», каждый пакет в отдельном файле.
+    pfsextract /file.pfs /catalog - создать в каталоге «/catalog» отдельные файлы .pfs из «/file.pfs». «/catalog» должен быть пустым.
+    pfsextract /file.pfs /catalog -p pack_1 pack_2 - создать в каталоге «/catalog» отдельные файлы .pfs только из пакетов «pack_1» и «pack_2», если пакеты с такими названиями содержатся в файле «/file.pfs» (использование «-p pack_1 pack_2» допустимо и без указания «/catalog»).
+
+Параметры (ключи):
+
+    -no-progress - не показывать строку прогресса.
+    -g - gz компрессия (размер .pfs больше, но создается быстрее).
+" >&2 ;exit 1
+}
+
 compression="xz"
 for arg in "$@"
 do
   case "${arg}" in
     "-p" | "--packages" ) upacklist="yes";;
+    "-?" | "--help") HLP ;exit 1 ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-    "--gzip") compression="gzip";;
-    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
+    "--gzip" | "-g") compression="gzip";;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP;exit 1;;
     *) if [ "${upacklist}" != "yes" ]; then [ ! "${pfsname}" ] && pfsname="${arg}" || outdir="${arg}" 
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
        else listpackage="${listpackage}/tmp/.pfs/extract/$(basename "${pfsname}")/pmount${PFSDIR}/mount/${arg}$IFS"
        fi;;  
   esac
 done
+
+[ "`file ${pfsname} |grep -v "Squashfs filesystem"`" ] && echo "File '${pfsname}' is not squashfs" && exit 1
+[ "`unsquashfs -l ${pfsname} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l`" -lt 2 ] && echo "File '${pfsname}' is not component-pfs. Use 'unsquashfs ${pfsname}'" && exit 1
+
 if [ "${pfsname}" = "" ]; then
   echo "Usage: $(basename "$0") FILE [DIRECTORY]"; exit 1
 fi
@@ -89,6 +109,7 @@ if [ ! "${listpackage}" ]; then
   done)"
 fi
 
+rm -f /tmp/pfsextract-err
 echo "${listpackage}" | while read pack; do
   if [ ${status} -eq 0 ]; then
     if [ -f "${pack}/pfs.files" ]; then    
@@ -105,22 +126,28 @@ echo "${listpackage}" | while read pack; do
         cp -a "${tmpdir}/pmount${file}" "${cpnamedir}"
         status=$?
         if [ ${status} -gt 0 ]; then
+          touch /tmp/pfsextract-err 
           echo "Extract error!" >&2
           break
         fi
       done
+
+ if [ ! -f /tmp/pfsextract-err ]; then 
       mkdir -p "${tmpdir}/files/${namepack}${PFSDIR}/mount"
       cp -a "${tmpdir}/pmount${PFSDIR}/mount/${namepack}" "${tmpdir}/files/${namepack}${PFSDIR}/mount"
       status=$?
       sync
       if [ ${status} -eq 0 ]; then
-        find "${tmpdir}/pmount${file}" -type d -printf "[ -e '%p' ] && { chmod %m '%p'; chown %U:%G '%p';}\n" | sed 's#'${tmpdir}'/pmount#'${tmpdir}'/files/'${namepack}'#g' | ash
+        find "${tmpdir}/pmount${file}" -type d -printf "[ -e '%p' ] && { chmod %m '%p'; chown %U:%G '%p';}\n" | 
+    	    sed 's#'${tmpdir}'/pmount#'${tmpdir}'/files/'${namepack}'#g' | ash ###sfs
         if [ "${compression}" = "xz" ]; then
           optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
         fi
         mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
         status=$?
       fi
+ fi
+
       rm -rf "${tmpdir}/files" 2>/dev/null
       if [ ${status} -gt 0 ]; then
         echo "Extract error!" >&2
