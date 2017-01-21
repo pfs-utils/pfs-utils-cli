@@ -9,8 +9,7 @@ TMPFSLIMIT=100000
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
 
-if [ -f /etc/initvars ] ; then
-	. /etc/initvars
+if . /etc/initvars 2>/dev/null ; then
 	copyramdir=${SYSMNT}/copy2ram/
 	prefixmp=${SYSMNT}/bundles/
 fi
