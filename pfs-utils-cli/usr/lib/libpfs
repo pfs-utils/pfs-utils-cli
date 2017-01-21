@@ -25,9 +25,8 @@ if [[ -x $(which checkramfree) ]] ; then
 else
    free=$(expr $(df $copyramdir -B 1024 |grep tmpfs |awk '{print $4}') -  $TMPFSLIMIT)
    echo $free
-fi
-	 
-	}
+fi 2>/dev/null
+}
 
 
 function allow_only_root()
