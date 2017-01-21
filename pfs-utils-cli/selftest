@@ -19,9 +19,13 @@ rm -rf ./second
 
 pfsmerge ./first.pfs ./second.pfs testmodule.pfs && PFSMERGE=OK
 m="\n=============\n$m\npfsmerge=		$PFSMERGE" ; [ "$PFSMERGE" != "OK" ] && ex
-
 rm -f ./first.pfs
 rm -f  ./second.pfs
+
+pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] &&
+    [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK || ex
+m="\n=============\n$m\npfsextract=<---><------>$PFSEXTRACT"
+rm -r testmodule_pfs
 
 pfsload ./testmodule.pfs && PFSLOAD=OK
 m="$m\npfsload=		$PFSLOAD" ; [ "$PFSLOAD" != "OK" ] && exit
