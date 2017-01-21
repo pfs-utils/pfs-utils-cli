@@ -1,7 +1,5 @@
 #!/bin/sh
-#Merge .pfs (for PuppyRus), by Zay, GPL v3.
-#Version 0.18
-#Modify 26.04.2015
+#Merge .pfs , by Zay, GPL v3.
 . /usr/lib/libpfs
 
 checksfsxzb >/dev/null 2>&1
@@ -24,7 +22,7 @@ do
     "-a" | "--cmd" | "--add-command") addcmd="on";;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors") numproc="on";;
-    "--gzip") compression="gzip";;
+    "--gzip" | "-g") compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${cutpack}" ]; then delpacks="${delpacks}${arg}$IFS"
        elif [ "${addcmd}" = "on" ]; then usecommand="${arg}"
