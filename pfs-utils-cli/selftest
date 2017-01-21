@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # скрипт для самотестирования утилит pfs
 # пока основные только
 PFSLOAD=false
@@ -7,36 +7,38 @@ PFSRAMLOAD=false
 PFSREBUILD=false
 PFSMERGE=false
 
+ex(){ printf "$m" ; exit 1 ; }
 mkdir -p ./first/111 ./second/222
 : > ./first/111/file
-: > ./second/111/file
+: > ./second/222/file
 mkpfs ./first && mkpfs ./second && MKPFS=OK
-echo mkpfs=$MKPFS ; [ "$MKPFS" != "OK" ] && exit 
+m="mkpfs=			$MKPFS" 
 rm -rf ./first
 rm -rf ./second
+[ "$MKPFS" != "OK" ] && ex
 
 pfsmerge ./first.pfs ./second.pfs testmodule.pfs && PFSMERGE=OK
-echo pfsmerge=$PFSMERGE ; [ "$PFSMERGE" != "OK" ] && exit
+m="\n=============\n$m\npfsmerge=		$PFSMERGE" ; [ "$PFSMERGE" != "OK" ] && ex
 
 rm -f ./first.pfs
 rm -f  ./second.pfs
 
 pfsload ./testmodule.pfs && PFSLOAD=OK
-echo pfsload=$PFSLOAD ; [ "$PFSLOAD" != "OK" ] && exit
+m="$m\npfsload=		$PFSLOAD" ; [ "$PFSLOAD" != "OK" ] && exit
 
 pfsunload ./testmodule.pfs && PFSUNLOAD=OK
-echo pfsunload=$PFSUNLOAD ; [ "$PFSUNLOAD" != "OK" ] && exit
+m="$m\npfsunload=		$PFSUNLOAD" ; [ "$PFSUNLOAD" != "OK" ] && ex
 
 pfsramload ./testmodule.pfs && PFSRAMLOAD=OK
-echo pfsramload=$PFSRAMLOAD ; [ "$PFSRAMLOAD" != "OK" ] && exit
+m="$m\npfsramload=		$PFSRAMLOAD" ; [ "$PFSRAMLOAD" != "OK" ] && ex
 
 rm -f ./testmodule.pfs
 
 pfsrebuild testmodule.pfs && PFSREBUILD=OK
-echo pfsrebuild=$PFSREBUILD ; [ "$PFSREBUILD" != "OK" ] && exit
+m="$m\npfsrebuild=		$PFSREBUILD" ; [ "$PFSREBUILD" != "OK" ] && ex
 
 pfsunload ./testmodule.pfs
 rm -f ./first.pfs
 rm -f  ./second.pfs
 rm -f testmodule.pfs
-echo "all OK"
+printf "$m\n==== all OK\n"
