@@ -16,7 +16,7 @@ dirsempty=$(echo $fileslist | sed 's/pfs.files/pfs.dirs.empty/')
 
 # find pfs files in pfs contaners
 if ! [ -f $fileslist ] ;then
-	package_list=$(ls ${SYSMNT}/bundles/${package_name}.pfs${PFSDIR}/mount/)
+	package_list=$(ls ${prefixmp}${package_name}.pfs${PFSDIR}/mount/)
 	if [[ -n $package_list ]] ; then
 		pfs_in_contaner=''
 		for pack in $package_list ; do
