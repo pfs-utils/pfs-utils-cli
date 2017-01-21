@@ -27,7 +27,7 @@ for arg in "$@"
 do
   case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
-    "-?" | "--help")  HLP ;;
+    "-?" | "--help")  HLP ;exit 1;;
     "-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
     "-n" | "--no-dirs-empty") dirs="off";;
     "-m" | "--md5") md5cr="on";;
