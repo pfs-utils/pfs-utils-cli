@@ -35,7 +35,7 @@ do
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "--gzip" | "-g" ) compression="gzip";;
-    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP;;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
