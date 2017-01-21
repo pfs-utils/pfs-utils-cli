@@ -1,22 +1,41 @@
 #!/bin/sh
-#Make .pfs (for PuppyRus), by Zay, GPL v3.
-#Version 0.19
-#Modify 26.04.2015
+#Make .pfs , by Zay, GPL v3.
 . /usr/lib/libpfs
+
+HLP(){
+[ "`echo $LANG| egrep '^ru_RU'`" ] || return
+echo "\
+mkpfs создаёт .pfs пакет из каталога (аналогично mksquashfs). Автоматически создаёт файлы pfs.files, pfs.specs и pfs.dirs.empty (при наличии внутри пакета пустых каталогов).
+Использование:
+
+    mkpfs - создаст .pfs из текущего каталога
+    mkpfs /catalog - создаст .pfs из каталога «/catalog».
+
+Параметры (ключи):
+
+    -p / --name - задаёт название пакета (по умолчанию соответствует названию каталога).
+    -o / --out-file - указывает название выходного файла .pfs.
+    -m / --md5 - создать необязательный файл pfs.md5.
+    -n / --not-dirs-empty - не создавать файл pfs.dirs.empty.
+    -no-progress - не показывать строку прогресса.
+    -g - gz компрессия (размер .pfs больше, но создается быстрее).
+" >&2 ;exit 1
+}
 
 compression="xz"
 for arg in "$@"
 do
   case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
+    "-?" | "--help")  HLP ;;
     "-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
     "-n" | "--no-dirs-empty") dirs="off";;
     "-m" | "--md5") md5cr="on";;
     "-e" | "--empty" | "--no-md5") ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-    "--gzip") compression="gzip";;
-    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
+    "--gzip" | "-g" ) compression="gzip";;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
