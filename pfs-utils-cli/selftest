@@ -1,16 +1,32 @@
 #!/bin/sh
 # скрипт для самотестирования утилит pfs
 # пока основные только
-PFSLOAD=false
-PFSUNLOAD=false
-PFSRAMLOAD=false
-PFSREBUILD=false
-PFSMERGE=false
+#TODO pfsinstall, pfsuninstall
 
-ex(){ printf "$m" ; exit 1 ; }
+PFSLOAD="\e[31mFALSE\e[0m"
+PFSUNLOAD="\e[31mFALSE\e[0m"
+PFSRAMLOAD="\e[31mFALSE\e[0m"
+PFSREBUILD="\e[31mFALSE\e[0m"
+PFSMERGE="\e[31mFALSE\e[0m"
+PFSEXTRACT="\e[31mFALSE\e[0m"
+
+EXITCODE="0"
+
+clear () {
+	rm -f ./first.pfs 2>/dev/null
+	rm -f ./second.pfs 2>/dev/null
+	rm -f ./testmodule.pfs 2>/dev/null
+}
+
+ex(){ printf "$m\n====== \e[31mTest  aborted\e[0m =====\n"
+	clear 
+	exit 1 
+}
+
 mkdir -p ./first/111 ./second/222
 : > ./first/111/file
 : > ./second/222/file
+
 mkpfs ./first && mkpfs ./second && MKPFS=OK
 m="mkpfs=			$MKPFS" 
 rm -rf ./first
@@ -18,17 +34,18 @@ rm -rf ./second
 [ "$MKPFS" != "OK" ] && ex
 
 pfsmerge ./first.pfs ./second.pfs testmodule.pfs && PFSMERGE=OK
-m="\n=============\n$m\npfsmerge=		$PFSMERGE" ; [ "$PFSMERGE" != "OK" ] && ex
 rm -f ./first.pfs
 rm -f  ./second.pfs
+m="\n==========================\n$m\npfsmerge=		$PFSMERGE" ; [ "$PFSMERGE" != "OK" ] && ex
 
-pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] &&
-    [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK || ex
-m="\n=============\n$m\npfsextract=<---><------>$PFSEXTRACT"
-rm -r testmodule_pfs
+pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] && [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK 
+rm -r testmodule_pfs 2>/dev/null
+# тут прерывать не надо, не влияет на прохождение теста
+m="$m\npfsextract=		$PFSEXTRACT" ; [ "$PFSEXTRACT" != "OK" ] && EXITCODE=1
+
 
 pfsload ./testmodule.pfs && PFSLOAD=OK
-m="$m\npfsload=		$PFSLOAD" ; [ "$PFSLOAD" != "OK" ] && exit
+m="$m\npfsload=		$PFSLOAD" ; [ "$PFSLOAD" != "OK" ] && ex
 
 pfsunload ./testmodule.pfs && PFSUNLOAD=OK
 m="$m\npfsunload=		$PFSUNLOAD" ; [ "$PFSUNLOAD" != "OK" ] && ex
@@ -37,12 +54,15 @@ pfsramload ./testmodule.pfs && PFSRAMLOAD=OK
 m="$m\npfsramload=		$PFSRAMLOAD" ; [ "$PFSRAMLOAD" != "OK" ] && ex
 
 rm -f ./testmodule.pfs
-
 pfsrebuild testmodule.pfs && PFSREBUILD=OK
-m="$m\npfsrebuild=		$PFSREBUILD" ; [ "$PFSREBUILD" != "OK" ] && ex
+m="$m\npfsrebuild=		$PFSREBUILD" ; [ "$PFSREBUILD" != "OK" ] && EXITCODE=1
+# последний тест, прерывать не нужно
 
 pfsunload ./testmodule.pfs
-rm -f ./first.pfs
-rm -f  ./second.pfs
-rm -f testmodule.pfs
-printf "$m\n==== all OK\n"
+clear
+if [ $EXITCODE -ne 0 ] ; then
+	printf "$m\n====== \e[31mTest finished\e[0m =====\n"
+else
+	printf "$m\n====== \e[32mTest finished\e[0m =====\n"
+fi
+exit $EXITCODE
