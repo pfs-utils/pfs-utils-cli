@@ -1,7 +1,5 @@
 #!/bin/sh
 #library for pfs-utils, by betcher, GPL v3.
-#Version 0.2
-#Modify 18.01.2017 sfs
 
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
@@ -10,13 +8,11 @@ copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
 
 if [ -f /etc/initvars ] ; then
-	. /etc/initvars
-	copyramdir=${SYSMNT}/copy2ram/
-	prefixmp=${SYSMNT}/bundles/
+        . /etc/initvars
+        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0)
+        copyramdir=${SYSMNT}/copy2ram/
+        prefixmp=${SYSMNT}/bundles/
 fi
-
-[ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0)
-
 
 function checkramfreeb () {
 	local free  
