@@ -1,5 +1,4 @@
 #!/bin/sh
-pfsunload "$1"
-status=$?
-[ ${status} -eq 0 ] && pfsramfree "$1"
-exit ${status}
+pfsunload "$1" || exit 1
+pfsramfree "$1"
+

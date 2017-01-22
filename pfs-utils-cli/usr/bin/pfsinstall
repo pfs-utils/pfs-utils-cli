@@ -5,6 +5,8 @@
 . /usr/lib/libpfs  
 allow_only_root
 
+mkdir -p $PFSDIR 2>/dev/null
+
 if [ "$1" ]; then
   instfile="$1"
 else
@@ -36,8 +38,7 @@ do
     *) [ "${upacklist}" = "yes" ] && listpackage="${listpackage}${arg}$IFS";;
   esac
 done
-[ "${listpackage}" = "" ] && listpackage="$(unsquashfs -l "${instfile}" 2>/dev/null | grep '${PFSDIR}/mount/' | cut -f5 -d'/' | sort -uf)"
-
+[ "${listpackage}" = "" ] && listpackage="$(unsquashfs -l "${instfile}" | grep "${PFSDIR}/mount/" | cut -f5 -d'/' | sort -uf)"
 allfiles="`echo "${listpackage}" | while read pack; do
   unsquashfs -l "${instfile}" 2>/dev/null | grep -q "${PFSDIR}/mount/${pack}/pfs.files"
   [ $? -gt 0 ] && continue
@@ -67,6 +68,7 @@ allfiles="`echo "${listpackage}" | while read pack; do
   rm -rf "/tmp/.pfs/install/${bsname}/${pack}" 2>/dev/null
 done`"
 
+# с пустым allfiles завершается без ошибок, надо поправить
 if [ "${allfiles}" != "" ]; then
   if echo "${allfiles}" | grep -q -F '\'; then
     unsquashfs -d "/tmp/.pfs/install/${bsname}/tmp" "${instfile}" >/dev/null 2>&1
