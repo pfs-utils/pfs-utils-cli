@@ -1,7 +1,6 @@
 #!/bin/sh
-#Read depends of PFS packages (for PuppyRus), by Zay, GPL v3.
-#Version 0.5
-#Modify 28.12.2013
+#Read depends of PFS packages, by Zay, GPL v3.
+#VERSION 0.23
 . /usr/lib/libpfs
 
 for arg in "$@"

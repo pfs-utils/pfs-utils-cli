@@ -1,5 +1,6 @@
 #!/bin/sh
-#Extract .pfs , by Zay , GPL v3.
+#Extract .pfs , by Zay , GPL v3
+#VERSION 0.23
 . /usr/lib/libpfs
 
 checksfsxzb >/dev/null 2>&1

@@ -1,5 +1,6 @@
 #!/bin/sh
 #Make .pfs , by Zay, GPL v3.
+#VERSION 0.23
 . /usr/lib/libpfs
 
 HLP(){

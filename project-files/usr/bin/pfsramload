@@ -1,7 +1,6 @@
 #!/bin/sh
-#Copy to RAM & Mount SquashFS to AUFS (for PuppyRus), by «sfs» & Zay, GPL v3.
-#Version 0.14
-#Modify 170118 sfs
+#Copy to RAM & Mount SquashFS to AUFS, by «sfs» & Zay, GPL v3.
+#VERSION 0.23
 . /usr/lib/libpfs
 allow_only_root
 

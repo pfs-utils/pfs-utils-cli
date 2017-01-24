@@ -1,7 +1,6 @@
 #!/bin/sh
 #Install .pfs (for PuppyRus), by Zay, GPL v3.
-#Version 0.13
-#Modify 21.04.2015
+#VERSION 0.23
 . /usr/lib/libpfs  
 allow_only_root
 

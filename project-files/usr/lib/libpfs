@@ -1,5 +1,6 @@
 #!/bin/sh
 #library for pfs-utils, by betcher, GPL v3.
+#VERSION 0.23
 
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000

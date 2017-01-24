@@ -1,7 +1,6 @@
 #!/bin/sh
-#Read list PFS packages (for PuppyRus), by Zay, GPL v3.
-#Version 0.12
-#Modify 28.12.2013
+#Read list PFS packages, by Zay, GPL v3.
+#VERSION 0.23
 . /usr/lib/libpfs
 
 for arg in "$@"

@@ -1,4 +1,5 @@
 #!/bin/sh
+#VERSION 0.23
 pfsunload "$1" || exit 1
 pfsramfree "$1"
 
