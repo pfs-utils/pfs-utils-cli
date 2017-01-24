@@ -4,7 +4,7 @@
 #Default -  current Version value plus one (in minor section)
 [ $1 ] && ver=$1
 if ! [ $ver ] ; then
-	current=$(cat ../project-files/usr/bin/pfsload |grep 'VERSION')
+	current=$(cat ../project-files/usr/bin/pfsload |grep 'VERSION' |awk '{print $2}')
 	major=$(echo $current |awk -F. '{print $1}')
 	minor=$(echo $current |awk -F. '{print $2}')
 	ver=${major}.$(echo $(($minor +1)))
@@ -12,5 +12,5 @@ fi
 for file in $(find ../project-files -type f) ;do
 	sed -i "s|#VERSION\ *[:digit:]*.*|#VERSION\ $ver|" $file
 done
-echo VERSION tag udated to $ver
+echo VERSION udated to $ver
 
