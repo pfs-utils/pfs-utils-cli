@@ -36,40 +36,40 @@ rm -rf ./first
 rm -rf ./second
 [ "$MKPFS" != "OK" ] && ex
 
-pfsinstall ./first.pfs && PFSINSTALL=OK
-m="$m\npfsinstall=		$PFSINSTALL" ; [ "$PFSINSTALL" != "OK" ] && ex
+pfsinstall ./first.pfs && PFSINSTALL=OK || ex
+m="$m\npfsinstall=		$PFSINSTALL"
 
-pfsuninstall ./first.pfs && PFSUNINSTALL=OK
-m="$m\npfsuninstall=		$PFSUNINSTALL" ; [ "$PFSUNINSTALL" != "OK" ] && ex
+pfsuninstall ./first.pfs && PFSUNINSTALL=OK || ex
+m="$m\npfsuninstall=		$PFSUNINSTALL" 
 
-pfsmerge ./first.pfs ./second.pfs testmodule.pfs && PFSMERGE=OK
-m="$m\npfsmerge=		$PFSMERGE" ; [ "$PFSMERGE" != "OK" ] && ex
+pfsmerge ./first.pfs ./second.pfs testmodule.pfs && PFSMERGE=OK || ex
+m="$m\npfsmerge=		$PFSMERGE" 
 
-pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] && [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK 
+[ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSINFO=OK || ex
+m="$m\npfsinfo=		$PFSINFO" 
+
+pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] && \
+    [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK || ex
 rm -r testmodule_pfs 2>/dev/null
 # тут прерывать не надо, не влияет на прохождение теста
-m="$m\npfsextract=		$PFSEXTRACT" ; [ "$PFSEXTRACT" != "OK" ] && EXITCODE=1
+m="$m\npfsextract=		$PFSEXTRACT"
+EXITCODE=1
 
-pfsload ./testmodule.pfs && PFSLOAD=OK
-m="$m\npfsload=		$PFSLOAD" ; [ "$PFSLOAD" != "OK" ] && ex
+pfsload ./testmodule.pfs && PFSLOAD=OK || ex
+m="$m\npfsload=		$PFSLOAD"
 
 rm -f ./testmodule.pfs
-pfsrebuild testmodule.pfs && PFSREBUILD=OK
-m="$m\npfsrebuild=		$PFSREBUILD" ; [ "$PFSREBUILD" != "OK" ] && ex
+pfsrebuild testmodule.pfs && PFSREBUILD=OK || ex
+m="$m\npfsrebuild=		$PFSREBUILD" 
 
-pfsunload ./testmodule.pfs && PFSUNLOAD=OK
-m="$m\npfsunload=		$PFSUNLOAD" ; [ "$PFSUNLOAD" != "OK" ] && ex
+pfsunload ./testmodule.pfs && PFSUNLOAD=OK || ex
+m="$m\npfsunload=		$PFSUNLOAD"
 
-pfsramload ./testmodule.pfs && PFSRAMLOAD=OK
-m="$m\npfsramload=		$PFSRAMLOAD" ; [ "$PFSRAMLOAD" != "OK" ] && ex
+pfsramload ./testmodule.pfs && PFSRAMLOAD=OK || ex
+m="$m\npfsramload=		$PFSRAMLOAD"
 
-pfsramunload ./testmodule.pfs && PFSRAMUNLOAD=OK
-m="$m\npfsramunload=		$PFSRAMUNLOAD" ; [ "$PFSRAMUNLOAD" != "OK" ] && ex
+pfsramunload ./testmodule.pfs && PFSRAMUNLOAD=OK || ex
+m="$m\npfsramunload=		$PFSRAMUNLOAD"
 
 clear
-if [ $EXITCODE -ne 0 ] ; then
-	printf "$m\n====== \e[31mTest finished\e[0m =====\n"
-else
 	printf "$m\n====== \e[32mTest finished\e[0m =====\n"
-fi
-exit $EXITCODE
