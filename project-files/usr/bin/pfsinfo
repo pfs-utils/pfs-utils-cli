@@ -22,7 +22,7 @@ if [ "${inpack}" ]; then
 fi
 
 if [ "${pack}" ]; then
-  disktypeb "${pack}" | grep -q -F "squashfs, version 4"
+  disktypeb "${pack}" | grep -q -i -F "squashfs"
   if [ $? -gt 0 ]; then
     echo "File \"$1\" is not PFS!" >&2; exit 1
   fi
