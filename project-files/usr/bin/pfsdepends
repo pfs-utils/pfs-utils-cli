@@ -26,7 +26,7 @@ fi
 [ -d "${PFSDIR}/install/" ] && packslistI="$(find "${PFSDIR}/install/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null)"
 
 if [ "${fsfile}" ]; then
-  disktype "${fsfile}" | grep -q -F "squashfs, version 4"
+  disktypeb "${fsfile}" | grep -q -F "squashfs, version 4"
   if [ $? -gt 0 ]; then
     echo "File \"${fsfile}\" is not PFS!" >&2; exit 1
   fi
