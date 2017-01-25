@@ -63,7 +63,7 @@ else
 		echo "$1 Is a directory"
 		return 0
 	elif $(echo $ftest |grep -qi squashfs) ;then
-		echo "$1 Linux squashfs"
+		echo "$1 $ftest"
 		return 0
 	elif $(echo $ftest |egrep -qi block.*special) ;then
 		echo block device

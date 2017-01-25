@@ -42,13 +42,13 @@ fi
 if [ "${devtype}" != "dir" ]; then
   diskinfo="$(disktypeb "${fsfile}" 2>/dev/null)"
   fstype=""
-  if echo "${diskinfo}" | grep -q -F "squashfs"; then
+  if echo "${diskinfo}" | grep -qi -F "squashfs"; then
     fstype='squashfs'
-  elif echo "${diskinfo}" | grep -q -F "Ext2"; then
+  elif echo "${diskinfo}" | grep -qi -F "Ext2"; then
     fstype='ext2'
-  elif echo "${diskinfo}" | grep -q -F "Ext3"; then
+  elif echo "${diskinfo}" | grep -qi -F "Ext3"; then
     fstype='ext3'
-  elif echo "${diskinfo}" | grep -q -F "Ext4"; then
+  elif echo "${diskinfo}" | grep -qi -F "Ext4"; then
     fstype='ext4'
   fi
 else

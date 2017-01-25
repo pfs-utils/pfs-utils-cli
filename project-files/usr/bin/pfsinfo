@@ -22,11 +22,12 @@ if [ "${inpack}" ]; then
 fi
 
 if [ "${pack}" ]; then
-  disktypeb "${pack}" | grep -q -i -F "squashfs"
+  disktypeb "${pack}" | grep -qi "squashfs.*version\ *4\."
+
   if [ $? -gt 0 ]; then
     echo "File \"$1\" is not PFS!" >&2; exit 1
   fi
-  unsquashfs -l "${pack}" 2>/dev/null | grep -F 'squashfs-root'${PFSDIR}'/mount/' | cut -f5 -d'/' | sort -uf
+  unsquashfs -l "${pack}" | grep -F 'squashfs-root'${PFSDIR}'/mount/' | cut -f5 -d'/' | sort -uf
 else
   [ "${readdir}" != "install" ] && [ -d "${PFSDIR}/mount" ] && echo "$(find "${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"
   [ "${readdir}" != "mount" ] && [ -d "${PFSDIR}/install" ] && echo "$(find "${PFSDIR}/install/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"
