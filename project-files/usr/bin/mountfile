@@ -22,7 +22,7 @@ else
   fi
 fi
 
-diskinfo="$(disktype "${mntfile}" 2>/dev/null)"
+diskinfo="$(disktypeb "${mntfile}" 2>/dev/null)"
 fstype=""
 if echo "${diskinfo}" | grep -q -F "Ext2" ;then
   fstype='ext2'
