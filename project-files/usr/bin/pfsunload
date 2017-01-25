@@ -1,6 +1,6 @@
 #!/bin/sh
 #Unmount filesystem to AUFS, by Zay, GPL v3.
-#VERSION 0.23
+#VERSION 2.0
 . /usr/lib/libpfs
 allow_only_root
 

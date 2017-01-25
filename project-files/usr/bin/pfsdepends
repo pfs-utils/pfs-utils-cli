@@ -1,6 +1,6 @@
 #!/bin/sh
 #Read depends of PFS packages, by Zay, GPL v3.
-#VERSION 0.23
+#VERSION 2.0
 . /usr/lib/libpfs
 
 for arg in "$@"

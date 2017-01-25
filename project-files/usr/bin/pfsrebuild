@@ -1,6 +1,6 @@
 #!/bin/sh
 #rebuild loaded or installed pfs, by betcher, GPL v3.
-#VERSION 0.23
+#VERSION 2.0
 
 . /usr/lib/libpfs
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #Find file in mounted or installed .pfs packages, by Zay.
-#VERSION 0.23
+#VERSION 2.0
 . /usr/lib/libpfs
 
 case "$1" in 

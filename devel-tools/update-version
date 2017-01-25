@@ -2,6 +2,7 @@
 #Update VERSION tag in all pfs-utils files
 #$1 - Version
 #Default -  current Version value plus one (in minor section)
+
 [ $1 ] && ver=$1
 if ! [ $ver ] ; then
 	current=$(cat ../project-files/usr/bin/pfsload |grep 'VERSION' |awk '{print $2}')
