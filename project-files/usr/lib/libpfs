@@ -51,10 +51,6 @@ return 0
 }
 
 function disktypeb () {
-if [[ -x $(which disktype) ]] ; then
-	echo $(disktype $1) 
-	return $?
-else
 	ftest=$(file $1)
 	if $(echo $ftest |egrep -qi cannot.*open) ; then
 		echo $ftest
@@ -75,7 +71,6 @@ else
 	fi
 	echo "unknown disk type"
 	return 2
-fi 2>/dev/null
 }
 
 function lddcheck () {
