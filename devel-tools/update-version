@@ -10,8 +10,9 @@ if ! [ $ver ] ; then
 	minor=$(echo $current |awk -F. '{print $2}')
 	ver=${major}.$(echo $(($minor +1)))
 fi
-for file in $(find ../project-files -type f) ;do
-	sed -i "s|#VERSION\ *[:digit:]*.*|#VERSION\ $ver|" $file
+filelist="$(find ../project-files -type f) ../VERSION.md"
+for file in  $filelist ;do
+	sed -i "s|VERSION\ *[:digit:]*.*|VERSION\ $ver|" $file
 done
 echo VERSION udated to $ver
 
