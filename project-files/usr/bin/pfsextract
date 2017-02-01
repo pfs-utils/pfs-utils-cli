@@ -12,12 +12,13 @@ status=0
 HLP(){
 [ "`echo $LANG| egrep '^ru_RU'`" ] || return
 echo "\
-pfsextract извлекает отдельные пакеты из многопакетных файлов .pfs.
+pfsextract извлекает отдельные модули из составных модулей.pfs.
 Использование:
 
-    pfsextract /file.pfs - создать каталог «/file_pfs» с отдельными файлами .pfs из «/file.pfs», каждый пакет в отдельном файле.
-    pfsextract /file.pfs /catalog - создать в каталоге «/catalog» отдельные файлы .pfs из «/file.pfs». «/catalog» должен быть пустым.
-    pfsextract /file.pfs /catalog -p pack_1 pack_2 - создать в каталоге «/catalog» отдельные файлы .pfs только из пакетов «pack_1» и «pack_2», если пакеты с такими названиями содержатся в файле «/file.pfs» (использование «-p pack_1 pack_2» допустимо и без указания «/catalog»).
+    pfsextract /file.pfs - создать каталог «/file_pfs» с отдельными модулями.pfs из «/file.pfs»
+    pfsextract -d /file.pfs - создать каталог «/file_pfs» с отдельными каталогами, в каждый из которых распакованы отдельные модули из «/file.pfs»
+    pfsextract /file.pfs /catalog - создать в каталоге «/catalog» отдельные модули.pfs из «/file.pfs». «/catalog» должен быть пустым.
+    pfsextract /file.pfs /catalog -p pack_1 pack_2 - создать в каталоге «/catalog» отдельные файлы .pfs только из модулей «pack_1» и «pack_2», если модули с такими названиями содержатся в файле «/file.pfs» (использование «-p pack_1 pack_2» допустимо и без указания «/catalog»).
 
 Параметры (ключи):
 
@@ -35,6 +36,7 @@ do
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "--gzip" | "-g") compression="gzip";;
+    "--dir" | "-d") dir=dir;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP;exit 1;;
     *) if [ "${upacklist}" != "yes" ]; then [ ! "${pfsname}" ] && pfsname="${arg}" || outdir="${arg}" 
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
@@ -144,7 +146,10 @@ echo "${listpackage}" | while read pack; do
         if [ "${compression}" = "xz" ]; then
           optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
         fi
-        mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
+    	    if [ "$dir" ];then
+    		mv "${tmpdir}/files/${namepack}" "${outdir}"
+	    else mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
+	    fi
         status=$?
       fi
  fi
