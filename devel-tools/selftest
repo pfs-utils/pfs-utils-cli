@@ -18,6 +18,7 @@ clear () {
 	rm -f ./first.pfs 2>/dev/null
 	rm -f ./second.pfs 2>/dev/null
 	rm -f ./testmodule.pfs 2>/dev/null
+	rm -fr ./testmodule_pfs 2>/dev/null
 	pfsunload ./testmodule.pfs 2>/dev/null
 	pfsuninstall ./testmodule.pfs 2>/dev/null
 }
