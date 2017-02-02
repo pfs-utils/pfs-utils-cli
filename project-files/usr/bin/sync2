@@ -1,0 +1,66 @@
+#!/bin/bash
+#second aufs layer utils by betcher, GPL v3.
+#VERSION 0.1
+. /usr/lib/libpfs
+allow_only_root 
+
+function exitmsg (){
+[ $2 != 0 ] && echo "$1" 
+exit $2
+} 
+
+function dirlayer () {
+[ -d $layername ] || mkdir -p $layername
+cat /proc/mounts | grep -q "$layername" &&  exitmsg "$layername already mounted" 1
+pfsload $layername
+}
+
+function filelayer () {
+if ! file $layername |grep -q ext ; then
+	[ -f $layername ] && exitmsg "Unsupported file format" 2
+	dd if=/dev/zero of="$layername" bs=1M count=1 seek=2000 2>&1 &&  \ 
+	/sbin/mkfs.ext3 -F -j "$layername" 2>&1 || exitmsg "Error create image file $layername" 3
+	pfsload $layername
+	else
+	cat /proc/mounts | grep -q "$layername"  &&  exitmsg "$layername already mounted" 1
+	pfsload $layername
+fi
+}
+
+function  sync2layer () {
+	layermp=$(cat /proc/mounts |grep $prefixmp |awk '{print $2}' |tail -n1)
+	[ -d  $layermp -a -w $layermp ] || exitmsg "Layer mounted RO" 4
+	dirlist=$(find ${changesDir}  -type d |sed 's:/.*/changes::')
+	filelist=$(echo $(find ${changesDir}  -type f) $(find ${changesDir}  -type l))
+	for dir in ${dirlist} ; do 
+	echo $dir |grep -q .wh* || mkdir -p ${layermp}/$dir 
+	done
+	for file in $filelist ; do
+	echo "$file" |grep -q .wh* && continue
+	file=$(echo $file |sed "s:/.*/changes/::")
+	if lsof /$file >/dev/null 2>&1; then 
+		cp -u ${changesDir}${file} ${layermp}/${file} && echo "${file} -- warning: file is copied"
+	else
+		mv -u ${changesDir}${file} ${layermp}/${file} && echo "${file} -- moved"
+	fi
+	done
+	mount -o remount $layermp
+	mount -o remount /
+	}
+
+if ! [ $1 ] ; then
+sync2layer
+exit
+fi 
+
+layername="$1"
+
+if echo $layername |egrep -q "\.rom$" ; then
+	filelayer || exitmsg "pfsload $layername ERROR" 5
+else
+	dirlayer || exitmsg "pfsload $layername ERROR" 6
+fi 
+
+sync2layer
+
+exit

@@ -7,12 +7,14 @@ TMPFSLIMIT=100000
 
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
+changesDir=""
 
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
         [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0)
         copyramdir=${SYSMNT}/copy2ram/
         prefixmp=${SYSMNT}/bundles/
+        changesDir=${SYSMNT}/changes/
 fi
 
 function checkramfreeb () {
