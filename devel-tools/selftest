@@ -58,6 +58,10 @@ EXITCODE=1
 pfsload ./testmodule.pfs && PFSLOAD=OK || ex
 m="$m\npfsload=		$PFSLOAD"
 
+pfsextract -d testmodule.pfs && rm -f ./testmodule.pfs && \
+    pfsmerge-dir ./testmodule_pfs || ex
+[ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && m="$m\npfsmerge-dir=		OK"
+
 rm -f ./testmodule.pfs
 pfsrebuild testmodule.pfs && PFSREBUILD=OK || ex
 m="$m\npfsrebuild=		$PFSREBUILD" 
