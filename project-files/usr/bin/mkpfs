@@ -1,6 +1,6 @@
 #!/bin/sh
 #Make .pfs , by Zay, GPL v3.
-#VERSION 2.0
+#VERSION 2.1
 . /usr/lib/libpfs
 
 HLP(){
@@ -11,6 +11,7 @@ mkpfs создаёт .pfs пакет из каталога (аналогично
 
     mkpfs - создаст .pfs из текущего каталога
     mkpfs /catalog - создаст .pfs из каталога «/catalog».
+    mkpfs -d - создаст $PFSDIR без упаковки в модуль
 
 Параметры (ключи):
 
@@ -33,6 +34,7 @@ do
     "-n" | "--no-dirs-empty") dirs="off";;
     "-m" | "--md5") md5cr="on";;
     "-e" | "--empty" | "--no-md5") ;;
+    "-d" | "--dir") dir=1;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "--gzip" | "-g" ) compression="gzip";;
@@ -75,11 +77,11 @@ echo "${allfiles}" >".${PFSDIR}/mount/${pfsname}/pfs.files"
 [ "${md5cr}" != "on" -o "${md5s}" = "" ] && [ -f ".${PFSDIR}/mount/${pfsname}/pfs.md5sums" ] && rm -f ".${PFSDIR}/mount/${pfsname}/pfs.md5sums"
 [ "${md5s}" != "" ] && echo "${md5s}" >".${PFSDIR}/mount/${pfsname}/pfs.md5sums"
 
+[ "$dir"  ] && exit 0
+
 [ "${pfsdir}" = "${pwddir}" ] && cd ../ || cd "${pwddir}"
 [ "${userout}" = "" ] && userout="./${pfsname}.pfs"
 if [ "${compression}" = "xz" ]; then
   optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
 fi
 mksquashfs "${pfsdir}" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
-
-exit $?
