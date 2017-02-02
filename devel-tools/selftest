@@ -18,6 +18,8 @@ clear () {
 	rm -f ./first.pfs 2>/dev/null
 	rm -f ./second.pfs 2>/dev/null
 	rm -f ./testmodule.pfs 2>/dev/null
+	pfsunload ./testmodule.pfs 2>/dev/null
+	pfsuninstall ./testmodule.pfs 2>/dev/null
 }
 
 ex(){ printf "$m\n====== \e[31mTest  aborted\e[0m =====\n"
@@ -54,7 +56,7 @@ rm -r testmodule_pfs 2>/dev/null
 # тут прерывать не надо, не влияет на прохождение теста
 m="$m\npfsextract=		$PFSEXTRACT"
 EXITCODE=1
-
+echo start pfsload 
 pfsload ./testmodule.pfs && PFSLOAD=OK || ex
 m="$m\npfsload=		$PFSLOAD"
 
