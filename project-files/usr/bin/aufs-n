@@ -1,10 +1,23 @@
 #!/bin/sh
 #aufs layers list, by DdS sfs
 #VERSION 2.0
-echo "Слои AUFS (верхний 0 перекрывает все что ниже)"
-printf %3s "N "; printf %-51s Модуль; printf "Путь\n\n"
+header () {
+echo "AUFS layers (top layer \"0\" covers all lower )"
+printf %3s "N "; printf %-45s Module; printf "Path\n\n"
+}
+
+listing () {
 n=0
 while true; do 
     a="`cat /sys/fs/aufs/si_*/br$n 2>/dev/null`" && printf %3s "$n " && printf %-45s `basename $a` && echo `dirname $a` || break
     n=$(expr $n + 1)
 done
+}
+
+if [ ! $1 ] ;then 
+	header
+	listing
+	exit
+elif echo $1 |grep -q '^[[:digit:]]*$' ; then
+	cat /sys/fs/aufs/si_*/br$1 |sed 's/=.*//'
+fi  

@@ -6,6 +6,8 @@ allow_only_root
 
 unset infile fupdate romode copy2ram mountdir copyramdir
 
+mntmode="upper"
+
 for arg in "$@"
 do
   case "${arg}" in
@@ -67,7 +69,6 @@ if [ "$(echo "${fsname}" | awk -F. '{print $NF}' | tr A-Z a-z)" = "pfs" ]; then
   if [ $? -gt 0 ]; then
     echo "Kernel not support PFS!" >&2; exit 1
   fi
-  [ ! "${mntmode}" ] && mntmode="upper"
 fi
 
 mountpoint="${prefixmp}${fsname}"
@@ -115,11 +116,7 @@ if [ ${status} -eq 0 ]; then
   if [ ${status} -eq 0 ]; then
     sync
     if [ "${mntmode}" = "upper" ]; then
-      aufslayer="$(topaufslayer 2>/dev/null)"
-      case "${aufslayer}" in
-        ''|*[!0-9]*) aufslayer=1;;
-      esac
-      mountb -o remount,add:${aufslayer}:"${mountpoint}"=ro / >/dev/null 2>&1
+      mountb -o remount,add:1:"${mountpoint}"=ro / >/dev/null 2>&1
     else
       mountb -o remount,append:"${mountpoint}"=ro / >/dev/null 2>&1
     fi

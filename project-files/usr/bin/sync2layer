@@ -12,7 +12,7 @@ exit $2
 function dirlayer () {
 [ -d $layername ] || mkdir -p $layername
 cat /proc/mounts | grep -q "$layername" &&  exitmsg "$layername already mounted" 1
-pfsload $layername
+pfsload -u $layername
 }
 
 function filelayer () {
@@ -23,15 +23,15 @@ if ! file $layername |grep -q ext ; then
 	pfsload $layername
 	else
 	cat /proc/mounts | grep -q "$layername"  &&  exitmsg "$layername already mounted" 1
-	pfsload $layername
+	pfsload -u $layername
 fi
 }
 
 function  sync2layer () {
-	layermp=$(cat /proc/mounts |grep $prefixmp |awk '{print $2}' |tail -n1)
+	layermp=$(aufs-n 1)
 	[ -d  $layermp -a -w $layermp ] || exitmsg "Layer mounted RO" 4
 	dirlist=$(find ${changesDir}  -type d |sed 's:/.*/changes::')
-	filelist=$(echo $(find ${changesDir}  -type f) $(find ${changesDir}  -type l))
+	filelist=$(find ${changesDir}  \( -type f -o -type l \) )
 	for dir in ${dirlist} ; do 
 	echo $dir |grep -q .wh* || mkdir -p ${layermp}/$dir 
 	done
@@ -39,7 +39,7 @@ function  sync2layer () {
 	echo "$file" |grep -q .wh* && continue
 	file=$(echo $file |sed "s:/.*/changes/::")
 	if lsof /$file >/dev/null 2>&1; then 
-		cp -u ${changesDir}${file} ${layermp}/${file} && echo "${file} -- warning: file is copied"
+		cp -uP ${changesDir}${file} ${layermp}/${file} && echo "${file} -- warning: file is copied"
 	else
 		mv -u ${changesDir}${file} ${layermp}/${file} && echo "${file} -- moved"
 	fi
