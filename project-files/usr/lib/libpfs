@@ -56,29 +56,21 @@ return 0
 }
 
 function disktypeb () {
+if disktype $1 2>/dev/null ; then 
+	return 0
+else
 	ftest=$(file $1)
 	if $(echo $ftest |egrep -qi cannot.*open) ; then
 		echo $ftest
 		return 1
-	elif $(echo $ftest |grep -qi directory) ;then
-		echo "$1 Is a directory"
-		return 0
-	elif $(echo $ftest |grep -qi squashfs) ;then
-		echo "$1 $ftest"
-		return 0
 	elif $(echo $ftest |egrep -qi block.*special) ;then
-		echo block device
 		echo $(blkid -s TYPE $1)
 		return 0
-	elif $(echo $ftest |egrep -qi 9660) ; then
+	else 
 		echo $ftest
-	elif $(echo $ftest |egrep -qi ext.*filesystem) ; then
-		echo $ftest
-	
 		return 0
 	fi
-	echo "unknown disk type"
-	return 2
+fi
 }
 
 function lddcheck () {
