@@ -116,7 +116,10 @@ if [ ${status} -eq 0 ]; then
   if [ ${status} -eq 0 ]; then
     sync
     if [ "${mntmode}" = "upper" ]; then
-      mountb -o remount,add:1:"${mountpoint}"=ro / >/dev/null 2>&1
+		nlayer=1
+		[ -w $(aufs-n 1) ] && nlayer=2
+		[ -w "${mountpoint}" ] && nlayer=1
+		mountb -o remount,add:${nlayer}:"${mountpoint}"=ro / >/dev/null 2>&1
     else
       mountb -o remount,append:"${mountpoint}"=ro / >/dev/null 2>&1
     fi
