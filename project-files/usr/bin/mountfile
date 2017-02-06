@@ -1,6 +1,8 @@
 #!/bin/sh
 # Mount file  ("Ext2", "Ext3", "Ext4", "SquashFS", "ISO"), by Zay, GPL v3.
 #VERSION 2.0
+. /usr/lib/libpfs
+allow_only_root
 
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") FILE" >&2; exit 1
@@ -22,19 +24,7 @@ else
   fi
 fi
 
-diskinfo="$(disktypeb "${mntfile}" 2>/dev/null)"
-fstype=""
-if echo "${diskinfo}" | grep -q -F "Ext2" ;then
-  fstype='ext2'
-elif echo "${diskinfo}" | grep -q -F "Ext3" ;then
-  fstype='ext3'
-elif echo "${diskinfo}" | grep -q -F "Ext4" ;then
-  fstype='ext4'
-elif echo "${diskinfo}" | grep -q -F "squashfs" ;then
-  fstype='squashfs'
-elif echo "${diskinfo}" | grep -q -F "ISO9660" ;then
-  fstype='iso9660'
-fi
+fstype=$(fs_type ${mntfile})
 if [ "${fstype}" = "" ]; then
   echo "Filesystem not supported!" >&2; exit 1
 fi

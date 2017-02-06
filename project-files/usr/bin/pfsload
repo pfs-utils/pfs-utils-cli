@@ -42,17 +42,7 @@ else
 fi
 
 if [ "${devtype}" != "dir" ]; then
-  diskinfo="$(disktypeb "${fsfile}" 2>/dev/null)"
-  fstype=""
-  if echo "${diskinfo}" | grep -qi -F "squashfs"; then
-    fstype='squashfs'
-  elif echo "${diskinfo}" | grep -qi -F "Ext2"; then
-    fstype='ext2'
-  elif echo "${diskinfo}" | grep -qi -F "Ext3"; then
-    fstype='ext3'
-  elif echo "${diskinfo}" | grep -qi -F "Ext4"; then
-    fstype='ext4'
-  fi
+  fstype=$(fs_type "${fsfile}")
 else
   fsinfo="$(df -aT "${fsfile}" | tail -n 1 | tr -s ' ' '_' | cut -d'_' -f 2)"
   case "${fsinfo}" in

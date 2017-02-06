@@ -73,6 +73,22 @@ else
 fi
 }
 
+function fs_type () {
+diskinfo="$(disktypeb "$1" 2>/dev/null)"
+if echo "${diskinfo}" | grep -qi -F "Ext2" ;then
+  echo 'ext2'
+elif echo "${diskinfo}" | grep -qi -F "Ext3" ;then
+  echo 'ext3'
+elif echo "${diskinfo}" | grep -qi -F "Ext4" ;then
+  echo 'ext4'
+elif echo "${diskinfo}" | grep -qi -F "squashfs" ;then
+  echo 'squashfs'
+elif echo "${diskinfo}" | grep  -qi "ISO.*9660" ;then
+  echo 'iso9660'
+fi
+}
+
+
 function lddcheck () {
 	local rootdir alllibs
 [ "${1}" != "" ] && rootdir="${1}" || rootdir="./"
