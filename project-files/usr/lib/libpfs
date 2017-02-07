@@ -7,7 +7,7 @@ TMPFSLIMIT=100000
 
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
-changesDir="/mnt/live/memory/changes"
+changesDir="/mnt/live/memory/changes/"
 
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
