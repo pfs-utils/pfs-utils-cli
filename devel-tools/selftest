@@ -51,6 +51,10 @@ m="$m\npfsmerge=		$PFSMERGE"
 [ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSINFO=OK || ex
 m="$m\npfsinfo=		$PFSINFO" 
 
+mountfile testmodule.pfs && umount /mnt/*+testmodule.pfs &&
+    rmdir /mnt/*+testmodule.pfs && MNTFILE=OK || MNTFILE="\e[31mFALSE\e[0m"
+m="$m\nmountfile=		$MNTFILE"
+
 pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] && \
     [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK || ex
 rm -r testmodule_pfs 2>/dev/null
