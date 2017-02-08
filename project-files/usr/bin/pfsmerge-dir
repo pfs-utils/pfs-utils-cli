@@ -27,6 +27,7 @@ do
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "--gzip" | "-g" ) compression="gzip";;
+    "--rm" ) rm=1;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
@@ -68,4 +69,4 @@ if [ "${compression}" = "xz" ]; then
 fi
 ###mkpfs)
 mksquashfs "${pfsdir}/tmp" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc} &&
-    rm -R "$pfsdir2"
+    [ "$rm" ] && rm -R "$pfsdir2" || exit 1
