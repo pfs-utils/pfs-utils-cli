@@ -35,7 +35,7 @@ do
     "-?" | "--help") HLP ;exit 1 ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-    "--gzip" | "-g") compression="gzip";;
+    "--gzip" | "-g")  [ "$compression-fast" ] && compression="$compression-fast" || compression="gzip";;
     "--dir" | "-d") dir=dir;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP;exit 1;;
     *) if [ "${upacklist}" != "yes" ]; then [ ! "${pfsname}" ] && pfsname="${arg}" || outdir="${arg}" 
