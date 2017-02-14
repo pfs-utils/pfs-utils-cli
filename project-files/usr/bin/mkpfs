@@ -20,7 +20,7 @@ mkpfs создаёт .pfs пакет из каталога (аналогично
     -m / --md5 - создать необязательный файл pfs.md5.
     -n / --not-dirs-empty - не создавать файл pfs.dirs.empty.
     -no-progress - не показывать строку прогресса.
-    -g - gz компрессия (размер .pfs больше, но создается быстрее).
+    -f / --fast - быстрая компрессия (размер .pfs больше, но создается быстрее).
 " >&2 ;exit 1
 }
 
@@ -37,7 +37,7 @@ do
     "-d" | "--dir") dir=1;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-    "--gzip" | "-g" ) [ "$compression-fast" ] && compression="$compression-fast" || compression="gzip";;
+    "-f" | "--fast" | "-g" ) [ "$compression-fast" ] && compression="$compression-fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
