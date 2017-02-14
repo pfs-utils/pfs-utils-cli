@@ -8,7 +8,7 @@ TMPFSLIMIT=100000
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
 changesDir="/mnt/live/memory/changes/"
-compression-fast=lz4
+compression_fast="lz4"
 
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
