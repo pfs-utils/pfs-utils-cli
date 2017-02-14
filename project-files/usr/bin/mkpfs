@@ -27,9 +27,9 @@ mkpfs создаёт .pfs пакет из каталога (аналогично
 compression="xz"
 argslist="$@"
 
-if echo $argslist |grep -q "\-comp .*" ; then
-	compression=$(echo $@ |sed 's/^.*\-comp//')
-	argslist=$(echo $@ |sed 's/\-comp.*$//')
+if  echo $argslist |grep -q "\-*comp .*" ; then
+	compression="$(echo $@ |sed 's/^.*\-*comp//')"
+	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
 fi
 
 for arg in $argslist

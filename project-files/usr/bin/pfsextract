@@ -9,6 +9,7 @@ if [ $? -gt 0 ]; then
 fi
 status=0
 
+
 HLP(){
 [ "`echo $LANG| egrep '^ru_RU'`" ] || return
 echo "\
@@ -27,15 +28,23 @@ pfsextract извлекает отдельные модули из состав�
 " >&2 ;exit 1
 }
 
+argslist="$@"
 compression="xz"
-for arg in "$@"
+
+if  echo $argslist |grep -q "\-*comp .*" ; then
+	compression="$(echo $@ |sed 's/^.*\-*comp//')"
+	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
+fi
+
+
+for arg in $argslist
 do
   case "${arg}" in
     "-p" | "--packages" ) upacklist="yes";;
     "-?" | "--help") HLP ;exit 1 ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-    "--gzip" | "-g")  [ "$compression-fast" ] && compression="$compression-fast" || compression="gzip";;
+    "--gzip" | "-g")  [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "--dir" | "-d") dir=dir;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP;exit 1;;
     *) if [ "${upacklist}" != "yes" ]; then [ ! "${pfsname}" ] && pfsname="${arg}" || outdir="${arg}" 
@@ -147,9 +156,11 @@ echo "${listpackage}" | while read pack; do
           optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
         fi
     	    if [ "$dir" ];then
-    		mv "${tmpdir}/files/${namepack}" "${outdir}"
-	    else mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
-	    fi
+				mv "${tmpdir}/files/${namepack}" "${outdir}"
+			else
+				echo "copression type: $compression ${optionscomp} ${bcjcomp}"
+				mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
+			fi
         status=$?
       fi
  fi

@@ -8,6 +8,7 @@ PFSRAMLOAD="\e[31mFALSE\e[0m"
 PFSRAMUNLOAD="\e[31mFALSE\e[0m"
 PFSREBUILD="\e[31mFALSE\e[0m"
 PFSMERGE="\e[31mFALSE\e[0m"
+PFSMERGEDIR="\e[31mFALSE\e[0m"
 PFSEXTRACT="\e[31mFALSE\e[0m"
 PFSINSTALL="\e[31mFALSE\e[0m"
 PFSUNINSTALL="\e[31mFALSE\e[0m"
@@ -66,8 +67,9 @@ pfsload ./testmodule.pfs && PFSLOAD=OK || ex
 m="$m\npfsload=		$PFSLOAD"
 
 pfsextract -d testmodule.pfs && rm -f ./testmodule.pfs && \
-    pfsmerge-dir ./testmodule_pfs || ex
-[ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && m="$m\npfsmerge-dir=		OK"
+    pfsmerge-dir ./testmodule_pfs
+[ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSMERGEDIR=OK  || ex 
+m="$m\npfsmerge-dir=		$PFSMERGEDIR"
 
 rm -f ./testmodule.pfs
 pfsrebuild testmodule.pfs && PFSREBUILD=OK || ex
