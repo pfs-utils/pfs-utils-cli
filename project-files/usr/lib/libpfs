@@ -135,3 +135,11 @@ else
 fi
 return $?
 }
+
+if [ "$(basename $0)" == "libpfs" ] ;then
+[ $1 ] || exit 1
+command="$1" 
+shift
+$command $@
+fi 
+
