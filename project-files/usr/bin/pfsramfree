@@ -1,8 +1,8 @@
 #!/bin/sh
 #Free RAM, by «sfs» & Zay, GPL v3.
-#VERSION 2.0
+#VERSION 3.0
 
-. /usr/lib/libpfs
+. /usr/bin/pfsfunc
 allow_only_root
 
 if [ "$1" ]; then

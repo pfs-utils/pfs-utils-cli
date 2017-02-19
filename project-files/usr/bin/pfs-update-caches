@@ -1,7 +1,7 @@
 #!/bin/sh
 #151125 ander
 #170118 sfs
-#VERSION 2.0
+#VERSION 3.0
 if [ ! -d "$1" ] ; then
     echo "Update caches when module load/unload"
     echo "Run by pfs utils, not user"
