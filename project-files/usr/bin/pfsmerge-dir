@@ -1,12 +1,17 @@
 #!/bin/sh
 #Merge dir -> .pfs , by sfs, GPL v3
-#VERSION 2.1
-. /usr/lib/libpfs
+#VERSION 3.1
+. /usr/bin/pfsfunc
 
 checksfsxzb >/dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo "Kernel not support PFS!" >&2; exit 1
 fi
+
+ERR(){ echo "mkaufs error" exit 1 ; }
+n="`mkaufs || ERR`"
+nn="`echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p'`"
+[ "`echo "$n" |egrep '/aufs[1-9]$'`" ] || ERR
 
 HLP(){
 echo "Usage: $0 DIRECTORY
@@ -26,8 +31,7 @@ do
     "-e" | "--empty" | "--no-md5") ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-    "--gzip" | "-g" ) compression="gzip";;
-    "--rm" ) rm=1;;
+    "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
@@ -55,9 +59,11 @@ d="$(find "${pfsdir}" -maxdepth 1 -type d |tail -n+2)"
 [ -d "$pfsdir" ] 	|| HLP
 [ "$d" ] 	|| HLP
 
-mkdir -p "$pfsdir/tmp" && echo "$d" |while read i ;do
-    mkpfs -d "$i" && cd "$i" && cp -aR * ../tmp && cd .. && rm -R "$i" || exit 1
-done
+while read i ;do
+    mkpfs -d "$i" && addlayer "$nn" "$i" || exit 1
+done << EOF
+$d
+EOF
 
 pfsdir2="$pfsdir"
 pfsname="`basename "$pfsdir" _pfs`"
@@ -68,5 +74,5 @@ if [ "${compression}" = "xz" ]; then
   optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
 fi
 ###mkpfs)
-mksquashfs "${pfsdir}/tmp" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc} &&
-    [ "$rm" ] && rm -R "$pfsdir2" || exit 1
+mksquashfs "${n}" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc} &&
+delaufs "$nn"
