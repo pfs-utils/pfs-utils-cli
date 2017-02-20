@@ -1,7 +1,7 @@
 #!/bin/bash
 #second aufs layer utils by betcher, GPL v3.
-#VERSION 0.1
-. /usr/lib/libpfs
+#VERSION 3.0
+. /usr/bin/pfsfunc
 allow_only_root 
 
 function exitmsg (){

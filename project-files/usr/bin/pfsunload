@@ -1,7 +1,7 @@
 #!/bin/sh
 #Unmount filesystem to AUFS, by Zay, GPL v3.
-#VERSION 2.0
-. /usr/lib/libpfs
+#VERSION 3.0
+. /usr/bin/pfsfunc
 allow_only_root
 
 for arg in "$@"

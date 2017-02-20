@@ -1,6 +1,6 @@
 #!/bin/sh
 #aufs layers list, by DdS sfs
-#VERSION 2.0
+#VERSION 3.0
 header () {
 echo "AUFS layers (top layer \"0\" covers all lower )"
 printf %3s "N "; printf %-45s Module; printf "Path\n\n"

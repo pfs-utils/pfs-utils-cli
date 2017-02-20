@@ -1,7 +1,7 @@
 #!/bin/sh
 #Make .pfs , by Zay, GPL v3.
-#VERSION 2.1
-. /usr/lib/libpfs
+#VERSION 3.0
+. /usr/bin/pfsfunc
 
 HLP(){
 [ "`echo $LANG| egrep '^ru_RU'`" ] || return

@@ -1,7 +1,7 @@
 #!/bin/sh
 #Read list PFS packages, by Zay, GPL v3.
-#VERSION 2.0
-. /usr/lib/libpfs
+#VERSION 3.0
+. /usr/bin/pfsfunc
 
 for arg in "$@"
 do
