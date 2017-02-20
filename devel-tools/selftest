@@ -15,7 +15,7 @@ PFSUNINSTALL="\e[31mFALSE\e[0m"
 
 EXITCODE="0"
 
-clear () {
+CLEAR () {
 	rm -f ./first.pfs 2>/dev/null
 	rm -f ./second.pfs 2>/dev/null
 	rm -f ./testmodule.pfs 2>/dev/null
@@ -25,7 +25,7 @@ clear () {
 }
 
 ex(){ printf "$m\n====== \e[31mTest  aborted\e[0m =====\n"
-	clear 
+	CLEAR 
 	exit 1 
 }
 
@@ -66,10 +66,6 @@ EXITCODE=1
 pfsload ./testmodule.pfs && PFSLOAD=OK || ex
 m="$m\npfsload=		$PFSLOAD"
 
-pfsextract -d testmodule.pfs && rm -f ./testmodule.pfs && \
-    pfsmerge-dir ./testmodule_pfs
-[ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSMERGEDIR=OK  || ex 
-m="$m\npfsmerge-dir=		$PFSMERGEDIR"
 
 rm -f ./testmodule.pfs
 pfsrebuild testmodule.pfs && PFSREBUILD=OK || ex
@@ -85,4 +81,10 @@ pfsramunload ./testmodule.pfs && PFSRAMUNLOAD=OK || ex
 m="$m\npfsramunload=		$PFSRAMUNLOAD"
 
 clear
+pfsextract -d testmodule.pfs && rm -f ./testmodule.pfs && \
+    pfsmerge-dir ./testmodule_pfs
+#echo "===err $err =======" ;exit
+[ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSMERGEDIR=OK  #|| ex 
+m="$m\npfsmerge-dir=		$PFSMERGEDIR"
+CLEAR
 	printf "$m\n====== \e[32mTest finished\e[0m =====\n"
