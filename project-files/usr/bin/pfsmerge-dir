@@ -60,7 +60,7 @@ d="$(find "${pfsdir}" -maxdepth 1 -type d |tail -n+2)"
 [ "$d" ] 	|| HLP
 
 while read i ;do
-    mkpfs -d "$i" && addlayer "$nn" "$i" || exit 1
+    mkmeta "$i" "$n"  && addlayer "$nn" "$i" || exit 1
 done << EOF
 $d
 EOF
