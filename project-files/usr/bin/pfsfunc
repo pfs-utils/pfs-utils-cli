@@ -4,7 +4,7 @@
 #Author: DdShurick, pappyrus.org
 #Author: Sfs, pappyrus.org
 #Author: Betcher, magos-linux.ru
-#VERSION 3.0
+#VERSION 3.1
 
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
@@ -16,97 +16,13 @@ compression_fast="lz4"
 
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
-        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0 | head -n1)
+        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0)
         copyramdir=${SYSMNT}/copy2ram/
         prefixmp=${SYSMNT}/bundles/
         changesDir=${SYSMNT}/changes/
 fi
 
-
-function mkaufs () {
-N=$(ls /sys/fs/aufs/ | wc -w) 
-if [ $# = 0 ]; then
-	mkdir $SYSMNT/changes$N
-	mount -t tmpfs tmpfs $SYSMNT/changes$N
-elif [ $# = 2 ]; then
-	MNTPT="$(grep $1 /proc/mounts | awk '{print $2}')" 
-	[ "$(grep $1 /proc/partitions | wc -l)" = 1 ] || return 1 
-	[ "$(blkid /dev/$1 | grep ext)" ] || return 2
-	if [ "$MNTPT" = "" ]; then
-		MNTPT=/mnt/$1
-		mkdir $MNTPT
-		mount /dev/$1 $MNTPT
-	fi
-	mkdir $MNTPT/$2
-	ln -s $MNTPT/$2 /$SYSMNT/changes$N
-fi
-mkdir /$SYSMNT/aufs$N
-mount -t aufs -o dirs=$SYSMNT/changes$N/=rw aufs $SYSMNT/aufs$N && echo $N
-}
-
-function delaufs () {
-N=$(ls /sys/fs/aufs/ | wc -w) 
-[ "$1" -gt 0 -a "$N" -gt "$1" ] || return 1
-
-umount $SYSMNT/aufs$1
-rmdir $SYSMNT/aufs$1
-
-if [ "$(grep changes$1 /proc/mounts)" ]; then
-	umount -d /$SYSMNT/changes$1
-	rmdir /$SYSMNT/changes$1
-else
-	rm /$SYSMNT/changes$1
-fi
-if [ -d /$SYSMNT/bundles$1 ]; then
-	ls -1 /$SYSMNT/bundles$1 | while read D
-	do
-		umount -d /$SYSMNT/bundles$1/$D
-		rmdir /$SYSMNT/bundles$1/$D
-	done
-	 rmdir /$SYSMNT/bundles$1
-fi
-}
-
-function addlayer () {
-case "$1" in
-	0) AUFSMNT="/"; shift;;
-	[1-9]) N=$1
-		if [ $N -le $(ls -d /sys/fs/aufs/si_* | wc -w) ]; then
-			AUFSMNT=$SYSMNT/aufs$N
-			shift
-		else
-			return 1
-		fi
-	;;
-	*) AUFSMNT="/" ;;
-esac
-
-NEWLAYER=$(realpath "$1") || return 2
-[ "$(grep aufs$N /proc/mounts)" ] || return 3
-MODNAME=$(basename "$NEWLAYER")
-NAME=$(echo $MODNAME | sed 's/\....$//')
-
-case $(file -b $NEWLAYER) in
-	*directory) MODTYPE="dir" ;;
-	Squashfs*4.0*|Linux*ext*)
-		if [ "$(grep $NAME /proc/mounts)" ]; then #if the module is already mounted
-			NEWLAYER="$(grep $NAME /sys/fs/aufs/si_*/br[1-9]* | cut -f2 -d:| cut -f1 -d=)"
-		else
-			mkdir -p /$SYSMNT/bundles$N/"$MODNAME"
-			mount -o loop "$NEWLAYER" /$SYSMNT/bundles$N/"$MODNAME"
-			NEWLAYER=/$SYSMNT/bundles$N/"$MODNAME"
-		fi
-	;;
-	"") return 4 ;;
-	*) return 6 ;;
-esac
-lay=1
-[ $2 ] && lay=$2
-mount -o remount,add:$lay:"$NEWLAYER" $AUFSMNT
-#[ "$AUFSMNT" = "/" ] || echo "aufs смонтирована в $AUFSMNT, сохранение изменений /$SYSMNT/changes$N"
-}
-
-function checkramfreeb () {
+checkramfreeb () {
 	local free  
 if [[ -x $(which checkramfree) ]] ; then
 	echo $(checkramfree) 
@@ -117,14 +33,14 @@ fi 2>/dev/null
 }
 
 
-function allow_only_root()
+allow_only_root()
 {
     if [ "0$UID" -ne 0 ]; then
         echo "Only root can run" "$(basename $0)"; exit 1
     fi
 }
 
-function checksfsxzb () {
+checksfsxzb () {
 grep squashfs /proc/filesystems || return 1
 grep aufs /proc/filesystems     || return 1
 #check xz
@@ -144,7 +60,7 @@ fi
 return 0
 }
 
-function disktypeb () {
+disktypeb () {
 if disktype $1 2>/dev/null ; then 
 	return 0
 else
@@ -162,7 +78,7 @@ else
 fi
 }
 
-function fs_type () {
+fs_type () {
 diskinfo="$(disktypeb "$1" 2>/dev/null)"
 if echo "${diskinfo}" | grep -qi -F "Ext2" ;then
   echo 'ext2'
@@ -178,7 +94,7 @@ fi
 }
 
 
-function lddcheck () {
+lddcheck () {
 	local rootdir alllibs
 [ "${1}" != "" ] && rootdir="${1}" || rootdir="./"
 if [ ! -d "${rootdir}" ]; then
@@ -189,7 +105,7 @@ find "${rootdir}" -type f -executable | while read chfile; do [ "$(file --brief 
 return 0
 }
 
-function losetupb () {
+losetupb () {
 	if [ -x "$(which losetup-FULL)" ]; then
   losetup-FULL $@
 elif   [ -x "$(which losetup)" ] ; then
@@ -198,7 +114,7 @@ fi 2>/dev/null
 return $?
 }
 
-function mountb () {
+mountb () {
 if [ -x "$(which busybox)" ]; then
   if busybox --list | grep -q -F mount; then
     busybox mount $@
@@ -211,7 +127,7 @@ fi
 return $?
 }
 
-function umountb () {
+umountb () {
 if [ -x "$(which busybox)" ]; then
   if busybox --list | grep -q -F umount; then
     busybox umount $@
@@ -224,10 +140,9 @@ fi
 return $?
 }
 
-if [ "$(basename $0)" == "pfsfunc" ] ;then
+if [ "$(basename $0)" == "libpfs" ] ;then
 [ $1 ] || exit 1
 command="$1" 
 shift
 $command $@
 fi 
-
