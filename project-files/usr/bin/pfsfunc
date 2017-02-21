@@ -5,7 +5,6 @@
 #Author: Sfs, pappyrus.org
 #Author: Betcher, magos-linux.ru
 #VERSION 3.1
-
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
 
@@ -16,11 +15,51 @@ compression_fast="lz4"
 
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
-        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0)
+        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0 |head -n1)
         copyramdir=${SYSMNT}/copy2ram/
         prefixmp=${SYSMNT}/bundles/
         changesDir=${SYSMNT}/changes/
 fi
+
+usage () {
+	echo -e "$(basename $0) is a library for pfs-utils \n" 
+	echo "Usage:" 
+	echo "	$(basename $0) <function> <pars>"
+	echo "		OR"
+	echo -e "	. $(realpath $0) ;  <function> <pars> \n"
+	echo "functions list:"
+	echo "$(cat $0 |grep '^.*\ *().*{\ *$' |sed 's/().*{//')"
+	exit 1
+}
+
+color_red='\033[0;31m'
+color_green='\033[0;32m'
+color_default='\033[0m'
+
+exitmsg () {
+	if [ "$2" -ne 0 ] ; then
+	echo -ne "$color_red" ; echo "$1" ; echo -ne "$color_default\n"
+	exit $2
+	fi
+	exit 0
+} 
+
+allow_only_root() {
+    if [ "0$UID" -ne 0 ]; then
+        echo "Only root can run" "$(basename $0)"; exit 1
+    fi
+}
+
+mkmeta () {
+source_dir=$(realpath $1)
+dest_dir=$(realpath $2)
+pack_name="$(basename $1)"
+mkdir -p ${dest_dir}${PFSDIR}/mount/${pack_name}
+echo "name=$pack_name" > ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs
+find ${source_dir} ! -type d | sed "s:$source_dir::" >  ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.files
+find ${source_dir}  -type d -empty | sed "s:$source_dir::" > ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty
+[ -s ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty ] || rm ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty 
+}
 
 checkramfreeb () {
 	local free  
@@ -30,14 +69,6 @@ else
    free=$(expr $(df $copyramdir -B 1024 |grep tmpfs |awk '{print $4}') -  $TMPFSLIMIT)
    echo $free
 fi 2>/dev/null
-}
-
-
-allow_only_root()
-{
-    if [ "0$UID" -ne 0 ]; then
-        echo "Only root can run" "$(basename $0)"; exit 1
-    fi
 }
 
 checksfsxzb () {
@@ -140,9 +171,11 @@ fi
 return $?
 }
 
-if [ "$(basename $0)" == "libpfs" ] ;then
-[ $1 ] || exit 1
+if [ "$(basename $0)" == "pfsfunc" ] ;then
+[ $1 ] || usage
 command="$1" 
 shift
 $command $@
+exitmsg "$command  ERROR!!!" "$?"
 fi 
+
