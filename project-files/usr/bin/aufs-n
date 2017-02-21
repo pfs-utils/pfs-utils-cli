@@ -19,5 +19,5 @@ if [ ! $1 ] ;then
 	listing
 	exit
 elif echo $1 |grep -q '^[[:digit:]]*$' ; then
-	cat /sys/fs/aufs/si_*/br$1 |sed 's/=.*//'
+	cat /sys/fs/aufs/si_*/br$1 |head -n1 |sed 's/=.*//'
 fi  
