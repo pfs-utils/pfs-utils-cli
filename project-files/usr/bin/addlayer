@@ -1,6 +1,6 @@
 #!/bin/sh
 ## addlayer, DdShurick 16.02.2017, GPL v2.
-#170220 sfs
+#170221 sfs
 usage () {
 	if [ "$1" ]; then
 		echo "$0: $1"
@@ -14,7 +14,7 @@ usage () {
 }
 
 [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" -o "$2" = "" ] && usage
-df -x aufs "$2" 1>/dev/null 2>/dev/null || { echo "Ошибка!
+[ "`df "$2" |egrep '^aufs |^unionfs '`" ] && { echo "Ошибка!
     '$2' находится на разделе с aufs. 
     Переместите на раздел с другой файловой системой."
 delaufs "$1" && echo "AUFS слой '$1' размонтирован." ; exit 1
