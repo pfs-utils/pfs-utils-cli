@@ -46,7 +46,7 @@ exitmsg () {
 
 allow_only_root() {
     if [ "0$UID" -ne 0 ]; then
-        echo "Only root can run" "$(basename $0)"; exit 1
+        exitmsg "Only root can run $0" -1
     fi
 }
 

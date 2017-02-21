@@ -2,16 +2,16 @@
 #Merge dir -> .pfs , by sfs, GPL v3
 #VERSION 3.1
 . /usr/bin/pfsfunc
+allow_only_root
 
 checksfsxzb >/dev/null 2>&1
 if [ $? -gt 0 ]; then
-  echo "Kernel not support PFS!" >&2; exit 1
+  exitmsg "Kernel not support PFS!" 1
 fi
 
-ERR(){ echo "mkaufs error" exit 1 ; }
-n="`mkaufs || ERR`"
-nn="`echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p'`"
-[ "`echo "$n" |egrep '/aufs[1-9]$'`" ] || ERR
+n="$(mkaufs || exitmsg "mkaufs error" 2)"
+nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
+[ "$(echo "$n" |egrep '/aufs[1-9]$')" ] || exitmsg "error mounting aufs" 3
 
 HLP(){
 echo "Usage: $0 DIRECTORY
@@ -47,7 +47,7 @@ if [ -d "${pfsdir}" ]; then
   chmod 755 "${pfsdir}"
   cd "${pfsdir}"
 else
-  echo "Directory \"${pfsdir}\" not found!" >&2; exit 1
+  exitmsg "Directory \"${pfsdir}\" not found!" 4
 fi
 [ "${packname}" != "" ] && pfsname="${packname}" || pfsname="$(basename "${pfsdir}")"
 echo "${pfsname}"
@@ -60,7 +60,7 @@ d="$(find "${pfsdir}" -maxdepth 1 -type d |tail -n+2)"
 [ "$d" ] 	|| HLP
 
 while read i ;do
-    mkmeta "$i" "$n"  && addlayer "$nn" "$i" || exit 1
+    mkmeta "$i" "$n"  && addlayer "$nn" "$i" || exitmsg "can't insert layer to aufs" 5
 done << EOF
 $d
 EOF
@@ -75,4 +75,6 @@ if [ "${compression}" = "xz" ]; then
 fi
 ###mkpfs)
 mksquashfs "${n}" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc} &&
+[ $? -ne 0 ] && exitmsg "error create squashfs module" $?
 delaufs "$nn"
+exitmsg "delaufs error" $?
