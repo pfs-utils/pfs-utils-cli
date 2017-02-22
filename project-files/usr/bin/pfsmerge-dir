@@ -2,25 +2,30 @@
 #Merge dir -> .pfs , by sfs, GPL v3
 #VERSION 3.1
 . /usr/bin/pfsfunc
+
+HLP(){
+echo "Usage: $0 <list of sources> -o out.pfs"
+echo "Examples:"
+echo "$0 ./dir 			-make dir.pfs from dir"
+echo "$0 1.pfs 2.pfs -o 3.pfs	-collect 1.pfs and 2.pfs to contaner 3.pfs"
+echo "$0 * -o ./big.pfs		-collect all dirs and squashfs modules from current dir to big.pfs" 
+exit 1
+}
+[ $1 ] || HLP
 allow_only_root
+
 
 checksfsxzb >/dev/null 2>&1
 if [ $? -gt 0 ]; then
   exitmsg "Kernel not support PFS!" 1
 fi
 
-HLP(){
-echo "Usage: $0 <list of sources> -o out.pfs
-    Collect DIRECTORY/DIRECTORYS to PFS.pfs" && exit 1
-}
 
 argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
 	compression="$(echo $@ |sed 's/^.*\-*comp//')"
 	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
 fi
-
-
 
 sourcelist=""
 for arg in $argslist
@@ -29,9 +34,9 @@ do
     "-o" | "--out-file") onuserout="on";;
     "-h" | "--help")  HLP ;exit 1;;
     "-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
-    "-n" | "--no-dirs-empty") dirs="off";;
-    "-m" | "--md5") md5cr="on";;
-    "-e" | "--empty" | "--no-md5") ;;
+    #"-n" | "--no-dirs-empty") dirs="off";;
+    #"-m" | "--md5") md5cr="on";;
+    #"-e" | "--empty" | "--no-md5") ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
