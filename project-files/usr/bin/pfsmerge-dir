@@ -33,6 +33,7 @@ do
     #"-n" | "--no-dirs-empty") dirs="off";;
     #"-m" | "--md5") md5cr="on";;
     #"-e" | "--empty" | "--no-md5") ;;
+    "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
@@ -60,12 +61,12 @@ nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 
 
 for  i in $sourcelist ;do
-    mklist "$i" "$n"  && addlayer "$nn" "$i" || exitmsg "can't insert layer to aufs" 5
+    mklist "$i" "$n"  && eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs" 5
 done 
 
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
 
-mksquashfs "${n}" "${userout}" -comp ${compression} -noappend ${noprogress} ${useproc}
+eval mksquashfs "${n}" "${userout}" -comp ${compression} -noappend ${noprogress} ${useproc} "$devnull"
 	exitmsg "error create squashfs module" $?
 delaufs "$nn"
 	exitmsg "delaufs error" $?

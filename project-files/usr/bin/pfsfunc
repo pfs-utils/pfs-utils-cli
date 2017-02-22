@@ -62,7 +62,7 @@ source_dir="$(realpath "$1")"
 [ "$2" ] && dest_dir="$(realpath "$2")" || dest_dir="$source_dir"
 pack_name="$(basename "$1")"
 #[ "$(pwd)" != "/" ] && find "$source_dir/${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d ! -name "${pack_name}" -exec rm -rf "{}" \;
-[ "$(pwd)" != "/" ] && find "$source_dir/${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \;
+[ "$(pwd)" != "/" ] && find "${source_dir}${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \; 2>/dev/null
 mkdir -p "${dest_dir}${PFSDIR}/mount/${pack_name}" &&
 echo 'name="'$pack_name'"' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs" &&
 find "${source_dir}" ! -type d | sed "s:$source_dir::" > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.files" &&
