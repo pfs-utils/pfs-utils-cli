@@ -57,15 +57,18 @@ allow_only_root() {
     fi
 }
 
-mkmeta () {
-source_dir=$(realpath $1)
-dest_dir=$(realpath $2)
-pack_name="$(basename $1)"
-mkdir -p ${dest_dir}${PFSDIR}/mount/${pack_name}
-echo "name=$pack_name" > ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs
-find ${source_dir} ! -type d | sed "s:$source_dir::" >  ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.files
-find ${source_dir}  -type d -empty | sed "s:$source_dir::" > ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty
-[ -s ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty ] || rm ${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty 
+mklist () {
+source_dir="$(realpath "$1")"
+[ "$2" ] && dest_dir="$(realpath "$2")" || dest_dir="$source_dir"
+pack_name="$(basename "$1")"
+#[ "$(pwd)" != "/" ] && find "$source_dir/${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d ! -name "${pack_name}" -exec rm -rf "{}" \;
+[ "$(pwd)" != "/" ] && find "$source_dir/${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \;
+mkdir -p "${dest_dir}${PFSDIR}/mount/${pack_name}" &&
+echo 'name="'$pack_name'"' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs" &&
+find "${source_dir}" ! -type d | sed "s:$source_dir::" > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.files" &&
+find "${source_dir}"  -type d -empty | sed "s:$source_dir::" > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty" &&
+[ -s "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty" ] || rm "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty" || 
+exitmsg "mklist error" -1
 }
 
 checkramfreeb () {

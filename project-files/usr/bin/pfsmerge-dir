@@ -64,7 +64,7 @@ nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 
 
 for  i in $sourcelist ;do
-    mkmeta "$i" "$n"  && addlayer "$nn" "$i" || exitmsg "can't insert layer to aufs" 5
+    mklist "$i" "$n"  && addlayer "$nn" "$i" || exitmsg "can't insert layer to aufs" 5
 done 
 
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
