@@ -14,12 +14,8 @@ exit 1
 [ $1 ] || HLP
 allow_only_root
 
-
 checksfsxzb >/dev/null 2>&1
-if [ $? -gt 0 ]; then
-  exitmsg "Kernel not support PFS!" 1
-fi
-
+exitmsg "Kernel not support PFS!" $?
 
 argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
@@ -33,7 +29,7 @@ do
   case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
     "-h" | "--help")  HLP ;exit 1;;
-    "-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
+    #"-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
     #"-n" | "--no-dirs-empty") dirs="off";;
     #"-m" | "--md5") md5cr="on";;
     #"-e" | "--empty" | "--no-md5") ;;
@@ -49,8 +45,8 @@ do
   esac
 done
 
-[ "${packname}" != "" ] && pfsname="${packname}" || pfsname="$(basename "${pfsdir}")"
-echo "${pfsname}"
+#[ "${packname}" != "" ] && pfsname="${packname}" || pfsname="$(basename "${pfsdir}")"
+#echo "${pfsname}"
 
 for source in $sourcelist ;do
 	[ -d $source ] && continue
