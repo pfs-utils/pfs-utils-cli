@@ -11,14 +11,22 @@ TMPFSLIMIT=100000
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
 changesDir="/mnt/live/memory/changes/"
-compression_fast="lz4"
-
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
         [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0 |head -n1)
         copyramdir=${SYSMNT}/copy2ram/
         prefixmp=${SYSMNT}/bundles/
         changesDir=${SYSMNT}/changes/
+fi
+
+compression="xz -b 512K"
+compression_fast="lz4 -b 512K"
+if echo $compression |grep -q xz; then
+	if uname -m | grep -q -e "86" -e "32" -e "64" ;then
+	compression="$compression -Xbcj x86" 
+	else 
+	compression="$compression -Xbcj x86,arm"
+	fi
 fi
 
 usage () {
@@ -41,7 +49,6 @@ exitmsg () {
 	echo -ne "$color_red" ; echo "$1" ; echo -ne "$color_default\n"
 	exit $2
 	fi
-	exit 0
 } 
 
 allow_only_root() {

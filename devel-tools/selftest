@@ -82,7 +82,7 @@ m="$m\npfsramunload=		$PFSRAMUNLOAD"
 
 clear
 pfsextract -d testmodule.pfs && rm -f ./testmodule.pfs && \
-    pfsmerge-dir ./testmodule_pfs &&
+    pfsmerge-dir ./testmodule_pfs/* -o testmodule.pfs
 [ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSMERGEDIR=OK  #|| ex 
 m="$m\npfsmerge-dir=		$PFSMERGEDIR"
 CLEAR
