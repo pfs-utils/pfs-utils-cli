@@ -2,6 +2,11 @@
 #VERSION 3.2
 . /usr/bin/pfsfunc
 
+case $1 in
+ -d | --dir ) $0 $(find $2 -maxdepth 1 -mindepth 1 -type d ) -o $2.pfs ; exit $? ;;
+ -m | --mod ) $0 $(find $2 -maxdepth 1 -mindepth 1 -type f ) -o $2.pfs ; exit $? ;;
+esac
+
 HLP(){
 echo "Usage: $0 <list of sources> -o out.pfs"
 echo "Examples:"
@@ -13,8 +18,15 @@ echo "Параметры (ключи):"
 echo "	-o / --out-file - указывает название выходного файла .pfs."
 echo "	-w - не включать AUFS тени."
 echo "	-f / --fast - быстрая компрессия (размер .pfs больше, но создается быстрее)."
+echo "	-comp / параметры для mksquashfs, компрессия размер блока и проч."
+echo "Алиасы (сокращения):"
+echo " -d | --dir - Только каталоги"
+echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.pfs'
+echo " -m | --mod - Только модули"
+echo "	$(basename $0) -m dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type f ) -o dir.pfs'
 exit 1
 }
+
 [ $1 ] || HLP
 allow_only_root
 
@@ -50,9 +62,6 @@ do
        onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
   esac
 done
-
-#[ "${packname}" != "" ] && pfsname="${packname}" || pfsname="$(basename "${pfsdir}")"
-#echo "${pfsname}"
 
 for source in $sourcelist ;do
 	[ -d $source ] && continue
