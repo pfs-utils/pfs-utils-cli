@@ -20,7 +20,7 @@ if [ -f /etc/initvars ] ; then
 fi
 
 compression="xz -b 512K"
-compression_fast="lz4 -b 512K"
+compression_fast="lz4"
 if echo $compression |grep -q xz; then
 	if uname -m | grep -q -e "86" -e "32" -e "64" ;then
 	compression="$compression -Xbcj x86" 
