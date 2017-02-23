@@ -1,6 +1,5 @@
 #!/bin/sh
-#Merge dir -> .pfs , by sfs, GPL v3
-#VERSION 3.1
+#VERSION 3.2
 . /usr/bin/pfsfunc
 
 HLP(){
@@ -9,6 +8,11 @@ echo "Examples:"
 echo "$0 ./dir 			-make dir.pfs from dir"
 echo "$0 1.pfs 2.pfs -o 3.pfs	-collect 1.pfs and 2.pfs to contaner 3.pfs"
 echo "$0 * -o ./big.pfs		-collect all dirs and squashfs modules from current dir to big.pfs" 
+echo
+echo "Параметры (ключи):"
+echo "	-o / --out-file - указывает название выходного файла .pfs."
+echo "	-w - не включать AUFS тени."
+echo "	-f / --fast - быстрая компрессия (размер .pfs больше, но создается быстрее)."
 exit 1
 }
 [ $1 ] || HLP
@@ -36,6 +40,7 @@ do
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
+    "-w") wh="-regex -e ".wh..wh."";;
     "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
@@ -66,7 +71,7 @@ done
 
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
 
-eval mksquashfs "${n}" "${userout}" -comp ${compression} -noappend ${noprogress} ${useproc} "$devnull"
+eval mksquashfs "${n}" "${userout}" -comp ${compression} -noappend ${noprogress} ${useproc} "$devnull" $wh
 	exitmsg "error create squashfs module" $?
 delaufs "$nn"
 	exitmsg "delaufs error" $?
