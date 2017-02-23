@@ -2,11 +2,13 @@
 #VERSION 3.2
 . /usr/bin/pfsfunc
 
+#aliases
 case $1 in
  -d | --dir ) $0 $(find $2 -maxdepth 1 -mindepth 1 -type d ) -o $2.pfs ; exit $? ;;
  -m | --mod ) $0 $(find $2 -maxdepth 1 -mindepth 1 -type f ) -o $2.pfs ; exit $? ;;
 esac
 
+#help
 HLP(){
 echo "Usage: $0 <list of sources> -o out.pfs"
 echo "Examples:"
@@ -30,25 +32,24 @@ exit 1
 [ $1 ] || HLP
 allow_only_root
 
+#check kernel
 checksfsxzb >/dev/null 2>&1
-exitmsg "Kernel not support PFS!" $?
+exitmsg "Kernel is not support squashfs/aufs" $?
 
+#parsing for "-comp" arg
 argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
 	compression="$(echo $@ |sed 's/^.*\-*comp//')"
 	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
 fi
 
+#get opts
 sourcelist=""
 for arg in $argslist
 do
   case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
     "-h" | "--help")  HLP ;exit 1;;
-    #"-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
-    #"-n" | "--no-dirs-empty") dirs="off";;
-    #"-m" | "--md5") md5cr="on";;
-    #"-e" | "--empty" | "--no-md5") ;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
@@ -63,24 +64,27 @@ do
   esac
 done
 
+#test sources, source must be dir or squashfs module
 for source in $sourcelist ;do
 	[ -d $source ] && continue
 	[ "$(fs_type $source)" == "squashfs" ] && continue
 	exitmsg "Type of source \"$source\" is not correct" 2
 done	
 
+#make aufs
 n="$(mkaufs || exitmsg "mkaufs error" 2)"
 nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 [ "$(echo "$n" |egrep '/aufs[1-9]$')" ] || exitmsg "error mounting aufs" 3
 
-
+#add sources as aufs layers
 for  i in $sourcelist ;do
     mklist "$i" "$n"  && eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs" 5
 done 
 
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
 
-eval mksquashfs "${n}" "${userout}" -comp ${compression} -noappend ${noprogress} ${useproc} "$devnull" $wh
+#make module
+eval mksquashfs "${n}" "${userout}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh "$devnull" 
 	exitmsg "error create squashfs module" $?
 delaufs "$nn"
 	exitmsg "delaufs error" $?
