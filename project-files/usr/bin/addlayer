@@ -44,9 +44,13 @@ NAME="$(echo $MODNAME | sed 's/\....$//')"
 case $(file -b $NEWLAYER) in
 	*directory) MODTYPE="dir" ;;
 	Squashfs*4.0*|Linux*ext*)
+#		if [ "$(grep "/$NAME squashfs " /proc/mounts)" ]; then #if the module is already mounted
+#			NEWLAYER="$(grep "/$NAME=" /sys/fs/aufs/si_*/br[1-9]* | cut -f2 -d:| cut -f1 -d=)"
+#		else
 			mkdir -p "/$SYSMNT/bundles$N/$MODNAME"
 			mount -o loop "$NEWLAYER" "/$SYSMNT/bundles$N/$MODNAME"
 			NEWLAYER="/$SYSMNT/bundles$N/$MODNAME"
+#		fi
 	;;
 	"") usage "Missing modulename" ;;
 	*) usage "Invalid format $MODNAME" ;;
