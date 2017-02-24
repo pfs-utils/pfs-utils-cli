@@ -9,7 +9,7 @@ TMPFSLIMIT=100000
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
 changesDir="/mnt/live/memory/changes/"
-        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
+SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
         copyramdir=${SYSMNT}/copy2ram/
