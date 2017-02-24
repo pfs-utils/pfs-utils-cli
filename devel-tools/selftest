@@ -29,10 +29,10 @@ ex(){ printf "$m\n====== \e[31mTest  aborted\e[0m =====\n"
 	exit 1 
 }
 
-mkdir -p ./first/111 ./second/222
+mkdir -p ./first/111 ./second/222 ./first/empty
 : > ./first/111/file
 : > ./second/222/file
-
+chmod 644 ./first/empty ; chown nobody ./first/empty
 echo "############# mkpfs ##############"
 m="\n=========================="
 mkpfs ./first && mkpfs ./second && MKPFS=OK
