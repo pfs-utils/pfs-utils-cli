@@ -1,96 +1,90 @@
 #!/bin/sh
-#Make .pfs , by Zay, GPL v3.
-#VERSION 3.0
+#VERSION 3.2
 . /usr/bin/pfsfunc
 
+#aliases
+case $1 in
+ -d | --dir ) $0 $(find "$2" -maxdepth 1 -mindepth 1 -type d ) -o "$2".pfs ; exit $? ;;
+ -m | --mod ) $0 $(find "$2" -maxdepth 1 -mindepth 1 -type f \( -name "*.pfs" -o -name ".xzm" \)) -o "$2".pfs ; exit $? ;;
+esac
+
+#help
 HLP(){
-[ "`echo $LANG| egrep '^ru_RU'`" ] || return
-echo "\
-mkpfs создаёт .pfs пакет из каталога (аналогично mksquashfs). Автоматически создаёт файлы pfs.files, pfs.specs и pfs.dirs.empty (при наличии внутри пакета пустых каталогов).
-Использование:
-
-    mkpfs - создаст .pfs из текущего каталога
-    mkpfs /catalog - создаст .pfs из каталога «/catalog».
-    mkpfs -d - создаст $PFSDIR без упаковки в модуль
-
-Параметры (ключи):
-
-    -p / --name - задаёт название пакета (по умолчанию соответствует названию каталога).
-    -o / --out-file - указывает название выходного файла .pfs.
-    -m / --md5 - создать необязательный файл pfs.md5.
-    -n / --not-dirs-empty - не создавать файл pfs.dirs.empty.
-    -no-progress - не показывать строку прогресса.
-    -f / --fast - быстрая компрессия (размер .pfs больше, но создается быстрее).
-" >&2 ;exit 1
+echo "Usage: $0 <list of sources> -o out.pfs"
+echo "Examples:"
+echo "$0 ./dir 			-make dir.pfs from dir"
+echo "$0 1.pfs 2.pfs -o 3.pfs	-collect 1.pfs and 2.pfs to contaner 3.pfs"
+echo "$0 * -o ./big.pfs		-collect all dirs and squashfs modules from current dir to big.pfs" 
+echo
+echo "Параметры (ключи):"
+echo "	-o / --out-file - указывает название выходного файла .pfs."
+echo "	-w - не включать AUFS тени."
+echo "	-f / --fast - быстрая компрессия (размер .pfs больше, но создается быстрее)."
+echo "	-comp / параметры для mksquashfs, компрессия размер блока и проч."
+echo "Алиасы (сокращения):"
+echo " -d | --dir - Только каталоги"
+echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.pfs'
+echo " -m | --mod - Только модули"
+echo "	$(basename $0) -m dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type f ) -o dir.pfs'
+exit 1
 }
 
-compression="xz"
-argslist="$@"
+[ $1 ] || HLP
+allow_only_root
 
+#check kernel
+checksfsxzb >/dev/null 2>&1
+exitmsg "Kernel is not support squashfs/aufs" $?
+
+#parsing for "-comp" arg
+argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
 	compression="$(echo $@ |sed 's/^.*\-*comp//')"
 	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
 fi
 
+#get opts
+sourcelist=""
 for arg in $argslist
 do
   case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
-    "-?" | "--help")  HLP ;exit 1;;
-    "-p" | "--name" | "--name-pack" | "--name-package") usepkname="on";;
-    "-n" | "--no-dirs-empty") dirs="off";;
-    "-m" | "--md5") md5cr="on";;
-    "-e" | "--empty" | "--no-md5") ;;
-    "-d" | "--dir") dir=1;;
+    "-h" | "--help")  HLP ;exit 1;;
+    "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
+    "-w") wh="-regex -e ".wh..wh."";;
     "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
-       else pfsdir="${arg}"; fi
+       else sourcelist="${sourcelist} ${arg}"; fi
        onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
   esac
 done
 
-pwddir="$(pwd)"
-[ "${pfsdir}" = "" ] && pfsdir="${pwddir}"
-if [ -d "${pfsdir}" ]; then
-  chmod 755 "${pfsdir}"
-  cd "${pfsdir}"
-else
-  echo "Directory \"${pfsdir}\" not found!" >&2; exit 1
-fi
-[ "${packname}" != "" ] && pfsname="${packname}" || pfsname="$(basename "${pfsdir}")"
-echo "${pfsname}"
+#test sources, source must be dir or squashfs module
+for source in $sourcelist ;do
+	[ -d $source ] && continue
+	[ "$(fs_type $source)" == "squashfs" ] && continue
+	exitmsg "Type of source \"$source\" is not correct" 2
+done	
 
-mkdir -p ".${PFSDIR}/mount/${pfsname}"
-[ $? -gt 0 ] && exit 1
-[ "$(pwd)" != "/" ] && find ".${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d ! -name "${pfsname}" -exec rm -rf "{}" \;
-[ ! -f ".${PFSDIR}/mount/${pfsname}/pfs.specs" ] && echo "name=\"${pfsname}\"" >".${PFSDIR}/mount/${pfsname}/pfs.specs"
+#make aufs
+n="$(mkaufs || exitmsg "mkaufs error" 2)"
+nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
+[ "$(echo "$n" |egrep '/aufs[1-9]$')" ] || exitmsg "error mounting aufs" 3
 
-allfiles="$(find . ! -type d | grep -v -F '.${PFSDIR}/' | cut -f2- -d'.' | sort -f)"
-if [ "${allfiles}" = "" ]; then
-  echo "Files not found!" >&2; exit 1
-fi
-echo "${allfiles}" >".${PFSDIR}/mount/${pfsname}/pfs.files"
-[ $? -gt 0 ] && exit 1
+#add sources as aufs layers
+for  i in $sourcelist ;do
+    mklist "$i" "$n"  && eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs" 5
+done 
 
-[ "${dirs}" != "off" ] && dirsempty="$(find . -type d -empty | cut -f2- -d'.' | sort -f)" 
-[ "${dirs}" = "off" -o "${dirsempty}" = "" ] && [ -f ".${PFSDIR}/mount/${pfsname}/pfs.dirs.empty" ] && rm -f ".${PFSDIR}/mount/${pfsname}/pfs.dirs.empty"
-[ "${dirsempty}" != "" ] && echo "${dirsempty}" >".${PFSDIR}/mount/${pfsname}/pfs.dirs.empty"
+[ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
 
-[ "${md5cr}" = "on" ] && md5s="$(find . -type f -exec md5sum "{}" \; | grep -v -F '.${PFSDIR}/' | sed 's/\.//' | sort -k 2 -f)"
-[ "${md5cr}" != "on" -o "${md5s}" = "" ] && [ -f ".${PFSDIR}/mount/${pfsname}/pfs.md5sums" ] && rm -f ".${PFSDIR}/mount/${pfsname}/pfs.md5sums"
-[ "${md5s}" != "" ] && echo "${md5s}" >".${PFSDIR}/mount/${pfsname}/pfs.md5sums"
-
-[ "$dir"  ] && exit 0
-
-[ "${pfsdir}" = "${pwddir}" ] && cd ../ || cd "${pwddir}"
-[ "${userout}" = "" ] && userout="./${pfsname}.pfs"
-if [ "${compression}" = "xz" ]; then
-  optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
-fi
-echo "compression type: $compression ${optionscomp} ${bcjcomp}"
-mksquashfs "${pfsdir}" "${userout}" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
+#make module
+eval mksquashfs "${n}" "${userout}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh "$devnull" 
+	exitmsg "error create squashfs module" $?
+delaufs "$nn"
+	exitmsg "delaufs error" $?
