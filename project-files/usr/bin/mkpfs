@@ -72,7 +72,7 @@ do
 done
 
 #модуль из одного каталога
-if [ -d $sourcelist ];then
+if [ -d $sourcelist 2>/dev/null ];then
     [ "${userout}" = "" ] && userout=$sourcelist.pfs
     mklist $sourcelist && MKM $sourcelist $userout && exit 0
 fi
@@ -98,6 +98,7 @@ for  i in $sourcelist ;do
     [ -d "$n2" ] || exitmsg "error mounting aufs" 3
     #mklist "$i" "$n"  && eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs" 5
     [ -f "$i" ] && name="`basename "${i%.*}"`" #без расширения
+    [ -d "$i" ] && name="`basename "${i}"`"
     eval addlayer "$nn2" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn2" 5
     mklist "$n2" "$n" $name
     delaufs "$nn2"
