@@ -4,8 +4,17 @@
 
 #aliases
 case $1 in
- -d | --dir ) $0 $(find "$2" -maxdepth 1 -mindepth 1 -type d ) -o "$2".pfs ; exit $? ;;
- -m | --mod ) $0 $(find "$2" -maxdepth 1 -mindepth 1 -type f \( -name "*.pfs" -o name ".sfs" -o -name ".xzm" \)) -o "$2".pfs ; exit $? ;;
+ -d | --dir )
+    m="$(find "$2" -maxdepth 1 -mindepth 1 -type d )"
+    [ "$m" ] || exitmsg "no directory in '$2'" $?
+    $0 $m -o "$2".pfs ; exit $?
+    ;;
+ -m | --mod )
+    m="$(find "$2" -maxdepth 1 -mindepth 1 -type f \( -name "*.pfs" -o name ".sfs" -o -name ".xzm" \
+))"
+    $0 $m -o "$2".pfs ; exit $?
+    ;;
+ *) [ "`ls "$2"`" ] || exitmsg "directory '$1' empty" $? ;;
 esac
 
 MKM(){
