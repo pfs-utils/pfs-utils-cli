@@ -2,16 +2,16 @@
 #library for pfs-utils, GPL v3. https://github.com/pfs-utils/
 #Authors: puppyrus.org : Zay, DdShurick, sfs
 #Author: magos-linux.ru: Betcher
-#VERSION 3.2
+#VERSION 3.3
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
 
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
 changesDir="/mnt/live/memory/changes/"
+        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
-        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
         copyramdir=${SYSMNT}/copy2ram/
         prefixmp=${SYSMNT}/bundles/
         changesDir=${SYSMNT}/changes/
@@ -56,10 +56,12 @@ allow_only_root() {
 }
 
 mklist () {
+#mklist source_dir [dest_dir] [pack_name]
 source_dir="$(realpath "$1")"
 [ "$2" ] && dest_dir="$(realpath "$2")" || dest_dir="$source_dir"
 pack_name="$(basename "$1")"
 #[ "$(pwd)" != "/" ] && find "$source_dir/${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d ! -name "${pack_name}" -exec rm -rf "{}" \;
+[ "$3" ] && pack_name="$3"
 [ "$(pwd)" != "/" ] && find "${source_dir}${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \; 2>/dev/null
 mkdir -p "${dest_dir}${PFSDIR}/mount/${pack_name}" &&
 echo 'name="'$pack_name'"' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs" &&
@@ -186,4 +188,3 @@ shift
 $command $@
 exitmsg "$command  ERROR!!!" "$?"
 fi 
-
