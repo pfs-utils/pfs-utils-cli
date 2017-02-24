@@ -19,7 +19,7 @@ usage () {
 
 #N=$(ls /sys/fs/aufs/ | wc -w) # № для aufs если несколько.
 N=$(ls /sys/fs/aufs/ |egrep '^si_'| wc -w) # № для aufs если несколько.
-SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0 | head -n1)
+SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
 
 if [ $# = 0 ]; then
 	mkdir /$SYSMNT/changes$N
