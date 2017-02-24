@@ -33,6 +33,7 @@ mkdir -p ./first/111 ./second/222
 : > ./first/111/file
 : > ./second/222/file
 
+echo "############# mkpfs ##############"
 m="\n=========================="
 mkpfs ./first && mkpfs ./second && MKPFS=OK
 m="$m\nmkpfs=			$MKPFS" 
@@ -40,22 +41,28 @@ rm -rf ./first
 rm -rf ./second
 [ "$MKPFS" != "OK" ] && ex
 
+echo "############# pfsinstall ##############"
 pfsinstall ./first.pfs && PFSINSTALL=OK || ex
 m="$m\npfsinstall=		$PFSINSTALL"
 
+echo "############# pfsunstall ##############"
 pfsuninstall ./first.pfs && PFSUNINSTALL=OK || ex
 m="$m\npfsuninstall=		$PFSUNINSTALL" 
 
+echo "############# pfsmerge ##############"
 pfsmerge ./first.pfs ./second.pfs testmodule.pfs && PFSMERGE=OK || ex
 m="$m\npfsmerge=		$PFSMERGE" 
 
+echo "############# pfsinfo ##############"
 [ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSINFO=OK || ex
 m="$m\npfsinfo=		$PFSINFO" 
 
+echo "############# mountfile ##############"
 mountfile testmodule.pfs && umount /mnt/*+testmodule.pfs &&
     rmdir /mnt/*+testmodule.pfs && MNTFILE=OK || MNTFILE="\e[31mFALSE\e[0m"
 m="$m\nmountfile=		$MNTFILE"
 
+echo "############# pfsextract ##############"
 pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] && \
     [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK || ex
 rm -r testmodule_pfs 2>/dev/null
@@ -63,24 +70,29 @@ rm -r testmodule_pfs 2>/dev/null
 m="$m\npfsextract=		$PFSEXTRACT"
 EXITCODE=1
  
+echo "############# pfsload ##############"
 pfsload ./testmodule.pfs && PFSLOAD=OK || ex
 m="$m\npfsload=		$PFSLOAD"
 
-
+echo "############# pfsrebuild ##############"
 rm -f ./testmodule.pfs
 pfsrebuild testmodule.pfs && PFSREBUILD=OK || ex
 m="$m\npfsrebuild=		$PFSREBUILD" 
 
+echo "############# pfsunload ##############"
 pfsunload ./testmodule.pfs && PFSUNLOAD=OK || ex
 m="$m\npfsunload=		$PFSUNLOAD"
 
+echo "############# pfsramload ##############"
 pfsramload ./testmodule.pfs && PFSRAMLOAD=OK || ex
 m="$m\npfsramload=		$PFSRAMLOAD"
 
+echo "############# pfsramunload ##############"
 pfsramunload ./testmodule.pfs && PFSRAMUNLOAD=OK || ex
 m="$m\npfsramunload=		$PFSRAMUNLOAD"
 
 clear
+echo "############# pfsmerge-dir ##############"
 pfsextract -d testmodule.pfs && rm -f ./testmodule.pfs && \
     pfsmerge-dir ./testmodule_pfs/* -o testmodule.pfs
 [ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSMERGEDIR=OK  #|| ex 
