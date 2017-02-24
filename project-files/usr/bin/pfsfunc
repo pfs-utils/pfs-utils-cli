@@ -1,10 +1,8 @@
 #!/bin/sh
-#library for pfs-utils, GPL v3.
-#Author: Zay, pappyrus.org
-#Author: DdShurick, pappyrus.org
-#Author: Sfs, pappyrus.org
-#Author: Betcher, magos-linux.ru
-#VERSION 3.1
+#library for pfs-utils, GPL v3. https://github.com/pfs-utils/
+#Authors: puppyrus.org : Zay, DdShurick, sfs
+#Author: magos-linux.ru: Betcher
+#VERSION 3.2
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
 
@@ -13,7 +11,7 @@ prefixmp="/mnt/."
 changesDir="/mnt/live/memory/changes/"
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
-        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_*/br0 |head -n1)
+        [ "$SYSMNT" ] || SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
         copyramdir=${SYSMNT}/copy2ram/
         prefixmp=${SYSMNT}/bundles/
         changesDir=${SYSMNT}/changes/
