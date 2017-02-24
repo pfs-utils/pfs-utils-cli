@@ -5,7 +5,7 @@
 #aliases
 case $1 in
  -d | --dir ) $0 $(find "$2" -maxdepth 1 -mindepth 1 -type d ) -o "$2".pfs ; exit $? ;;
- -m | --mod ) $0 $(find "$2" -maxdepth 1 -mindepth 1 -type f -name "*.pfs") -o "$2".pfs ; exit $? ;;
+ -m | --mod ) $0 $(find "$2" -maxdepth 1 -mindepth 1 -type f \( -name "*.pfs" -o -name ".xzm" \)) -o "$2".pfs ; exit $? ;;
 esac
 
 #help
