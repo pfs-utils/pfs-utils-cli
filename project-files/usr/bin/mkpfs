@@ -10,7 +10,7 @@ case $1 in
     $0 $m -o "$2".pfs ; exit $?
     ;;
  -m | --mod )
-    m="$(find "$2" -maxdepth 1 -mindepth 1 -type f \( -name "*.pfs" -o name ".sfs" -o -name ".xzm" ))"
+    m="$(find "$2" -maxdepth 1 -mindepth 1 -type f |egrep '.pfs$|.xzm$|.sfs$|.squashfs$')"
     [ "$m" ] || exitmsg "no modules in '$2'" 1
     $0 $m -o "$2".pfs ; exit $?
     ;;
