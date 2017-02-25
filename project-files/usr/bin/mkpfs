@@ -98,7 +98,7 @@ nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 
 #add sources as aufs layers
 for  i in $sourcelist ;do
-    eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn2" 5
+    eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
     [ -d "$i" ] && mklist "$i" "$n"
 done 
 bundles=$(find $(echo $n |sed 's:aufs:bundles:') -maxdepth 1 -mindepth 1 -type d 2>/dev/null)
