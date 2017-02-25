@@ -11,8 +11,10 @@ case $1 in
     ;;
  -m | --mod )
     m="$(find "$2" -maxdepth 1 -mindepth 1 -type f \( -name "*.pfs" -o name ".sfs" -o -name ".xzm" ))"
+    [ "$m" ] || exitmsg "no modules in '$2'" 1
     $0 $m -o "$2".pfs ; exit $?
     ;;
+ *) [ "`ls "$1"`" ] || exitmsg "directory '$1' empty" 1 ;;
 esac
 
 MKM(){
