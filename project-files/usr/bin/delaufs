@@ -1,6 +1,6 @@
 #!/bin/sh
 ## delaufs, DdShurick 18.02.2017, GPL v2.
-#170219 sfs
+#170224 sfs
 
 usage() {
 	if [ "$1" ]; then
