@@ -14,8 +14,7 @@ case $1 in
     [ "$m" ] || exitmsg "no modules in '$2'" 1
     $0 $m -o "$2".pfs ; exit $?
     ;;
- *) [ "`ls "$1"`" ] || exitmsg "directory '$1' empty" 1 ;;
-esac
+ esac
 
 MKM(){
 #make module
@@ -78,6 +77,8 @@ do
        onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
   esac
 done
+
+[ -d $sourcelist 2>/dev/null ] && [ ! "`ls $sourcelist`" ] && exitmsg "directory '$sourcelist' empty" 1
 
 #test sources, source must be dir or squashfs module
 for source in $sourcelist ;do
