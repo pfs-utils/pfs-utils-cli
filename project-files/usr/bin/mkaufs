@@ -1,6 +1,6 @@
 #!/bin/sh
 ## mkaufs, DdShurick 14.02.2017, GPL v2. The idea of betcher.
-#170219 sfs
+#170224 sfs
 
 usage () {
 	if [ "$1" ]; then
@@ -26,9 +26,9 @@ if [ $# = 0 ]; then
 	mount -t tmpfs tmpfs /$SYSMNT/changes$N
 elif [ $# = 2 ]; then
 	MNTPT="$(grep $1 /proc/mounts | awk '{print $2}')" 
-	[ "$(grep $1 /proc/partitions | wc -l)" = 1 ] || usage "Такого раздела не существует"
-	[ "$(blkid /dev/$1 | grep ext)" ] || usage "ФС не Linux"
 	if [ "$MNTPT" = "" ]; then
+		[ "$(grep $1 /proc/partitions)" ] || usage "Такого раздела не существует"
+		[ "$(blkid $DEV | grep ext)" ] || usage "ФС не Linux"
 		MNTPT=/mnt/$1
 		mkdir $MNTPT
 		mount /dev/$1 $MNTPT
