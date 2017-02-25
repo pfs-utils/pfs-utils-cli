@@ -1,0 +1,108 @@
+#!/bin/sh
+#VERSION 3.1
+. /usr/bin/pfsfunc
+
+HLP(){
+[ "`echo $LANG| egrep '^ru_RU'`" ] || return
+echo "\
+pfsextract извлекает отдельные модули из составных модулей.pfs.
+Использование:
+
+    pfsextract /file.pfs - создать каталог «/file» с отдельными модулями.pfs из «/file.pfs»
+    pfsextract -d /file.pfs - создать каталог «/file» с отдельными каталогами, в каждый из которых распакованы отдельные модули из «/file.pfs»
+    pfsextract /file.pfs /catalog - создать в каталоге «/catalog» отдельные модули.pfs из «/file.pfs». «/catalog» должен быть пустым.
+    pfsextract /file.pfs /catalog -p pack_1 pack_2 - создать в каталоге «/catalog» отдельные файлы .pfs только из модулей «pack_1» и «pack_2», если модули с такими названиями содержатся в файле «/file.pfs» (использование «-p pack_1 pack_2» допустимо и без указания «/catalog»).
+
+Параметры (ключи):
+
+    -no-progress - не показывать строку прогресса.
+    -f  - быстрая компрессия (размер .pfs больше, но создается быстрее).
+" >&2 ;exit 1
+}
+
+[ "$1" = "-d" ] && d=1 && shift
+[ "`file ${1} |grep -v "Squashfs filesystem"`" ] && exitmsg "File '${1}' is not squashfs" 1
+[ "`unsquashfs -l ${1} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l`" -lt 2 ] && exitmsg "File '${pfsname}' is not component-pfs. Use 'unsquashfs ${1}'" 1
+
+[ "$1" ] || HLP
+allow_only_root
+
+#check kernel
+checksfsxzb >/dev/null 2>&1
+exitmsg "Kernel is not support squashfs/aufs" $?
+
+MKM(){
+#make module
+eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh "$devnull" 
+	exitmsg "error create squashfs module" $?
+}
+wh="-regex -e ".wh..wh.""
+
+ML(){
+##mkpfs(
+#make root aufs
+n="$(mkaufs || exitmsg "mkaufs error" 2)"
+nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
+[ -d "$n" ] || exitmsg "error mounting aufs" 3
+##mkpfs)
+}
+
+
+##mkpfs(
+#parsing for "-comp" arg
+argslist="$@"
+if  echo $argslist |grep -q "\-*comp .*" ; then
+	compression="$(echo $@ |sed 's/^.*\-*comp//')"
+	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
+fi
+
+#get opts
+sourcelist=""
+for arg in $argslist
+do
+  case "${arg}" in
+    "-o" | "--out-file") onuserout="on";;
+    "-h" | "--help")  HLP ;exit 1;;
+    "-q" | "--quiet" ) devnull='>/dev/null' ;;
+    "-no-progress" | "--no-progress") noprogress="-no-progress";;
+    "-processors" | "--processors" ) numproc="on";;
+    "-w") wh="-regex -e ".wh..wh."";;
+    "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
+    *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
+       elif [ "${onuserout}" = "on" ]; then userout="${arg}"
+       elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
+       else sourcelist="${sourcelist} ${arg}"; fi
+       onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
+  esac
+done
+##mkpfs)
+
+p="`basename "$1"`"
+mm="/$SYSMNT/bundles1/$p/etc/packages/mount/"
+#dir="`basename "$1" .pfs`_pfs"
+dir="`basename "$1" .pfs`"
+mkdir -p "$dir"
+
+pfsinfo "$1" |while read m ;do
+    #echo "$m"
+    ML "$1"
+    eval addlayer "$nn" "$1" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
+    cat "/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.files" | while read F; do 
+	cp -a "/$SYSMNT/bundles$nn/$p/$F" "/$SYSMNT/aufs$nn$F"
+    done
+
+    emp="/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.dirs.empty"
+    [ -f "$emp" ] && cat "$emp" | while read F; do 
+	touch "/$SYSMNT/aufs$nn$F"
+    done
+
+    mklist "/$SYSMNT/changes$nn" "/$SYSMNT/changes$nn" "$m" 
+    if [ "$d" ];then	
+	mkdir -p "$dir/$m" && mv "/$SYSMNT/changes$nn"/* "$dir/$m"
+    else
+	MKM "/$SYSMNT/changes$nn" "$dir/$m.pfs"
+    fi
+    #exit
+    delaufs $nn
+done
