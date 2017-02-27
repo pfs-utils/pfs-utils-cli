@@ -3,6 +3,9 @@
 #VERSION 3.0
 . /usr/bin/pfsfunc
 allow_only_root 
+FILELIST=/.savelist
+#changesDir=/memory/changes
+rm -f /tmp/savelist* /tmp/allfiles /tmp/includedfiles /tmp/excludedfiles  
 
 function dirlayer () {
 [ -d $layername ] || mkdir -p $layername
@@ -22,26 +25,57 @@ if ! file $layername |grep -q ext ; then
 fi
 }
 
+function mkwhitelist () {
+	echo -e "/tmp/includedfiles\n/tmp/excludedfiles" > /tmp/excludedfiles
+	if ! [ -f "$FILELIST" ] ;then
+	echo "make /.savelist"
+cat > "$FILELIST" <<EndOF
+!/dev
+!/proc
+!/sys
+!/run
+!/var/log
+!/var/spool
+!/memory
+!/tmp
+!/mnt
+EndOF
+	fi
+	grep ^! "$FILELIST" | sed 's:!:\^:' > /tmp/savelist.black
+	grep -v '^[!#]' "$FILELIST" && grep -v '^[!#]' "$FILELIST" >/tmp/savelist.white
+	find ${changesDir} \( -type l -o -type f \) | sed 's|'${changesDir}'|/|' >/tmp/allfiles
+	find ${changesDir}  -type d -empty | sed 's|'${changesDir}'|/|' >>/tmp/allfiles
+	grep -q . /tmp/savelist.black && grep -f /tmp/savelist.black /tmp/allfiles >> /tmp/excludedfiles
+	sed -i 's:^/:\^/:' /tmp/excludedfiles
+	grep -vf /tmp/excludedfiles /tmp/allfiles > /tmp/includedfiles
+	[ -f /tmp/savelist.white ] && grep -f /tmp/savelist.white /tmp/allfiles >> /tmp/includedfiles
+	cat /tmp/includedfiles
+}
+
 function  sync2layer () {
 	layermp=$(aufs-n 1)
 	[ -d  $layermp -a -w $layermp ] || exitmsg "Layer mounted RO" 4
-	dirlist=$(find ${changesDir}  -type d |sed 's:/.*/changes::')
-	filelist=$(find ${changesDir}  \( -type f -o -type l \) )
-	for dir in ${dirlist} ; do 
-	echo $dir |grep -q .wh* || mkdir -p ${layermp}/$dir 
-	done
+	filelist=$(mkwhitelist |sort |uniq )
 	for file in $filelist ; do
 	echo "$file" |grep -q .wh* && continue
-	file=$(echo $file |sed "s:/.*/changes/::")
-	if lsof /$file >/dev/null 2>&1; then 
-		cp -uP ${changesDir}${file} ${layermp}/${file} && echo "${file} -- warning: file is copied"
-	else
-		mv -u ${changesDir}${file} ${layermp}/${file} && echo "${file} -- moved"
-	fi
+	echo "$file" |grep -q  "$layermp" && continue
+	[ -e $file ] || continue
+	cp -uPR --parents ${file} ${layermp}/ || ( sync ; mount -o remount $layermp ; mount -o remount / ; exitmsg "Copy $file error" 2 )
+		if [ -f $file ] ; then
+			if lsof $file >/dev/null 2>&1; then
+				[ $? == 0 ] && echo -ne "$file ${color_green} -- is open now,  copied ${color_default}\n"
+				continue
+			fi 
+		rm -f ${changesDir}${file}  &&	echo "${file} -- moved"
+		continue
+		fi
+		[ -d $file ] && echo -ne "$file ${color_green} -- is empty dir, created ${color_default}\n" && continue
+		[ -L $file ] && echo -ne "$file ${color_green} -- is link, created ${color_default}\n" && continue
+		echo  -ne "$file ${color_green} -- uknown type, copied ${color_default}\n"
 	done
-	mount -o remount $layermp
-	mount -o remount /
-	}
+	sync
+	mount -o remount $layermp && mount -o remount /
+}
 
 if ! [ $1 ] ; then
 sync2layer
