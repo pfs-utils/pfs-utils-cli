@@ -34,11 +34,12 @@ cat > "$FILELIST" <<EndOF
 !/proc
 !/sys
 !/run
-!/var/log
-!/var/spool
 !/memory
 !/tmp
 !/mnt
+!/media
+!/var/spool
+#!/var/log
 EndOF
 	fi
 	grep ^! "$FILELIST" | sed 's:!:\^:' > /tmp/savelist.black
