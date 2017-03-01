@@ -81,10 +81,10 @@ done
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
 
 #1 dir
-if [ -d $sourcelist 2>/dev/null ];then
-    [ ! "`ls $sourcelist`" ] && exitmsg "directory '$sourcelist' empty" 1
-    mklist $sourcelist && MKM $sourcelist "${userout}" && exit 0 || exitmsg "mkpfs error" 2
-fi
+#if [ -d $sourcelist 2>/dev/null ];then
+#    [ ! "`ls $sourcelist`" ] && exitmsg "directory '$sourcelist' empty" 1
+#    mklist $sourcelist && MKM $sourcelist "${userout}" && exit 0 || exitmsg "mkpfs error" 2
+#fi
 
 #test sources, source must be dir or squashfs module
 for source in $sourcelist ;do

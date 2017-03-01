@@ -15,12 +15,12 @@ usage () {
 
 [ "$1" = "" -o "$1" = "-h" -o "$1" = "--help" -o "$2" = "" ] && usage
 NEWLAYER=$(realpath "$2") || usage "Файл не найден"
-if [ "$(df "$NEWLAYER" | egrep '^aufs|^unionfs')" ] ;then
-    echo "Ошибка!
-    '$2' находится на разделе с aufs. 
-    Переместите на раздел с другой файловой системой."
-    delaufs "$1" && echo "AUFS слой '$1' размонтирован." ; exit 1
-fi
+#if [ "$(df "$NEWLAYER" | egrep '^aufs|^unionfs')" ] ;then
+#    echo "Ошибка!
+#    '$2' находится на разделе с aufs. 
+#    Переместите на раздел с другой файловой системой."
+#    delaufs "$1" && echo "AUFS слой '$1' размонтирован." ; exit 1
+#fi
 
 [ "$(id -u)" = 0 ] || usage "Разрешено только root"
 SYSMNT=$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
@@ -42,6 +42,12 @@ esac
 [ "$(grep aufs$N /proc/mounts)" ] || usage "aufs с таким № не существует"
 MODNAME="$(basename "$NEWLAYER")"
 
+if df $NEWLAYER |grep -q ^aufs ;then
+	[ "$(grep $SYSMNT/tmpfs$N /proc/mounts)" ] || ( mkdir /$SYSMNT/tmpfs$N && mount -t tmpfs tmpfs /$SYSMNT/tmpfs$N )
+	cp -uPR "$NEWLAYER" "/$SYSMNT/tmpfs$N/"
+	NEWLAYER="/${SYSMNT}/tmpfs${N}/$(basename $NEWLAYER)"
+fi
+
 case $(file -b $NEWLAYER) in
 	*directory) ;;
 	Squashfs*4.0*|Linux*ext*)
@@ -55,4 +61,6 @@ esac
 
 mount -o remount,add:1:"$NEWLAYER" "$AUFSMNT" || usage "Ошибка монтирования"
 
-[ "$AUFSMNT" = "/" ] || echo "aufs `basename $NEWLAYER` смонтирована в $AUFSMNT, сохранение изменений /$SYSMNT/changes$N"
+echo $NEWLAYER
+
+#[ "$AUFSMNT" = "/" ] || echo "aufs `basename $NEWLAYER` смонтирована в $AUFSMNT, сохранение изменений /$SYSMNT/changes$N"
