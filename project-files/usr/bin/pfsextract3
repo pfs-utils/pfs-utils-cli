@@ -1,5 +1,5 @@
 #!/bin/sh
-#VERSION 3.1
+#VERSION 3.2
 . /usr/bin/pfsfunc
 
 HLP(){
@@ -61,6 +61,7 @@ sourcelist=""
 for arg in $argslist
 do
   case "${arg}" in
+    "-p" | "--packages" ) list="yes";;
     "-o" | "--out-file") onuserout="on";;
     "-h" | "--help")  HLP ;exit 1;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
@@ -80,14 +81,14 @@ done
 
 p="`basename "$1"`"
 mm="/$SYSMNT/bundles1/$p/etc/packages/mount/"
-#dir="`basename "$1" .pfs`_pfs"
-dir="`basename "$1" .pfs`"
-mkdir -p "$dir"
-
-pfsinfo "$1" |while read m ;do
-    #echo "$m"
-    ML "$1"
-    eval addlayer "$nn" "$1" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
+dir="`basename "$1" .pfs`" && pfs="$1" && shift
+[ "$1" ] && dir="$1"  && shift
+#[ "`echo "$1" |egrep '^-p$|^--packages$' `" ] && shift && list=1
+[ "$list" ] && shift 
+mkdir -p "$dir" && pfsinfo "$pfs" |while read m ;do
+    [ "$list" ] && { [ "`echo "$@" |grep "$m"`" ] || continue ; }
+    ML "$pfs"
+    eval addlayer "$nn" "$pfs" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
     cat "/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.files" | while read F; do 
 	cp -a "/$SYSMNT/bundles$nn/$p/$F" "/$SYSMNT/aufs$nn$F"
     done
@@ -105,4 +106,4 @@ pfsinfo "$1" |while read m ;do
     fi
     #exit
     delaufs $nn
-done
+done 
