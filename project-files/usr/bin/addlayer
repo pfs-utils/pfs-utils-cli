@@ -44,7 +44,7 @@ MODNAME="$(basename "$NEWLAYER")"
 
 if df $NEWLAYER |grep -q ^aufs ;then
 	[ "$(grep $SYSMNT/tmpfs$N /proc/mounts)" ] || ( mkdir /$SYSMNT/tmpfs$N && mount -t tmpfs tmpfs /$SYSMNT/tmpfs$N )
-	cp -uPR "$NEWLAYER" "/$SYSMNT/tmpfs$N/"
+	cp -auPR "$NEWLAYER" "/$SYSMNT/tmpfs$N/"
 	NEWLAYER="/${SYSMNT}/tmpfs${N}/$(basename $NEWLAYER)"
 fi
 
