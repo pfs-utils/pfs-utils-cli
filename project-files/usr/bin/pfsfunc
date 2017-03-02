@@ -194,27 +194,25 @@ umount $SYSMNT/aufs$1 2>/dev/null
 rmdir $SYSMNT/aufs$1 
 
 if [ "$(grep changes$1 /proc/mounts)" ]; then
-	umount -d $SYSMNT/changes$1
-	rmdir $SYSMNT/changes$1
+	umount -d $SYSMNT/changes$1 &&	rmdir $SYSMNT/changes$1
 else
-	rm $SYSMNT/changes$1
-fi 2>/dev/null
-
-if [ "$(grep tmpfs$1 /proc/mounts)" ]; then
-	umount $SYSMNT/tmpfs$1
-	rmdir $SYSMNT/tmpfs$1
-else
-	rmdir $SYSMNT/tmpfs$1
+	rm -rf $SYSMNT/changes$1
 fi 2>/dev/null
 
 if [ -d $SYSMNT/bundles$1 ]; then
 	ls -1 $SYSMNT/bundles$1 | while read D
 	do
-		umount -d $SYSMNT/bundles$1/$D
-		rmdir $SYSMNT/bundles$1/$D
+		umount -d $SYSMNT/bundles$1/$D && 	rmdir $SYSMNT/bundles$1/$D
 	done
 	 rmdir $SYSMNT/bundles$1
 fi 2>/dev/null
+
+if [ "$(grep tmpfs$1 /proc/mounts)" ]; then
+	umount $SYSMNT/tmpfs$1 && 	rmdir $SYSMNT/tmpfs$1
+else
+	rm -rf  $SYSMNT/tmpfs$1
+fi 2>/dev/null
+
 }
 
 addlayer () {
@@ -242,9 +240,9 @@ fi
 case $(file -b $NEWLAYER) in
 	*directory) ;;
 	Squashfs*4.0*|Linux*ext*)
-		mkdir -p "/$SYSMNT/bundles$N/$MODNAME"
+		mkdir -p "$SYSMNT/bundles$N/$MODNAME"
 		mount -o loop "$NEWLAYER" "/$SYSMNT/bundles$N/$MODNAME"
-		NEWLAYER="/$SYSMNT/bundles$N/$MODNAME"
+		NEWLAYER="$SYSMNT/bundles$N/$MODNAME"
 	;;
 	*) return 5 ;;
 esac
