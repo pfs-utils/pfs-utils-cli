@@ -1,14 +1,6 @@
 #!/bin/sh
-#Extract .pfs , by Zay , GPL v3
-#VERSION 3.0
+#VERSION 3.3
 . /usr/bin/pfsfunc
-
-checksfsxzb >/dev/null 2>&1
-if [ $? -gt 0 ]; then
-  echo "Kernel not support PFS!" >&2; exit 1
-fi
-status=0
-
 
 HLP(){
 [ "`echo $LANG| egrep '^ru_RU'`" ] || return
@@ -16,10 +8,10 @@ echo "\
 pfsextract извлекает отдельные модули из составных модулей.pfs.
 Использование:
 
-    pfsextract /file.pfs - создать каталог «/file_pfs» с отдельными модулями.pfs из «/file.pfs»
-    pfsextract -d /file.pfs - создать каталог «/file_pfs» с отдельными каталогами, в каждый из которых распакованы отдельные модули из «/file.pfs»
-    pfsextract /file.pfs /catalog - создать в каталоге «/catalog» отдельные модули.pfs из «/file.pfs». «/catalog» должен быть пустым.
-    pfsextract /file.pfs /catalog -p pack_1 pack_2 - создать в каталоге «/catalog» отдельные файлы .pfs только из модулей «pack_1» и «pack_2», если модули с такими названиями содержатся в файле «/file.pfs» (использование «-p pack_1 pack_2» допустимо и без указания «/catalog»).
+    pfsextract /file.pfs [параметры] - создать каталог «/file» с отдельными модулями.pfs из «/file.pfs»
+    pfsextract -d /file.pfs [параметры] - создать каталог «/file» с отдельными каталогами, в каждый из которых распакованы отдельные модули из «/file.pfs»
+    pfsextract /file.pfs /catalog [параметры] - создать в каталоге «/catalog» отдельные модули.pfs из «/file.pfs». «/catalog» должен быть пустым.
+    pfsextract /file.pfs /catalog -p pack_1 pack_2 [параметры] - создать в каталоге «/catalog» отдельные файлы .pfs только из модулей «pack_1» и «pack_2», если модули с такими названиями содержатся в файле «/file.pfs» (использование «-p pack_1 pack_2» допустимо и без указания «/catalog»).
 
 Параметры (ключи):
 
@@ -28,154 +20,99 @@ pfsextract извлекает отдельные модули из состав�
 " >&2 ;exit 1
 }
 
-argslist="$@"
-compression="xz"
+[ "$1" = "-d" ] && d=1 && shift
+[ "$1" ] || HLP
+allow_only_root
 
+#check kernel
+checksfsxzb >/dev/null 2>&1
+exitmsg "Kernel is not support squashfs/aufs" $?
+
+MKM(){
+#make module
+eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh "$devnull" 
+	exitmsg "error create squashfs module" $?
+}
+wh="-regex -e ".wh..wh.""
+UNM(){
+#unpack module
+eval unsquashfs -d "${1}" "${2}" $noprogress $useproc "$devnull"  
+exitmsg "unsquashfs error" $?
+}
+
+ML(){
+##mkpfs(
+#make root aufs
+n="$(mkaufs || exitmsg "mkaufs error" 2)"
+nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
+[ -d "$n" ] || exitmsg "error mounting aufs" 3
+##mkpfs)
+}
+
+##mkpfs(
+#parsing for "-comp" arg
+argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
 	compression="$(echo $@ |sed 's/^.*\-*comp//')"
 	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
 fi
+##mkpfs)
 
-
+#get opts
+sourcelist=""
 for arg in $argslist
 do
   case "${arg}" in
-    "-p" | "--packages" ) upacklist="yes";;
-    "-?" | "--help") HLP ;exit 1 ;;
+    "-p" | "--packages" ) list="yes";;
+#    "-o" | "--out-file") onuserout="on";;
+    "-h" | "--help")  HLP ;exit 1;;
+    "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-    "--gzip" | "-g")  [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
-    "--dir" | "-d") dir=dir;;
-    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP;exit 1;;
-    *) if [ "${upacklist}" != "yes" ]; then [ ! "${pfsname}" ] && pfsname="${arg}" || outdir="${arg}" 
+#    "-w") wh="-regex -e ".wh..wh."";;
+    "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
+    *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
+       elif [ "${onuserout}" = "on" ]; then userout="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
-       else listpackage="${listpackage}/tmp/.pfs/extract/$(basename "${pfsname}")/pmount${PFSDIR}/mount/${arg}$IFS"
-       fi;;  
+       else sourcelist="${sourcelist} ${arg}"; fi
+       onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
   esac
 done
 
-[ "`file ${pfsname} |grep -v "Squashfs filesystem"`" ] && echo "File '${pfsname}' is not squashfs" && exit 1
-[ "`unsquashfs -l ${pfsname} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l`" -lt 2 ] && echo "File '${pfsname}' is not component-pfs. Use 'unsquashfs ${pfsname}'" && exit 1
+[ "$(fs_type $1)" == "squashfs" ] || exitmsg "File '${1}' is not squashfs" 1
+p="`basename "$1"`"
+mm="/$SYSMNT/bundles1/$p/etc/packages/mount/"
+dir="`basename "$1" .pfs`" && pfs="$1" && shift
+[ "$1" ] && dir="$1"  && shift
+[ -d "${dir}" ] && exitmsg "output dirrectory '$dir' exists" 1
+[ "$list" ] && shift 
 
-if [ "${pfsname}" = "" ]; then
-  echo "Usage: $(basename "$0") FILE [DIRECTORY]"; exit 1
-fi
-[ ! "${outdir}" ] && outdir="$(echo "${pfsname}" | sed 's/.pfs/_pfs/g')"
-
-if [ ! -f "${pfsname}" ]; then
-  echo "File \"${pfsname}\" not found!" >&2; exit 1
-fi
-if [ "$(ls -A "${outdir}" 2>/dev/null)" != "" ]; then
-  echo "Directory \"${outdir}\" not empty!" >&2; exit 1
-fi
-mkdir -p "${outdir}"
-[ $? -gt 0 ] && exit 1
-tmpdir="/tmp/.pfs/extract/$(basename "${pfsname}")"
-
-if [ -d "${tmpdir}" ]; then
-  rmdir "${tmpdir}/pmount" 2>/dev/null
-  rmdir "${tmpdir}" 2>/dev/null
-  if [ -d "${tmpdir}" ]; then
-    echo "Progress is already running!" >&2; exit 1    
-  fi
+#no component-pfs or simple squashfs
+if [ "`unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l`" -lt 2 ];then
+    [ "$d$list" ] && exitmsg "File '${pfs}' is not component-pfs. Use 'unsquashfs ${pfs}'" 1
+    UNM "${dir}" "${pfs}" && exit 0
 fi
 
-sync
-freeloop=0
-looplist="$(losetupb -a)"
-while :; do
-  echo "${looplist}" | grep -q -F "/dev/loop${freeloop}" && freeloop="$(expr ${freeloop} + 1)" || break
-done
-if [ ! -b /dev/loop${freeloop} ]; then
-  mknod -m660 /dev/loop${freeloop} b 7 ${freeloop}
-  chown root.root /dev/loop${freeloop}
-  sync
-fi
-if [ ! -b /dev/loop${freeloop} ]; then
-  "Error! Free loop devices is not found!"; exit 1
-fi
+mkdir -p "$dir" && pfsinfo "$pfs" |while read m ;do
+    [ "$list" ] && { [ "`echo "$@" |grep "$m"`" ] || continue ; }
+    ML "$pfs"
+    eval addlayer "$nn" "$pfs" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
+    cat "/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.files" | while read F; do 
+	#cp -a "/$SYSMNT/bundles$nn/$p/$F" "/$SYSMNT/aufs$nn$F"
+	touch "/$SYSMNT/aufs$nn$F"
+    done
 
-losetupb /dev/loop${freeloop} "${pfsname}"
-status=$?
-if [ ${status} -eq 0 ]; then
-  mkdir -p "${tmpdir}/pmount"
-  mountb -t squashfs -o loop /dev/loop${freeloop} "${tmpdir}/pmount" >/dev/null 2>&1
-  status=$?
-  if [ ${status} -gt 0 ]; then
-    losetupb -d /dev/loop${freeloop}
-    rmdir "${tmpdir}/pmount" 2>/dev/null
-    rmdir "${tmpdir}" 2>/dev/null
-    echo "Mount \"${pfsname}\": failed!" >&2; exit ${status}
-  fi
-else
-  rmdir "${tmpdir}/pmount" 2>/dev/null
-  rmdir "${tmpdir}" 2>/dev/null
-  echo "Mount \"${pfsname}\": failed!" >&2; exit ${status}  
-fi
-sync
+    emp="/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.dirs.empty"
+    [ -f "$emp" ] && cat "$emp" | while read F; do 
+	touch "/$SYSMNT/aufs$nn$F"
+    done
 
-if [ ! "${listpackage}" ]; then
-  listpackage="$(find "${tmpdir}/pmount${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d | while read package
-  do
-    echo -n "${package}$IFS"
-  done)"
-fi
-
-rm -f /tmp/pfsextract-err
-echo "${listpackage}" | while read pack; do
-  if [ ${status} -eq 0 ]; then
-    if [ -f "${pack}/pfs.files" ]; then    
-      namepack="$(basename "${pack}")"
-      mkdir -p "${tmpdir}/files/${namepack}" 
-      if [ -f "${pack}/pfs.dirs.empty" ]; then
-        cat "${pack}/pfs.dirs.empty" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e 's:[/*]$::g' | while read dirempty; do
-          mkdir -p "${tmpdir}/files/${namepack}${dirempty}"
-        done
-      fi
-      cat "${pack}/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e 's:[/*]$::g' | while read file; do
-        cpnamedir="${tmpdir}/files/${namepack}$(dirname "${file}")"
-        mkdir -p "${cpnamedir}"
-        cp -a "${tmpdir}/pmount${file}" "${cpnamedir}"
-        status=$?
-        if [ ${status} -gt 0 ]; then
-          touch /tmp/pfsextract-err 
-          echo "Extract error!" >&2
-          break
-        fi
-      done
-
- if [ ! -f /tmp/pfsextract-err ]; then 
-      mkdir -p "${tmpdir}/files/${namepack}${PFSDIR}/mount"
-      cp -a "${tmpdir}/pmount${PFSDIR}/mount/${namepack}" "${tmpdir}/files/${namepack}${PFSDIR}/mount"
-      status=$?
-      sync
-      if [ ${status} -eq 0 ]; then
-        find "${tmpdir}/pmount${file}" -type d -printf "[ -e '%p' ] && { chmod %m '%p'; chown %U:%G '%p';}\n" | 
-    	    sed 's#'${tmpdir}'/pmount#'${tmpdir}'/files/'${namepack}'#g' | ash ###sfs
-        if [ "${compression}" = "xz" ]; then
-          optionscomp="-Xbcj"; uname -m | grep -q -e "86" -e "32" -e "64" && bcjcomp="x86" || bcjcomp="x86,arm"
-        fi
-    	    if [ "$dir" ];then
-				mv "${tmpdir}/files/${namepack}" "${outdir}"
-			else
-				echo "copression type: $compression ${optionscomp} ${bcjcomp}"
-				mksquashfs "${tmpdir}/files/${namepack}" "${outdir}/${namepack}.pfs" -comp ${compression} -b 512K ${optionscomp} ${bcjcomp} -noappend ${noprogress} ${useproc}
-			fi
-        status=$?
-      fi
- fi
-
-      rm -rf "${tmpdir}/files" 2>/dev/null
-      if [ ${status} -gt 0 ]; then
-        echo "Extract error!" >&2
-        break
-      fi
+    mklist "/$SYSMNT/changes$nn" "/$SYSMNT/changes$nn" "$m" 
+    if [ "$d" ];then	
+	mkdir -p "$dir/$m" && mv "/$SYSMNT/changes$nn"/* "$dir/$m"
+    else
+	MKM "/$SYSMNT/changes$nn" "$dir/$m.pfs"
     fi
-  fi
-done
-
-umountb -d "${tmpdir}/pmount" >/dev/null 2>&1
-rmdir "${tmpdir}/pmount" 2>/dev/null
-rmdir "${tmpdir}" 2>/dev/null
-
-exit ${status}
+    delaufs $nn
+done 
