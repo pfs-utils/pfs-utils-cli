@@ -48,29 +48,45 @@ for arg in $argslist
 do
   case "${arg}" in
     "-p" | "--packages" ) list="yes";;
-#    "-o" | "--out-file") onuserout="on";;
+    "-o" | "--out-file") onuserout="on";;
     "-h" | "--help")  HLP ;exit 1;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
-#    "-w") wh="-regex -e ".wh..wh."";;
-    "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
+    "-f" | "--fast"  ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
-       elif [ "${onuserout}" = "on" ]; then userout="${arg}"
+       elif [ "${onuserout}" = "on" ]; then dir="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
        else sourcelist="${sourcelist} ${arg}"; fi
        onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
   esac
 done
 
-[ "$(fs_type $1)" == "squashfs" ] || exitmsg "File '${1}' is not squashfs" 1
-p="`basename "$1"`"
-mm="/$SYSMNT/bundles1/$p/etc/packages/mount/"
-dir="`basename "$1" .pfs`" && pfs="$1" && shift
-[ "$1" ] && dir="$1"  && shift
-[ -d "${dir}" ] && exitmsg "output dirrectory '$dir' exists" 1
-[ "$list" ] && shift 
+for item in $sourcelist ; do
+	if [ "$(fs_type $item)" == "squashfs" ] ; then
+	pfs=$item
+	sourcelist=$(echo "$sourcelist" |sed "s/$item//")
+	break
+	fi 
+done
+[ -f $pfs ] || exitmsg "There is no source module" 2 
+[ $dir ] || dir="./"
+
+echo out dir: $dir
+echo pfs file : $pfs
+echo list of packages : $sourcelist
+echo compression: $compression
+echo devnull: $devnull
+
+exit
+#[ "$(fs_type $1)" == "squashfs" ] || exitmsg "File '${1}' is not squashfs" 1
+#p="`basename "$1"`"
+#mm="/$SYSMNT/bundles1/$p/etc/packages/mount/"
+#dir="`basename "$1" .pfs`" && pfs="$1" && shift
+#[ "$1" ] && dir="$1"  && shift
+#[ -d "${dir}" ] && exitmsg "output dirrectory '$dir' exists" 1
+#[ "$list" ] && shift 
 
 #no component-pfs or simple squashfs
 if [ "`unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l`" -lt 2 ];then
