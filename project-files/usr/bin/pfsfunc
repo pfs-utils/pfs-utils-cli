@@ -180,6 +180,84 @@ fi
 return $?
 }
 
+
+mkaufs () {
+N=$(ls /sys/fs/aufs/ |egrep '^si_'| wc -w) # layrer prefix
+mkdir /$SYSMNT/changes$N
+mount -t tmpfs tmpfs /$SYSMNT/changes$N
+mkdir /$SYSMNT/aufs$N
+mount -t aufs -o dirs=/$SYSMNT/changes$N/=rw aufs /$SYSMNT/aufs$N && echo "/$SYSMNT/aufs$N" || return 1
+}
+
+delaufs () {
+umount $SYSMNT/aufs$1 2>/dev/null
+rmdir $SYSMNT/aufs$1 
+
+if [ "$(grep changes$1 /proc/mounts)" ]; then
+	umount -d $SYSMNT/changes$1
+	rmdir $SYSMNT/changes$1
+else
+	rm $SYSMNT/changes$1
+fi 2>/dev/null
+
+if [ "$(grep tmpfs$1 /proc/mounts)" ]; then
+	umount $SYSMNT/tmpfs$1
+	rmdir $SYSMNT/tmpfs$1
+else
+	rmdir $SYSMNT/tmpfs$1
+fi 2>/dev/null
+
+if [ -d $SYSMNT/bundles$1 ]; then
+	ls -1 $SYSMNT/bundles$1 | while read D
+	do
+		umount -d $SYSMNT/bundles$1/$D
+		rmdir $SYSMNT/bundles$1/$D
+	done
+	 rmdir $SYSMNT/bundles$1
+fi 2>/dev/null
+}
+
+addlayer () {
+NEWLAYER=$(realpath "$2") || return 1
+AUFSMNT="/"
+case "$1" in
+	0) shift;;
+	[1-9]) N=$1
+		if [ $N -lt $(ls -d /sys/fs/aufs/si_* | wc -w) ]; then
+			AUFSMNT=$SYSMNT/aufs$N
+			shift
+		else
+			return 2
+		fi
+	;;
+	*) return 3
+esac
+[ "$(grep aufs$N /proc/mounts)" ] || return 4
+MODNAME="$(basename "$NEWLAYER")"
+if df $NEWLAYER |grep -q ^aufs ;then
+	[ "$(grep $SYSMNT/tmpfs$N /proc/mounts)" ] || ( mkdir $SYSMNT/tmpfs$N && mount -t tmpfs tmpfs $SYSMNT/tmpfs$N )
+	cp -auPR "$NEWLAYER" "$SYSMNT/tmpfs$N/"
+	NEWLAYER="${SYSMNT}/tmpfs${N}/$(basename $NEWLAYER)"
+fi
+case $(file -b $NEWLAYER) in
+	*directory) ;;
+	Squashfs*4.0*|Linux*ext*)
+		mkdir -p "/$SYSMNT/bundles$N/$MODNAME"
+		mount -o loop "$NEWLAYER" "/$SYSMNT/bundles$N/$MODNAME"
+		NEWLAYER="/$SYSMNT/bundles$N/$MODNAME"
+	;;
+	*) return 5 ;;
+esac
+mount -o remount,add:1:"$NEWLAYER" "$AUFSMNT" || return 5
+echo $NEWLAYER
+}
+
+mksqmod(){
+#make module
+eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh $devnull
+exitmsg "error create squashfs module" $?
+}
+
 if [ "$(basename $0)" == "pfsfunc" ] ;then
 [ $1 ] || usage
 command="$1" 
@@ -187,3 +265,5 @@ shift
 $command $@
 exitmsg "$command  ERROR!!!" "$?"
 fi 
+
+

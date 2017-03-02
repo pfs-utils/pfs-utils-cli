@@ -28,35 +28,19 @@ allow_only_root
 checksfsxzb >/dev/null 2>&1
 exitmsg "Kernel is not support squashfs/aufs" $?
 
-MKM(){
-#make module
-eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh "$devnull" 
-	exitmsg "error create squashfs module" $?
-}
 wh="-regex -e ".wh..wh.""
-UNM(){
-#unpack module
-eval unsquashfs -d "${1}" "${2}" $noprogress $useproc "$devnull"  
-exitmsg "unsquashfs error" $?
-}
 
 ML(){
-##mkpfs(
-#make root aufs
 n="$(mkaufs || exitmsg "mkaufs error" 2)"
 nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 [ -d "$n" ] || exitmsg "error mounting aufs" 3
-##mkpfs)
 }
 
-##mkpfs(
-#parsing for "-comp" arg
 argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
 	compression="$(echo $@ |sed 's/^.*\-*comp//')"
 	argslist="$(echo $@ |sed 's/\-*comp.*$//')"
 fi
-##mkpfs)
 
 #get opts
 sourcelist=""
@@ -91,15 +75,15 @@ dir="`basename "$1" .pfs`" && pfs="$1" && shift
 #no component-pfs or simple squashfs
 if [ "`unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l`" -lt 2 ];then
     [ "$d$list" ] && exitmsg "File '${pfs}' is not component-pfs. Use 'unsquashfs ${pfs}'" 1
-    UNM "${dir}" "${pfs}" && exit 0
+    eval unsquashfs -d "${dir}" "${pfs}" $noprogress $useproc "$devnull"  && exit 0
+	exitmsg "unsquashfs error" $?
 fi
 
-mkdir -p "$dir" && pfsinfo "$pfs" |while read m ;do
+	mkdir -p "$dir" && pfsinfo "$pfs" |while read m ;do
     [ "$list" ] && { [ "`echo "$@" |grep "$m"`" ] || continue ; }
     ML "$pfs"
     eval addlayer "$nn" "$pfs" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
     cat "/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.files" | while read F; do 
-	#cp -a "/$SYSMNT/bundles$nn/$p/$F" "/$SYSMNT/aufs$nn$F"
 	touch "/$SYSMNT/aufs$nn$F"
     done
 
@@ -112,7 +96,7 @@ mkdir -p "$dir" && pfsinfo "$pfs" |while read m ;do
     if [ "$d" ];then	
 	mkdir -p "$dir/$m" && mv "/$SYSMNT/changes$nn"/* "$dir/$m"
     else
-	MKM "/$SYSMNT/changes$nn" "$dir/$m.pfs"
+	mksqmod "/$SYSMNT/changes$nn" "$dir/$m.pfs"
     fi
     delaufs $nn
 done 

@@ -16,12 +16,6 @@ case $1 in
     ;;
  esac
 
-MKM(){
-#make module
-eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh $devnull
-exitmsg "error create squashfs module" $?
-}
-
 #help
 HLP(){
 echo "Usage: $0 <list of sources> -o out.pfs"
@@ -60,6 +54,7 @@ fi
 
 #get opts
 sourcelist=""
+inplace=""
 for arg in $argslist
 do
   case "${arg}" in
@@ -83,10 +78,10 @@ done
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
 
 #1 dir, in place mode
-if [ -d $sourcelist  -a "$inplace" == "yes" ] ;then
+if [ -d "$sourcelist"  -a "$inplace" == "yes" ] ;then
     eval echo "==== In place mode ====" $devnull
     [ ! "`ls $sourcelist`" ] && exitmsg "directory '$sourcelist' empty" 1
-    mklist $sourcelist && MKM $sourcelist "${userout}" && exit 0 
+    mklist $sourcelist && mksqmod $sourcelist "${userout}" && exit 0 
     exitmsg "mkpfs error" 2
 fi
 
@@ -118,5 +113,5 @@ for i in $bundles ;do
 	mklist "$i" "$n" "$name"
 done 
 
-MKM "${n}" "${userout}"
+mksqmod "${n}" "${userout}"
 delaufs "$nn" && exit 0 || exitmsg "delaufs error" $?
