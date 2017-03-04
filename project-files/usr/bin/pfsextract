@@ -30,12 +30,6 @@ exitmsg "Kernel is not support squashfs/aufs" $?
 
 wh="-regex -e ".wh..wh.""
 
-ML(){
-n="$(mkaufs || exitmsg "mkaufs error" 2)"
-nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
-[ -d "$n" ] || exitmsg "error mounting aufs" 3
-}
-
 argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
 	compression="$(echo $@ |sed 's/^.*\-*comp//')"
@@ -47,19 +41,18 @@ sourcelist=""
 for arg in $argslist
 do
   case "${arg}" in
-    "-p" | "--packages" ) list="yes";;
     "-o" | "--out-file") onuserout="on";;
+    "-d" | "--nopfs") d=yes ;;
     "-h" | "--help")  HLP ;exit 1;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "-f" | "--fast"  ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
-    *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
-       elif [ "${onuserout}" = "on" ]; then dir="${arg}"
-       elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
-       else sourcelist="${sourcelist} ${arg}"; fi
-       onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
+    *) if [ "${onuserout}" = "on" ]; then dir="${arg}"
+        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
+        else sourcelist="${sourcelist} ${arg}"; fi
+        onuserout="off";  numproc="off";;
   esac
 done
 
@@ -70,7 +63,7 @@ for item in $sourcelist ; do
 	break
 	fi 
 done
-[ -f $pfs ] || exitmsg "There is no source module" 2 
+[ $pfs ] || exitmsg "There is no source pfs module" 2 
 [ $dir ] || dir="./"
 
 echo out dir: $dir
@@ -79,40 +72,41 @@ echo list of packages : $sourcelist
 echo compression: $compression
 echo devnull: $devnull
 
-exit
-#[ "$(fs_type $1)" == "squashfs" ] || exitmsg "File '${1}' is not squashfs" 1
-#p="`basename "$1"`"
-#mm="/$SYSMNT/bundles1/$p/etc/packages/mount/"
-#dir="`basename "$1" .pfs`" && pfs="$1" && shift
-#[ "$1" ] && dir="$1"  && shift
-#[ -d "${dir}" ] && exitmsg "output dirrectory '$dir' exists" 1
-#[ "$list" ] && shift 
+
+echo $sourcelist  |grep -q [[:alnum:]] || unset sourcelist
+
+mkdir -p "$dir"
 
 #no component-pfs or simple squashfs
-if [ "`unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l`" -lt 2 ];then
-    [ "$d$list" ] && exitmsg "File '${pfs}' is not component-pfs. Use 'unsquashfs ${pfs}'" 1
+if [ "$(unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l)" -lt 2 ];then
+     [ "$sourcelist" ] && exitmsg "File '${pfs}' is not component-pfs.  Can't extract packages: $sourcelist" 1
+    dir=$dir/$(basename "${pfs%.*}") 
     eval unsquashfs -d "${dir}" "${pfs}" $noprogress $useproc "$devnull"  && exit 0
 	exitmsg "unsquashfs error" $?
 fi
-
-	mkdir -p "$dir" && pfsinfo "$pfs" |while read m ;do
-    [ "$list" ] && { [ "`echo "$@" |grep "$m"`" ] || continue ; }
-    ML "$pfs"
+pfsinfo "$pfs" |while read m ;do
+    if  [ "$sourcelist" ] 	;then 
+		echo $sourcelist |grep -q "$m" || continue
+    fi
+    echo  package: $m    -- processing...
+    n="$(mkaufs || exitmsg "mkaufs error" 2)"
+	nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
+	[ -d "$n" ] || exitmsg "error mounting aufs" 3
     eval addlayer "$nn" "$pfs" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
-    cat "/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.files" | while read F; do 
-	touch "/$SYSMNT/aufs$nn$F"
+    cat "$SYSMNT/aufs${nn}/etc/packages/mount/${m}/pfs.files" | while read F; do 
+	touch "$SYSMNT/aufs$nn$F"
     done
 
-    emp="/$SYSMNT/bundles$nn/$p/etc/packages/mount/$m/pfs.dirs.empty"
+    emp="$SYSMNT/aufs$nn/etc/packages/mount/$m/pfs.dirs.empty"
     [ -f "$emp" ] && cat "$emp" | while read F; do 
-	touch "/$SYSMNT/aufs$nn$F"
+	touch "$SYSMNT/aufs$nn$F"
     done
 
-    mklist "/$SYSMNT/changes$nn" "/$SYSMNT/changes$nn" "$m" 
+    mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
     if [ "$d" ];then	
-	mkdir -p "$dir/$m" && mv "/$SYSMNT/changes$nn"/* "$dir/$m"
+	mkdir -p "$dir/$m" && cp -au "$SYSMNT/changes$nn"/* "$dir/$m"
     else
-	mksqmod "/$SYSMNT/changes$nn" "$dir/$m.pfs"
+	mksqmod "$SYSMNT/changes$nn" "$dir/$m.pfs"
     fi
     delaufs $nn
 done 
