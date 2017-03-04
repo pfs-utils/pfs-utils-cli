@@ -11,6 +11,7 @@ $(basename $0) - Распаковщик для модулей pfs
     $(basename $0) file.pfs pack1 pack2 - извлечь из file.pfs только пакеты pack1 и pack2 
     
 Параметры (ключи):
+	-i  распаковать и установить в систему
 	-o path/dir - создать каталог dir и распаковывать в него  
 	-d - разобрать на каталоги вместо модулей
 	-no-progress - не показывать строку прогресса.
@@ -42,6 +43,7 @@ do
   case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
     "-d" | "--nopfs") d=yes ;;
+    "-i" | "--install") i=yes ;;
     "-h" | "--help")  HLP ;exit 1;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
@@ -71,9 +73,15 @@ mkdir -p "$dir"
 #no component-pfs or simple squashfs
 if [ "$(unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l)" -lt 2 ];then
      [ "$sourcelist" ] && exitmsg "File '${pfs}' is not component-pfs.  Can't extract packages: $sourcelist" 1
-    dir=$dir/$(basename "${pfs%.*}") 
-    eval unsquashfs -d "${dir}" "${pfs}" $noprogress $useproc "$devnull"  && exit 0
-	exitmsg "unsquashfs error" $?
+    if [ $i ] ; then
+		dir="/" && mkdir -p ${PFSDIR}/install/
+    else
+		dir=$dir/$(basename "${pfs%.*}") && mkdir -p $dir
+    fi
+    eval unsquashfs -f -dest "${dir}" "${pfs}" $noprogress $useproc "$devnull" 
+    exitmsg "Unsquashfs error" $?
+    [ $i ] && mv ${PFSDIR}/mount/$(pfsinfo) ${PFSDIR}/install/
+	exit
 fi
 pfsinfo "$pfs" |while read m ;do
     if  [ "$sourcelist" ] 	;then 
@@ -94,8 +102,11 @@ pfsinfo "$pfs" |while read m ;do
     done
 
     mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
-    if [ "$d" ];then	
-	mkdir -p "$dir/$m" && cp -au "$SYSMNT/changes$nn"/* "$dir/$m"
+    if [ "$d" ] ; then	
+		mkdir -p "$dir/$m" && cp -a "$SYSMNT/changes$nn"/* "$dir/$m"
+	elif [ "$i" ] ; then
+		cp -a "$SYSMNT/changes$nn"/* /
+		mv ${PFSDIR}/mount/$m ${PFSDIR}/install/
     else
 	mksqmod "$SYSMNT/changes$nn" "$dir/$m.pfs"
     fi
