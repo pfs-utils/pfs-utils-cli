@@ -34,7 +34,7 @@ extract_simple () {
 }
 
 extract_contaner () {
-#extract from contaner
+#extract packages from contaner
 pfsinfo "$pfs" |while read m ;do
     if  [ "$sourcelist" ] 	;then 
 		echo $sourcelist |grep -q "$m" || continue
@@ -43,7 +43,7 @@ pfsinfo "$pfs" |while read m ;do
     n="$(mkaufs || exitmsg "mkaufs error" 2)"
 	nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 	[ -d "$n" ] || exitmsg "error mounting aufs" 3
-    eval addlayer "$nn" "$pfs" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
+    eval addlayer "$nn" "$pfs"  >/dev/null  || exitmsg "can't insert layer to aufs $n" 5
     cat "$SYSMNT/aufs${nn}/etc/packages/mount/${m}/pfs.files" | while read F; do 
 	touch "$SYSMNT/aufs$nn$F"
     done
@@ -62,7 +62,7 @@ pfsinfo "$pfs" |while read m ;do
     else
 		mksqmod "$SYSMNT/changes$nn" "$dir/$m.pfs"
     fi
-    delaufs $nn
+    delaufs $nn ; echo ''
 done 
 }
 

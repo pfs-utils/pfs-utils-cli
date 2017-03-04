@@ -64,15 +64,15 @@ function  sync2layer () {
 	cp -uPR --parents ${file} ${layermp}/ || ( sync ; mount -o remount $layermp ; mount -o remount / ; exitmsg "Copy $file error" 2 )
 		if [ -f $file ] ; then
 			if lsof $file >/dev/null 2>&1; then
-				[ $? == 0 ] && echo -ne "$file ${color_green} -- is open now,  copied ${color_default}\n"
+				[ $? == 0 ] && echo -ne "$file ${color_blue} -- is open now,  copied ${color_default}\n"
 				continue
 			fi 
-		rm -f ${changesDir}${file}  &&	echo "${file} -- moved"
+		rm -f ${changesDir}${file}  &&	echo -ne "${file} -- ${color_green}moved ${color_default}\n"
 		continue
 		fi
-		[ -d $file ] && echo -ne "$file ${color_green} -- is empty dir, created ${color_default}\n" && continue
-		[ -L $file ] && echo -ne "$file ${color_green} -- is link, created ${color_default}\n" && continue
-		echo  -ne "$file ${color_green} -- uknown type, copied ${color_default}\n"
+		[ -d $file ] && echo -ne "$file ${color_yellow} -- is empty dir, created ${color_default}\n" && continue
+		[ -L $file ] && echo -ne "$file  -- is link, created ${color_default}\n" && continue
+		echo  -ne "$file ${color_red} -- uknown type, copied ${color_default}\n"
 	done
 	sync
 	mount -o remount $layermp && mount -o remount /
