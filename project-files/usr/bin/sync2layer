@@ -7,6 +7,25 @@ FILELIST=/.savelist
 #changesDir=/memory/changes
 rm -f /tmp/savelist* /tmp/allfiles /tmp/includedfiles /tmp/excludedfiles  
 
+function help () {
+echo "\
+$(basename $0) -- util move files from upper system aufs layer to second layer
+It helps you to clear tmpfs diskspace, or to save changes
+
+Usage:
+$(basename $0) <newlayer> 	- create new layer and move files
+$(basename $0)	 	- move files to existing second aufs layer
+
+If <newlayer> name has no extintion, $(basename $0) create directory-layer.
+If <newlayer> has extintion \".rom\" $(basename $0) create fs in file layer (ext3).
+
+Please edit file \"/.savelist\" to specifу files to move:
+!/path/file - pattern to delete from white list
+/path/file  - pattern to add back to white list from delete list
+" 
+exit 0
+}
+
 function dirlayer () {
 [ -d $layername ] || mkdir -p $layername
 cat /proc/mounts | grep -q "$layername" &&  exitmsg "$layername already mounted" 1
@@ -82,6 +101,7 @@ if ! [ $1 ] ; then
 sync2layer
 exit
 fi 
+[ "$1" == "-h" -o "$1" == "--help" ] && help
 
 layername="$1"
 
