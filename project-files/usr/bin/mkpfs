@@ -27,7 +27,7 @@ echo
 echo "Параметры (ключи):"
 echo "	-o / --out-file - указывает название выходного файла .pfs."
 echo "	-w - не включать AUFS тени."
-echo "  -i / --in-place - сборка на месте, без использования aufs."
+echo "  -l / --local - сборка на месте, без использования aufs."
 echo "	-f / --fast - быстрая компрессия (размер .pfs больше, но создается быстрее)."
 echo "	-comp / параметры для mksquashfs, компрессия размер блока и проч."
 echo "Алиасы (сокращения):"
@@ -64,7 +64,7 @@ do
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
     "-w") wh="-regex -e ".wh..wh."";;
-    "-i" | "--in-place" ) inplace=yes ;;
+    "-l" | "--local" ) inplace=yes ;;
     "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
@@ -96,7 +96,6 @@ done
 
 #make root aufs
 n="$(mkaufs || exitmsg "mkaufs error" 2)"
-#nn="`echo "$n" |sed 's#/'$SYSMNT'/aufs##'`" Эта не работает у меня
 nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 [ -d "$n" ] || exitmsg "error mounting aufs" 3
 

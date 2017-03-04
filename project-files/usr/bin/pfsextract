@@ -6,12 +6,12 @@ HLP(){
 echo "\
 $(basename $0) - Распаковщик для модулей pfs
 Использование:
-    $(basename $0) file.pfs - если модуль составной - разобрать на составляющие
+    $(basename $0) file.pfs - если модуль составной - разобрать на составляющие в папку ./file 
     $(basename $0) file.pfs - если модуль простой - распаковать
     $(basename $0) file.pfs pack1 pack2 - извлечь из file.pfs только пакеты pack1 и pack2 
     
 Параметры (ключи):
-	-i  / --install   распаковать в систему т.е. \"установить\"
+	-i / --install   распаковать в систему т.е. \"установить\"
 	-o / --out-dir path/dir - создать каталог dir и распаковывать в него  
 	-d / --nopfs - разобрать на каталоги вместо модулей
 	-no-progress - не показывать строку прогресса.
@@ -22,15 +22,16 @@ $(basename $0) - Распаковщик для модулей pfs
 
 extract_simple () {
 #unsquashfs non component-pfs or simple squashfs  
-     [ "$sourcelist" ] && exitmsg "File '${pfs}' is not component-pfs.  Can't extract packages: $sourcelist" 1
+    [ "$sourcelist" ] && exitmsg "File '${pfs}' is not component-pfs.  Can't extract packages: $sourcelist" 1
     if [ $i ] ; then
 		dir="/" && mkdir -p ${PFSDIR}/install/
     else
+		[ $dir ] || dir="./"
 		dir=$dir/$(basename "${pfs%.*}") && mkdir -p $dir
     fi
     eval unsquashfs -f -dest "${dir}" "${pfs}" $noprogress $useproc "$devnull" 
     exitmsg "Unsquashfs error" $?
-    [ $i ] && mv ${PFSDIR}/mount/$(pfsinfo) ${PFSDIR}/install/
+    [ $i ] && mv -f ${PFSDIR}/mount/$(pfsinfo) ${PFSDIR}/install/
 }
 
 extract_contaner () {
@@ -39,28 +40,30 @@ pfsinfo "$pfs" |while read m ;do
     if  [ "$sourcelist" ] 	;then 
 		echo $sourcelist |grep -q "$m" || continue
     fi
-    echo  package: $m    -- processing...
+    eval echo  "package: $m    -- processing..." $devnull
     n="$(mkaufs || exitmsg "mkaufs error" 2)"
 	nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 	[ -d "$n" ] || exitmsg "error mounting aufs" 3
-    eval addlayer "$nn" "$pfs"  >/dev/null  || exitmsg "can't insert layer to aufs $n" 5
+    bundle=$(addlayer "$nn" "$pfs" || exitmsg "can't insert layer to aufs $n" 5)
     cat "$SYSMNT/aufs${nn}/etc/packages/mount/${m}/pfs.files" | while read F; do 
-	touch "$SYSMNT/aufs$nn$F"
+	touch "$SYSMNT/aufs$nn$F" 2>/dev/null || cp -a "$bundle/$F" "$SYSMNT/aufs${nn}$F"
     done
 
     emp="$SYSMNT/aufs$nn/etc/packages/mount/$m/pfs.dirs.empty"
     [ -f "$emp" ] && cat "$emp" | while read F; do 
-	touch "$SYSMNT/aufs$nn$F"
+	touch "$SYSMNT/aufs$nn$F" 2>/dev/null || cp -a "$bundle/$F" "$SYSMNT/aufs${nn}$F"
     done
 
     mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
-    if [ "$d" ] ; then	
+    [ $dir ] || dir="$(basename "${pfs%.*}")"
+	if [ "$d" ] ; then	
 		mkdir -p "$dir/$m" && cp -a "$SYSMNT/changes$nn"/* "$dir/$m"
 	elif [ "$i" ] ; then
 		cp -a "$SYSMNT/changes$nn"/* /
-		mv ${PFSDIR}/mount/$m ${PFSDIR}/install/
+		mv -f ${PFSDIR}/mount/$m ${PFSDIR}/install/
+		eval echo  "package: $m  install complete" $devnull 
     else
-		mksqmod "$SYSMNT/changes$nn" "$dir/$m.pfs"
+		mkdir -p "$dir" && mksqmod "$SYSMNT/changes$nn" "$dir/$m.pfs"
     fi
     delaufs $nn ; echo ''
 done 
@@ -68,10 +71,11 @@ done
 
 installDir ()  {
 sourcedir=$(echo $sourcelist |sed 's:^\ *::')
+eval echo "directory: $sourcedir installing..." $devnull 
 mklist "$sourcedir"   /
 cp -a "$sourcedir"/*   /
 mkdir -p ${PFSDIR}/install/
-mv ${PFSDIR}/mount/"${sourcedir}" ${PFSDIR}/install/
+mv -f ${PFSDIR}/mount/"${sourcedir}" ${PFSDIR}/install/
 exit
 }
 
@@ -97,11 +101,11 @@ do
   case "${arg}" in
     "-o" | "--out-dir") onuserout="on";;
     "-d" | "--nopfs") d=yes ;;
-    "-i"  | "--install") i=yes ;;
+    "-i" | "--install") i=yes ;;
     "-h" | "--help")  HLP ;exit 1;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
-    "-processors" | "--processors" ) numproc="on";;
+    "-processors"  | "--processors" ) numproc="on";;
     "-f" | "--fast"  ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${onuserout}" = "on" ]; then dir="${arg}"
@@ -110,8 +114,6 @@ do
         onuserout="off";  numproc="off";;
   esac
 done
-
-[ $dir ] || dir="./"
 
 for item in $sourcelist ; do
 	if [ "$(fs_type $item)" == "squashfs" ] ; then
@@ -122,12 +124,8 @@ for item in $sourcelist ; do
 done
 
 [ ! $pfs ] &&  [ $i ]  && [ -d $sourcelist ] && installDir
-
 [ $pfs ] || exitmsg "There is no source pfs module" 2 
-
 echo $sourcelist  |grep -q [[:alnum:]] || unset sourcelist
-mkdir -p "$dir"
-
 if [ "$(unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l)" -lt 2 ];then
 	extract_simple
 else
