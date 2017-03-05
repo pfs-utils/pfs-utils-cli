@@ -1,5 +1,5 @@
 #!/bin/bash
-#second aufs layer utils by betcher, GPL v3.
+#Util to move files to second aufs layer, by betcher, GPL v3.
 #VERSION 3.0
 . /usr/bin/pfsfunc
 allow_only_root 
@@ -35,8 +35,8 @@ pfsload -u $layername
 function filelayer () {
 if ! file $layername |grep -q ext ; then
 	[ -f $layername ] && exitmsg "Unsupported file format" 2
-	dd if=/dev/zero of="$layername" bs=1M count=1 seek=2000 2>&1 &&  \ 
-	/sbin/mkfs.ext3 -F -j "$layername" 2>&1 || exitmsg "Error create image file $layername" 3
+	dd if=/dev/zero of="$layername" bs=1 count=1 seek=2G 2>&1 &&  \ 
+	mkfs.ext3 -F -j "$layername" 2>&1 || exitmsg "Error create image file $layername" 3
 	pfsload $layername
 	else
 	cat /proc/mounts | grep -q "$layername"  &&  exitmsg "$layername already mounted" 1

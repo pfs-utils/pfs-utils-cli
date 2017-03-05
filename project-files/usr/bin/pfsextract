@@ -75,7 +75,7 @@ eval echo "directory: $sourcedir installing..." $devnull
 mklist "$sourcedir"   /
 cp -a "$sourcedir"/*   /
 mkdir -p ${PFSDIR}/install/
-mv -f ${PFSDIR}/mount/"${sourcedir}" ${PFSDIR}/install/
+mv -f ${PFSDIR}/mount/$(basename "${sourcedir}") ${PFSDIR}/install/
 exit
 }
 
@@ -118,7 +118,7 @@ done
 for item in $sourcelist ; do
 	if [ "$(fs_type $item)" == "squashfs" ] ; then
 	pfs=$item
-	sourcelist=$(echo "$sourcelist" |sed "s/$item//")
+	sourcelist=$(echo "$sourcelist" |sed "s:"$item"::")
 	break
 	fi 
 done
