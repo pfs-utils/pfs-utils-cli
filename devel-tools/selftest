@@ -38,20 +38,20 @@ chmod 644 ./first/empty ; chown nobody ./first/empty
 
 echo "############# mkpfs ##############"
 m="\n=========================="
-mkpfs ./first && mkpfs ./second && MKPFS=OK
+mkpfs ./first -q && mkpfs ./second -q && MKPFS=OK
 m="$m\nmkpfs=			$MKPFS" 
 rm -rf ./first
 rm -rf ./second
 [ "$MKPFS" != "OK" ] && ex
 
 echo "############# unsquashfs ##############"
-pfsextract ./first.pfs && rm -rf ./first && 
+pfsextract ./first.pfs -q && rm -rf ./first && 
 PFSEXTRACT_SIMPLE=OK  
 m="$m\npfsextract simple =	$PFSEXTRACT_SIMPLE"
 [ "$PFSEXTRACT_SIMPLE" != "OK" ] && ex
 
 echo "############# pfsinstall ##############"
-pfsextract -i ./first.pfs && PFSINSTALL=OK
+pfsextract -i -q ./first.pfs && PFSINSTALL=OK
 m="$m\npfsextract -i=		$PFSINSTALL"
 [ "$PFSINSTALL" != "OK" ] && ex
 
@@ -61,7 +61,7 @@ m="$m\npfsuninstall=		$PFSUNINSTALL"
 [ "$PFSUNINSTALL" != "OK" ] && ex
 
 echo "############# mkpfs merging ##############"
-mkpfs ./first.pfs ./second.pfs -o testmodule.pfs && MKPFS_MERGE=OK
+mkpfs ./first.pfs ./second.pfs -o testmodule.pfs -q && MKPFS_MERGE=OK
 m="$m\nmkpfs merging=		$MKPFS_MERGE" 
 [ "$MKPFS_MERGE" != "OK" ] && ex
 
@@ -77,41 +77,36 @@ m="$m\n(u)mountfile=		$MNTFILE"
 echo "############# pfsload ##############"
 pfsload ./testmodule.pfs && PFSLOAD=OK
 m="$m\npfsload=		$PFSLOAD"
-#[ "$PFSLOAD" != "OK" ] && ex
+
+echo "############# pfsunload ##############"
+pfsunload ./testmodule.pfs && PFSUNLOAD=OK
+m="$m\npfsunload=		$PFSUNLOAD"
+
+echo "############# pfsramload ##############"
+pfsramload ./testmodule.pfs && PFSRAMLOAD=OK
+m="$m\npfsramload=		$PFSRAMLOAD"
 
 echo "############# pfsrebuild ##############"
 [ "$PFSLOAD" == "OK" ] && rm -f ./testmodule.pfs
 pfsrebuild testmodule.pfs && PFSREBUILD=OK
 m="$m\npfsrebuild=		$PFSREBUILD" 
-rm -r first second
-#[ "$PFSREBUILD" != "OK" ] && ex
-
-echo "############# pfsunload ##############"
-pfsunload ./testmodule.pfs && PFSUNLOAD=OK
-m="$m\npfsunload=		$PFSUNLOAD"
-#[ "$PFSUNLOAD" != "OK" ] && ex
-
-echo "############# pfsramload ##############"
-pfsramload ./testmodule.pfs && PFSRAMLOAD=OK
-m="$m\npfsramload=		$PFSRAMLOAD"
-#[ "$PFSRAMLOAD" != "OK" ] && ex
+rm -r first second 2>/dev/nul
 
 echo "############# pfsramunload ##############"
 pfsramunload ./testmodule.pfs && PFSRAMUNLOAD=OK
 m="$m\npfsramunload=		$PFSRAMUNLOAD"
-#[ "$PFSRAMUNLOAD" != "OK" ] && ex
 
 echo "############# pfsextract ##############"
-pfsextract testmodule.pfs -o testmodule && [ -f testmodule/first.pfs ] && \
+pfsextract testmodule.pfs -o testmodule -f -q && [ -f testmodule/first.pfs ] && \
 [ -f testmodule/second.pfs ]  && PFSEXTRACT=OK
 m="$m\npfsextract=		$PFSEXTRACT"
 [ "$PFSEXTRACT" != "OK" ] && ex
 
 echo "############# mkpfs -m ##############"
-rm -r ./testmodule.pfs #2>/dev/null
+rm -r ./testmodule.pfs 2>/dev/null
 mkpfs -m testmodule  && MKPFSm=OK
 m="$m\nmkpfs -m=		$MKPFSm"
-rm -r testmodule #2>/dev/null
+rm -r testmodule 2>/dev/null
 [ "$MKPFSm" != "OK" ] && ex
 
 echo "############# pfsextract -d##############"
@@ -121,7 +116,7 @@ m="$m\npfsextract -d=		$PFSEXTRACTd"
 [ "$PFSEXTRACTd" != "OK" ] && ex
 
 echo "############# mkpfs -d ##############"
-rm -r ./testmodule.pfs #2>/dev/null
+rm -r ./testmodule.pfs 2>/dev/null
 mkpfs -d testmodule  && MKPFSd=OK
 m="$m\nmkpfs -d=		$MKPFSd"
 rm -r testmodule #2>/dev/null

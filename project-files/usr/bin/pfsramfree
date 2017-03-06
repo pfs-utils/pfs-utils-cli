@@ -19,20 +19,22 @@ else
   exit
 fi
 
-if [ -d "${copyramdir}/${fsname}" ]; then
-  mountb | grep -q -F "${copyramdir}/${fsname}"
+fullname=$(echo "${copyramdir}/${fsname}" |sed 's://:/:')
+echo $fullname
+if [ -d "$fullname" ]; then
+  mountb | grep -q -F "$fullname"
   if [ $? -eq 0 ]; then
-    losetupb -a | grep -q -F "${copyramdir}/${fsname}"
+    losetupb -a | grep -q -F "$fullname"
     if [ $? -gt 0 ]; then
-      umountb "${copyramdir}/${fsname}"
+      umountb "$fullname"
       if [ $? -eq 0 ]; then
-        rmdir "${copyramdir}/${fsname}" 2>/dev/null
+        rmdir "$fullname" >/dev/null
       else
-        echo "ERROR free RAM!" >&2; exit 1
+        exitmsg "ERROR free RAM!" 3
       fi
     fi
   else
-    rmdir "${copyramdir}/${fsname}" 2>/dev/null
+    rmdir "$fullname" >/dev/null
   fi
 fi
   

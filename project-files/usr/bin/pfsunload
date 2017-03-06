@@ -35,7 +35,7 @@ if [ -d "${mountpoint}" ]; then
   umountb -d "${mountpoint}" #>/dev/null 2>&1
   status=$?
   sync
-  rmdir "${mountpoint}" 2>/dev/null
+  rmdir "${mountpoint}" >/dev/null
   [ ${status} -eq 0 ] && status=${stataufs}
   [ ${status} -gt 0 ] && echo "Unmount \"${fsname}\" failed!" >&2
   sync
