@@ -89,9 +89,9 @@ fi
 status=$?
 
 if [ ${status} -gt 0 ]; then
-  echo -en "\\033[1;31m"; echo -n "ERROR copy to RAM!"; echo -en "\\033[0;39m"
   umountb "${copyramdir}/${fsname}" >/dev/null 2>&1
   rmdir "${copyramdir}/${fsname}" 2>/dev/null
+  exitmsg "ERROR copy to RAM!" ${status}
 fi
 
 exit ${status}

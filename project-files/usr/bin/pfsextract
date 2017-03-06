@@ -31,7 +31,7 @@ extract_simple () {
     fi
     eval unsquashfs -f -dest "${dir}" "${pfs}" $noprogress $useproc "$devnull" 
     exitmsg "Unsquashfs error" $?
-    [ $i ] || return
+    [ $i ] || return 0 # need zero exit code
     mv -f ${PFSDIR}/mount/`pfsinfo "${pfs}"` ${PFSDIR}/install/ || exitmsg "$i install error" $?
 }
 

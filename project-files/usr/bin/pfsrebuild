@@ -26,6 +26,8 @@ if ! [ -f $fileslist ] ;then
 		done
 		mkpfs $pfs_in_contaner -o ${package_name}.pfs $@
 		exitmsg "can't create contaner" $?
+	else
+		exitmsg "can't find packages" 4
 	fi
 exit
 fi
