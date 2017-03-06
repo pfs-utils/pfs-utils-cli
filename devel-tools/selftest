@@ -42,8 +42,9 @@ rm -rf ./second
 [ "$MKPFS" != "OK" ] && ex
 
 echo "############# pfsinstall ##############"
-pfsinstall ./first.pfs && PFSINSTALL=OK || ex
-m="$m\npfsinstall=		$PFSINSTALL"
+#pfsinstall ./first.pfs && PFSINSTALL=OK || ex
+pfsextract -i ./first.pfs && PFSINSTALL=OK || ex
+m="$m\npfsextract -i=		$PFSINSTALL"
 
 echo "############# pfsunstall ##############"
 pfsuninstall ./first.pfs && PFSUNINSTALL=OK || ex
@@ -62,14 +63,6 @@ mountfile testmodule.pfs && umount /mnt/*+testmodule.pfs &&
     rmdir /mnt/*+testmodule.pfs && MNTFILE=OK || MNTFILE="\e[31mFALSE\e[0m"
 m="$m\nmountfile=		$MNTFILE"
 
-echo "############# pfsextract ##############"
-pfsextract testmodule.pfs && [ -f testmodule_pfs/first.pfs ] && \
-    [ -f testmodule_pfs/second.pfs ]  && PFSEXTRACT=OK || ex
-rm -r testmodule_pfs 2>/dev/null
-# тут прерывать не надо, не влияет на прохождение теста
-m="$m\npfsextract=		$PFSEXTRACT"
-EXITCODE=1
- 
 echo "############# pfsload ##############"
 pfsload ./testmodule.pfs && PFSLOAD=OK || ex
 m="$m\npfsload=		$PFSLOAD"
@@ -78,6 +71,7 @@ echo "############# pfsrebuild ##############"
 rm -f ./testmodule.pfs
 pfsrebuild testmodule.pfs && PFSREBUILD=OK || ex
 m="$m\npfsrebuild=		$PFSREBUILD" 
+rm -r first second
 
 echo "############# pfsunload ##############"
 pfsunload ./testmodule.pfs && PFSUNLOAD=OK || ex
@@ -91,11 +85,29 @@ echo "############# pfsramunload ##############"
 pfsramunload ./testmodule.pfs && PFSRAMUNLOAD=OK || ex
 m="$m\npfsramunload=		$PFSRAMUNLOAD"
 
-clear
-echo "############# pfsmerge-dir ##############"
-pfsextract -d testmodule.pfs && rm -f ./testmodule.pfs && \
-    pfsmerge-dir ./testmodule_pfs/* -o testmodule.pfs
-[ "`pfsinfo testmodule.pfs |wc -l`" = "2" ] && PFSMERGEDIR=OK  #|| ex 
-m="$m\npfsmerge-dir=		$PFSMERGEDIR"
+echo "############# pfsextract ##############"
+pfsextract testmodule.pfs -o testmodule && [ -f testmodule/first.pfs ] && \
+    [ -f testmodule/second.pfs ]  && PFSEXTRACT=OK || ex
+# тут прерывать не надо, не влияет на прохождение теста
+m="$m\npfsextract=		$PFSEXTRACT"
+
+echo "############# mkpfs -m ##############"
+rm -r ./testmodule.pfs #2>/dev/null
+mkpfs -m testmodule  && MKPFSm=OK || ex
+m="$m\nmkpfs -m=		$MKPFSm"
+rm -r testmodule #2>/dev/null
+
+echo "############# pfsextract -d##############"
+pfsextract -d testmodule.pfs && [ -d testmodule/first ] && \
+    [ -d testmodule/second ]  && PFSEXTRACTd=OK || ex
+# тут прерывать не надо, не влияет на прохождение теста
+m="$m\npfsextract -d=		$PFSEXTRACTd"
+
+echo "############# mkpfs -d ##############"
+rm -r ./testmodule.pfs #2>/dev/null
+mkpfs -d testmodule  && MKPFSd=OK || ex
+m="$m\nmkpfs -d=		$MKPFSd"
+rm -r testmodule #2>/dev/null
+
 CLEAR
 	printf "$m\n====== \e[32mTest finished\e[0m =====\n"
