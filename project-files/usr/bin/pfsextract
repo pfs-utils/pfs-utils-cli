@@ -32,9 +32,7 @@ extract_simple () {
     eval unsquashfs -f -dest "${dir}" "${pfs}" $noprogress $useproc "$devnull" 
     exitmsg "Unsquashfs error" $?
     [ $i ] || return
-    for i in `pfsinfo "${pfs}"` ;do
-	mv -f ${PFSDIR}/mount/$i ${PFSDIR}/install/ || exitmsg "$i install error" $?
-    done
+    mv -f ${PFSDIR}/mount/`pfsinfo "${pfs}"` ${PFSDIR}/install/ || exitmsg "$i install error" $?
 }
 
 extract_contaner () {
