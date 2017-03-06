@@ -1,5 +1,5 @@
 #!/bin/sh
-#VERSION 3.3
+#VERSION 3.4
 . /usr/bin/pfsfunc
 
 HLP(){
@@ -31,7 +31,10 @@ extract_simple () {
     fi
     eval unsquashfs -f -dest "${dir}" "${pfs}" $noprogress $useproc "$devnull" 
     exitmsg "Unsquashfs error" $?
-    [ $i ] && mv -f ${PFSDIR}/mount/$(pfsinfo) ${PFSDIR}/install/
+    [ $i ] || return
+    for i in `pfsinfo "${pfs}"` ;do
+	mv -f ${PFSDIR}/mount/$i ${PFSDIR}/install/ || exitmsg "$i install error" $?
+    done
 }
 
 extract_contaner () {
