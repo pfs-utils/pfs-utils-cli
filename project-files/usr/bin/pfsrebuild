@@ -35,16 +35,13 @@ fi
 if [[ -f ${fileslist} ]]; then 
   buildir="./build_${package_name}/${package_name}"
   mkdir -p "$buildir"
-  cat $fileslist | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g'| while read file; do 
-  cp --parents "${file}" "${buildir}"; done
+  tar -c --ignore-failed-read --no-recursion -T $fileslist  2>/dev/null | tar -x -C ${buildir} 2>/dev/null
   if [[ -f  ${dirsempty} ]] ; then
-	cat $dirsempty | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' | while read file; do
-	mkdir -p "${buildir}${file}"
-	done
+	cat $dirsempty | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' | xargs -I {} mkdir -p ${buildir}/{} 
   fi
   # --nopfs parametr - make build dir and exit 
   if echo "$@" | grep -q "\-\-nopfs" ; then 
-	mv ${buildir} ./
+	rm -rf ./${package_name} && mv -f ${buildir} ./
   else
 	mkpfs  ${buildir} -o ${package_name}.pfs $@
 	exitmsg "can't create module" $?
