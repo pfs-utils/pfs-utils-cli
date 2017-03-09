@@ -46,7 +46,7 @@ if [ "${devtype}" != "dir" ]; then
 else
   fsinfo="$(df -aT "${fsfile}" | tail -n 1 | tr -s ' ' '_' | cut -d'_' -f 2)"
   case "${fsinfo}" in
-    "ext2"|"ext3"|"ext4"|"squashfs"|"btrfs") fstype="${fsinfo}";;
+    "ext2"|"ext3"|"ext4"|"squashfs"|"btrfs"|"tmpfs") fstype="${fsinfo}";;
   esac
 fi
 
