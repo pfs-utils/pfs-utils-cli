@@ -43,16 +43,15 @@ fi
 
 if [ "${devtype}" != "dir" ]; then
   fstype=$(fs_type "${fsfile}")
+  [ "${fstype}" = "" ] && exitmsg "Unknown file system -- \"$fsfile\"" 5
 else
   fsinfo="$(df -aT "${fsfile}" | tail -n 1 | tr -s ' ' '_' | cut -d'_' -f 2)"
   case "${fsinfo}" in
-    "ext2"|"ext3"|"ext4"|"squashfs"|"btrfs"|"tmpfs") fstype="${fsinfo}";;
+    "ntfs"|"fat32"|"aufs") exitmsg "\"$fsinfo\" -- isn't supported FS" 5;;
   esac
+  fstype="${fsinfo}"
 fi
-
-if [ "${fstype}" = "" ]; then
-  echo "Filesystem not supported!" >&2; exit 1
-fi
+  
 fsname="$(basename "${fsfile}")"
 if [ "$(echo "${fsname}" | awk -F. '{print $NF}' | tr A-Z a-z)" = "pfs" ]; then
   checksfsxzb >/dev/null
