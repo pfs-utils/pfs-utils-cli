@@ -3,7 +3,6 @@
 #VERSION 3.0
 . /usr/bin/pfsfunc
 allow_only_root
-
 unset infile fupdate romode copy2ram mountdir copyramdir
 
 mntmode="upper"

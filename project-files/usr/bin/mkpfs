@@ -116,4 +116,6 @@ for i in $bundles ;do
 done 
 
 mksqmod "${n}" "${userout}"
-delaufs "$nn" && exit 0 || exitmsg "delaufs error" $?
+exitmsg "mksqmod error" $?
+delaufs "$nn" 
+exitmsg "delaufs error" $?

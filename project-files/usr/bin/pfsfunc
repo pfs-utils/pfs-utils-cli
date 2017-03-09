@@ -184,23 +184,25 @@ return $?
 
 
 mkaufs () {
-N=$(ls /sys/fs/aufs/ |egrep '^si_'| wc -w) # layrer prefix
-mkdir /$SYSMNT/changes$N
+#N=$(ls /sys/fs/aufs/ |egrep '^si_'| wc -w) # layrer prefix
+N=1
+while [ -f $SYSMNT/aufs${N}.lock ] ; do  N=$(($N +1)) ; done 
+echo "$SYSMNT/aufs$N" > $SYSMNT/aufs${N}.lock
+mkdir $SYSMNT/changes$N
 mount -t tmpfs tmpfs /$SYSMNT/changes$N
-mkdir /$SYSMNT/aufs$N
+mkdir $SYSMNT/aufs$N
 mount -t aufs -o dirs=/$SYSMNT/changes$N/=rw aufs /$SYSMNT/aufs$N && echo "/$SYSMNT/aufs$N" || return 1
 }
 
 delaufs () {
+[ $1 ] || return 1
 umount $SYSMNT/aufs$1 2>/dev/null
-rmdir $SYSMNT/aufs$1 
-
+rmdir $SYSMNT/aufs$1 2>/dev/null
 if [ "$(grep changes$1 /proc/mounts)" ]; then
 	umount -d $SYSMNT/changes$1 &&	rmdir $SYSMNT/changes$1
 else
 	rm -rf $SYSMNT/changes$1
 fi 2>/dev/null
-
 if [ -d $SYSMNT/bundles$1 ]; then
 	ls -1 $SYSMNT/bundles$1 | while read D
 	do
@@ -208,13 +210,13 @@ if [ -d $SYSMNT/bundles$1 ]; then
 	done
 	 rmdir $SYSMNT/bundles$1
 fi 2>/dev/null
-
 if [ "$(grep tmpfs$1 /proc/mounts)" ]; then
 	umount $SYSMNT/tmpfs$1 && 	rmdir $SYSMNT/tmpfs$1
 else
 	rm -rf  $SYSMNT/tmpfs$1
 fi 2>/dev/null
-
+ls -1 $SYSMNT | egrep  "aufs${1}$|changes${1}$|bundles${1}$" && return 3
+rm -f $SYSMNT/aufs${1}.lock
 }
 
 addlayer () {
