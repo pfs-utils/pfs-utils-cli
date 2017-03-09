@@ -3,18 +3,26 @@
 . /usr/bin/pfsfunc
 
 #aliases
-case $1 in
- -d | --dir )
-    m="$(find "$2" -maxdepth 1 -mindepth 1 -type d )"
-    [ "$m" ] || exitmsg "no directory in '$2'" 1
-    $0 $m -o "$2".pfs ; exit $?
-    ;;
- -m | --mod )
-    m="$(find "$2" -maxdepth 1 -mindepth 1 -type f |egrep '.pfs$|.xzm$|.sfs$|.squashfs$')"
-    [ "$m" ] || exitmsg "no modules in '$2'" 1
-    $0 $m -o "$2".pfs ; exit $?
-    ;;
- esac
+#case $1 in
+# -d | --dir )
+D(){
+    sourcelist="$(find "$1" -maxdepth 1 -mindepth 1 -type d )"
+    [ "$sourcelist" ] || exitmsg "no directory in '$2'" 1
+    ondir=
+    [ "${userout}" = "" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").pfs"
+}
+#    $0 $m -o "$2".pfs ; exit $?
+#    ;;
+# -m | --mod )
+M(){
+    sourcelist="$(find "$1" -maxdepth 1 -mindepth 1 -type f |egrep '.pfs$|.xzm$|.sfs$|.squashfs$')"
+    [ "$sourcelist" ] || exitmsg "no modules in '$2'" 1
+    onmod=
+    [ "${userout}" = "" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").pfs"
+}
+#    $0 $m -o "$2".pfs ; exit $?
+#    ;;
+# esac
 
 #help
 HLP(){
@@ -59,6 +67,8 @@ for arg in $argslist
 do
   case "${arg}" in
     "-o" | "--out-file") onuserout="on";;
+    "-d") ondir="on";;
+    "-m") onmod="on";;
     "-h" | "--help")  HLP ;exit 1;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
@@ -68,6 +78,8 @@ do
     "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
+       elif [ "${ondir}" = "on" ]; then D "${arg}"
+       elif [ "${onmod}" = "on" ]; then M "${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
        else sourcelist="${sourcelist} ${arg}"; fi
@@ -76,7 +88,7 @@ do
 done
 
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
-
+###    printf "useroot=$userout \n sourcelist=${sourcelist}" ;exit
 #1 dir, in place mode
 if [ -d $sourcelist 2>/dev/null -a "$inplace" == "yes" ] ;then
     eval echo "==== In place mode ====" $devnull
