@@ -1,6 +1,6 @@
 #!/bin/sh
 #VERSION 3.4
-. /usr/bin/pfsfunc
+. $(which pfsfunc)
 
 HLP(){
 echo "\
@@ -27,7 +27,7 @@ extract_simple () {
 		dir="/" && mkdir -p ${PFSDIR}/install/
     else
 		[ $dir ] || dir="./"
-		dir=$dir/$(basename "${pfs%.*}") && mkdir -p $dir
+		dir=$dir/$(basename $pfs |sed "s/\.${EXT}$//") && mkdir -p $dir
     fi
     eval unsquashfs -f -dest "${dir}" "${pfs}" $noprogress $useproc "$devnull" 
     exitmsg "Unsquashfs error" $?
@@ -56,7 +56,7 @@ pfsinfo "$pfs" |while read m ;do
     done
 
     mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
-    [ $dir ] || dir="$(basename "${pfs%.*}")"
+    [ $dir ] || dir=$(basename $pfs |sed "s/\.${EXT}$//")
 	if [ "$d" ] ; then	
 		mkdir -p "$dir/$m" && cp -a "$SYSMNT/changes$nn"/* "$dir/$m"
 	elif [ "$i" ] ; then
@@ -64,7 +64,7 @@ pfsinfo "$pfs" |while read m ;do
 		mv -f ${PFSDIR}/mount/$m ${PFSDIR}/install/
 		eval echo  "package: $m  install complete" $devnull 
     else
-		mkdir -p "$dir" && mksqmod "$SYSMNT/changes$nn" "$dir/$m.pfs"
+		mkdir -p "$dir" && mksqmod "$SYSMNT/changes$nn" "$dir/$m.$EXT"
     fi
     delaufs $nn ; echo ''
 done 

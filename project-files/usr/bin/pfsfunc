@@ -5,6 +5,7 @@
 #VERSION 3.4
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
+EXT=pfs
 
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
@@ -26,6 +27,9 @@ if echo $compression |grep -q xz; then
 	compression="$compression -Xbcj x86,arm"
 	fi
 fi
+
+#user config
+[ -f /etc/pfs.cfg ] && . /etc/pfs.cfg
 
 usage () {
 	echo -e "$(basename $0) is a library for pfs-utils \n" 
@@ -135,7 +139,6 @@ elif echo "${diskinfo}" | grep  -qi "ISO.*9660" ;then
   echo 'iso9660'
 fi
 }
-
 
 lddcheck () {
 	local rootdir alllibs
@@ -262,6 +265,7 @@ exitmsg "error create squashfs module" $?
 }
 
 pfsramfree () {
+#rm unmounted modules anf empty dirs from $copyramdir 
 if [ "$1" ]; then
 	[ -f "$1" ] && fsname="`basename $(realpath "$1")`" || fsname="$(basename "$1")"
 	fullname=$(echo "${copyramdir}/${fsname}" |sed 's://:/:')

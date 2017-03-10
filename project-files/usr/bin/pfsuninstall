@@ -1,7 +1,7 @@
 #!/bin/sh
 #Uninstall .pfs, by Zay, GPL v3.
 #VERSION 3.0
-. /usr/bin/pfsfunc
+. $(which pfsfunc)
 allow_only_root
 
 if [ ! "$1" ]; then

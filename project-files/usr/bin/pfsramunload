@@ -1,6 +1,6 @@
 #!/bin/sh
 #VERSION 3.0
-. /usr/bin/pfsfunc
+. $(which pfsfunc)
 pfsunload "$1" 
 exitmsg "Can't unload $1" $?
 pfsramfree "$1"

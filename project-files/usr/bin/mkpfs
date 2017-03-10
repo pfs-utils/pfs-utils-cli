@@ -1,39 +1,39 @@
 #!/bin/sh
 #VERSION 3.4
-. /usr/bin/pfsfunc
+. $(which pfsfunc)
 
 D(){
     sourcelist="$(find "$1" -maxdepth 1 -mindepth 1 -type d )"
     [ "$sourcelist" ] || exitmsg "no directory in '$2'" 1
     ondir=
-    [ "${userout}" = "" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").pfs"
+    [ "${userout}" = "" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").$EXT"
 }
 M(){
-    sourcelist="$(find "$1" -maxdepth 1 -mindepth 1 -type f |egrep '.pfs$|.xzm$|.sfs$|.squashfs$')"
+    sourcelist="$(find "$1" -maxdepth 1 -mindepth 1 -type f |egrep ".pfs$|.xzm$|.sfs$|.squashfs$|.$EXT$")"
     [ "$sourcelist" ] || exitmsg "no modules in '$2'" 1
     onmod=
-    [ "${userout}" = "" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").pfs"
+    [ "${userout}" = "" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").$EXT"
 }
 
 #help
 HLP(){
-echo "Usage: $0 <list of sources> -o out.pfs"
+echo "Usage: $0 <list of sources> -o out.$EXT"
 echo "Examples:"
 echo "$0 ./dir 			-make dir.pfs from dir"
-echo "$0 1.pfs 2.pfs -o 3.pfs	-collect 1.pfs and 2.pfs to contaner 3.pfs"
-echo "$0 * -o ./big.pfs		-collect all dirs and squashfs modules from current dir to big.pfs" 
+echo "$0 1.$EXT 2.$EXT -o 3.$EXT	-collect 1.$EXT and 2.$EXT to contaner 3.$EXT"
+echo "$0 * -o ./big.$EXT		-collect all dirs and squashfs modules from current dir to big.$EXT" 
 echo
 echo "Параметры (ключи):"
-echo "	-o / --out-file - указывает название выходного файла .pfs."
+echo "	-o / --out-file - указывает название выходного файла .$EXT."
 echo "	-w - не включать AUFS тени."
 echo "  -l / --local - сборка на месте, без использования aufs."
-echo "	-f / --fast - быстрая компрессия (размер .pfs больше, но создается быстрее)."
+echo "	-f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
 echo "	-comp / параметры для mksquashfs, компрессия размер блока и проч."
 echo "Алиасы (сокращения):"
 echo " -d | --dir - Только каталоги"
-echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.pfs'
+echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.$EXT'
 echo " -m | --mod - Только модули"
-echo "	$(basename $0) -m dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type f ) -o dir.pfs'
+echo "	$(basename $0) -m dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type f ) -o dir.$EXT'
 exit 1
 }
 
@@ -78,7 +78,7 @@ do
   esac
 done
 
-[ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).pfs"
+[ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).${EXT}"
 
 #1 dir, in place mode
 if [ -d $sourcelist 2>/dev/null -a "$inplace" == "yes" ] ;then

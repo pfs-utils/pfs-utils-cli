@@ -1,7 +1,7 @@
 #!/bin/sh
 #Copy to RAM & Mount SquashFS to AUFS, by «sfs» & Zay, GPL v3.
 #VERSION 3.0
-. /usr/bin/pfsfunc
+. $(which pfsfunc)
 allow_only_root
 
 for arg in "$@"
