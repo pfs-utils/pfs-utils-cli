@@ -17,12 +17,11 @@ if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") FYLESYSTEM"; exit
 fi
 
-[ -f "${infile}" ] && fsname="`basename $(realpath "${infile}")`" || fsname="$(basename "${infile}")"
-if [ "$(echo "${fsname}" | sed 's/^.*\.//')" = "pfs" ]; then
-  checksfsxzb >/dev/null 2>&1
-  if [ $? -gt 0 ]; then
-    echo "Kernel not support PFS!" >&2; exit 1
-  fi
+if [ -f "${infile}" ] ; then 
+	fsname="$(basename $(realpath "${infile}"))" 
+	checksfsxzb >/dev/null || exitmsg "Kernel not support PFS!" 3
+else
+	fsname="$(basename "${infile}")"
 fi
 
 mountpoint="${prefixmp}${fsname}"
