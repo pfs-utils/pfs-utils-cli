@@ -1,7 +1,8 @@
 #!/bin/sh
 #VERSION 3.0
 . /usr/bin/pfsfunc
-pfsunload "$1" || echo "Can't unload $1"
+pfsunload "$1" 
+exitmsg "Can't unload $1" $?
 pfsramfree "$1"
 exitmsg "Ramfree $1 error" $?
 

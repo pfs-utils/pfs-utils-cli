@@ -261,6 +261,23 @@ eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${use
 exitmsg "error create squashfs module" $?
 }
 
+pfsramfree () {
+if [ "$1" ]; then
+	[ -f "$1" ] && fsname="`basename $(realpath "$1")`" || fsname="$(basename "$1")"
+	fullname=$(echo "${copyramdir}/${fsname}" |sed 's://:/:')
+	[ -f "$fullname" ] &&  rm -f "$fullname" || return 1
+else
+	if [ -d "${copyramdir}" ]; then
+    find "${copyramdir}" -mindepth 1 -type f 2>/dev/null | while read rampfs ; do
+		losetupb -a | grep -q "${rampfs}" || rm -f "$rampfs"
+    done
+    find "${copyramdir}" -mindepth 1 -type d -empty 2>/dev/null | while read empdir ; do
+		rmdir --parents $empdir 2>/dev/null
+	done
+	fi
+fi
+}
+
 if [ "$(basename $0)" == "pfsfunc" ] ;then
 [ $1 ] || usage
 command="$1" 
