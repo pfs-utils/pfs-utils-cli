@@ -191,7 +191,7 @@ echo "$SYSMNT/aufs$N" > $SYSMNT/aufs${N}.lock
 mkdir $SYSMNT/changes$N
 mount -t tmpfs tmpfs /$SYSMNT/changes$N
 mkdir $SYSMNT/aufs$N
-mount -t aufs -o dirs=/$SYSMNT/changes$N/=rw aufs /$SYSMNT/aufs$N && echo "/$SYSMNT/aufs$N" || return 1
+mount -t aufs -o dirs=/$SYSMNT/changes$N/=rw aufs /$SYSMNT/aufs$N && echo "$SYSMNT/aufs$N" || return 1
 }
 
 delaufs () {
