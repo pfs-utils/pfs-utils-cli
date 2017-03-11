@@ -109,7 +109,7 @@ if [ ${status} -eq 0 ]; then
     status=$?
     sync
     if [ ${status} -eq 0 ]; then
-      [ "${fupdate}" != "no" ] && pfs-update-caches "${mountpoint}"
+      [ "${fupdate}" != "no" ] && pfs_update_caches "${mountpoint}"
     else
       umountb -d "${mountpoint}" >/dev/null
 	  rmdir "${mountpoint}" >/dev/null

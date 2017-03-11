@@ -188,7 +188,7 @@ return $?
 
 
 mkaufs () {
-#N=$(ls /sys/fs/aufs/ |egrep '^si_'| wc -w) # layrer prefix
+#make new aufs
 N=1
 while [ -f $SYSMNT/aufs${N}.lock ] ; do  N=$(($N +1)) ; done 
 echo "$SYSMNT/aufs$N" > $SYSMNT/aufs${N}.lock
@@ -199,6 +199,7 @@ mount -t aufs -o dirs=/$SYSMNT/changes$N/=rw aufs /$SYSMNT/aufs$N && echo "$SYSM
 }
 
 delaufs () {
+#remove aufs 
 [ $1 ] || return 1
 umount $SYSMNT/aufs$1 2>/dev/null
 rmdir $SYSMNT/aufs$1 2>/dev/null
@@ -224,6 +225,7 @@ rm -f $SYSMNT/aufs${1}.lock
 }
 
 addlayer () {
+#add new aufs layer, $1 - aufs number, $2 - layer source
 NEWLAYER=$(realpath "$2") || return 1
 AUFSMNT="/"
 case "$1" in
@@ -280,6 +282,26 @@ else
 	done
 	fi
 fi
+}
+
+pfs_update_caches () {
+#update caches, icons, menus, etc after load/unload modules
+[ "$(find "$1"{,/usr{,/local,/X11R6}}/lib -type f -name "*.so" 2>/dev/null)" ] && ldconfig &
+[ -d "$1/usr/share/mime/" ] && update-mime-database /usr/share/mime &
+[ -d "$1/usr/lib/gdk-pixbuf-2.0/" ]  && gdk-pixbuf-query-loaders --update-cache &
+[ -d "$1/usr/share/icons/hicolor/" ] && gtk-update-icon-cache -f -i -q /usr/share/icons/hicolor &
+[ -d "$1/usr/share/applications/" -o -d "$1/usr/local/share/applications/" ] && update-desktop-database -q &
+[ -d "$1/usr/share/glib-2.0/schemas/" ]  && glib-compile-schemas /usr/share/glib-2.0/schemas/ &
+for font_dir in /usr/share/fonts{,/default}/TTF  /usr/X11R6/lib/X11/fonts/TTF ; do
+    if [ -d "$1/${font_dir}" ]; then
+	fcneed=on
+	mkfontscale ${font_dir} & 
+	mkfontdir ${font_dir} &
+    fi
+done
+[ $fcneed ] && fc-cache -f -s &
+#run all  fixmenu* scripts to reload menu for your DE
+for script in $(ls $(dirname $0)/fixmenus*) ; do $script "$1" ; done 
 }
 
 if [ "$(basename $0)" == "pfsfunc" ] ;then

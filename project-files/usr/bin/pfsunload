@@ -30,7 +30,7 @@ if [ -d "${mountpoint}" ]; then
   mountb -t aufs -o remount,del:"${mountpoint}"/ aufs / #>/dev/null 2>&1
   stataufs=$?
   sync
-  [ "${fupdate}" != "no" ] && [ ${stataufs} -eq 0 ] && pfs-update-caches "${mountpoint}"
+  [ "${fupdate}" != "no" ] && [ ${stataufs} -eq 0 ] && pfs_update_caches "${mountpoint}"
   umountb -d "${mountpoint}" #>/dev/null 2>&1
   status=$?
   sync

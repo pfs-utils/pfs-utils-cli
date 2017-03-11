@@ -6,3 +6,4 @@ if [ -d "${mpoint}/usr/share/applications/" -o -d "${mpoint}/usr/local/share/app
    ps -A | grep -q gam_server || killall -1 lxpanel gnome-panel 2>/dev/null
    touch /usr/share/applications/screensavers
 fi
+
