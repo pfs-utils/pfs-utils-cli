@@ -15,16 +15,16 @@ do
     "-n" | "--no-update") fupdate="no";;
     "-r" | "--read-only") romode="yes";;
     "-h" | "--help") infile=""; break;;
-    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
+    "-"*[A-Za-z]*) exitmsg "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" 1 ;;
     *) infile="${arg}";;
   esac
 done
 if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM${IFS}${IFS}Options:"
-  echo " -u, --upper    Mount filesystem to upper layer (AUFS)."
-  echo " -l, --lower    Mount filesystem to lower layer (AUFS)."; exit
-  echo " -r, --read-only Mount read-only"
+  echo " -u, --upper    (default) Mount filesystem to upper layer (AUFS)."
+  echo " -l, --lower    Mount filesystem to lower layer (AUFS)."
   echo " -n, --no-update Do not check for update caches"
+  echo " -r, --read-only Mount read-only"
 fi
 
 if [ -f "${infile}" ]; then
@@ -37,13 +37,13 @@ elif [ -d "${infile}" ]; then
   fsfile="$(realpath "${infile}")"
   devtype="dir"
 else
-  echo "Object \"${infile}\" not found!" >&2; exit 1
+  exitmsg "Object \"${infile}\" not found!"  2
 fi
 
 if [ "${devtype}" != "dir" ]; then
   fstype=$(fs_type "${fsfile}")
-  [ "${fstype}" = "" ] && exitmsg "Unknown file system -- \"$fsfile\"" 5
-  [ checksfsxzb 2>/dev/null ] || exitmsg "Kernel not support PFS!" 6
+  [ "${fstype}" = "" ] && exitmsg "Unknown file system -- \"$fsfile\"" 3
+  [ checksfsxzb 2>/dev/null ] || exitmsg "Kernel not support PFS!" 4
 else
   fsinfo="$(df -aT "${fsfile}" | tail -n 1 | tr -s ' ' '_' | cut -d'_' -f 2)"
   case "${fsinfo}" in
@@ -56,9 +56,7 @@ fsname="$(basename "${fsfile}")"
 
 mountpoint="${prefixmp}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
-if [ -d "${mountpoint}" ]; then
-  echo "Object \"${fsfile}\" is mounted!" >&2; exit 1
-fi
+[ -d "${mountpoint}" ] && exitmsg "Object \"${fsfile}\" is mounted!" 6
 
 if [ "${devtype}:${fstype}" = "file:squashfs" ]; then
   sync
@@ -72,9 +70,7 @@ if [ "${devtype}:${fstype}" = "file:squashfs" ]; then
     chown root.root /dev/loop${freeloop}
     sync
   fi
-  if [ ! -b /dev/loop${freeloop} ]; then
-    echo "Error! Free loop devices is not found!" >&2; exit 1
-  fi
+  [ -b /dev/loop${freeloop} ] || exitmsg "Error! Free loop devices is not found!" 7
   losetupb /dev/loop${freeloop} "${fsfile}"
   status=$?
 else
@@ -86,14 +82,14 @@ if [ ${status} -eq 0 ]; then
   sync
   case "${devtype}" in
     "file" )  if [ "${fstype}" = "squashfs" ]; then
-                mountb -t squashfs -o ro /dev/loop${freeloop} "${mountpoint}" >/dev/null 2>&1
+                mountb -t squashfs -o ro /dev/loop${freeloop} "${mountpoint}" >/dev/null #2>&1
               else
                 [ "${romode}" ] && optmnt="loop,ro" || optmnt="loop"
-                mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1
+                mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null #2>&1
               fi;;
     "dev" )   [ "${romode}" ] && optmnt="ro" || optmnt="rw"
-              mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
-    "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null 2>&1;;
+              mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null ;;
+    "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null ;;
   esac 
   status=$?
   if [ ${status} -eq 0 ]; then
@@ -102,9 +98,9 @@ if [ ${status} -eq 0 ]; then
 		nlayer=1
 		[ -w $(aufs-n 1) ] && nlayer=2
 		[ -w "${mountpoint}" ] && nlayer=1
-		mountb -o remount,add:${nlayer}:"${mountpoint}"=ro / >/dev/null 2>&1
+		mountb -o remount,add:${nlayer}:"${mountpoint}"=ro / >/dev/null #2>&1
     else
-      mountb -o remount,append:"${mountpoint}"=ro / >/dev/null 2>&1
+      mountb -o remount,append:"${mountpoint}"=ro / >/dev/null #2>&1
     fi
     status=$?
     sync
@@ -113,16 +109,16 @@ if [ ${status} -eq 0 ]; then
     else
       umountb -d "${mountpoint}" >/dev/null
 	  rmdir "${mountpoint}" >/dev/null
-	  echo "AUFS error!" >&2; exit ${status}
+	  exitmsg "AUFS error!" ${status}
     fi
   else
     losetupb -d /dev/loop${freeloop}
     rmdir "${mountpoint}" >/dev/null
-	echo "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." >&2; exit ${status}
+	exitmsg "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." ${status}
   fi
 else
   rmdir "${mountpoint}" 2>/dev/null
-  echo "Mount error!" >&2; exit ${status}
+  exitmsg "Mount error!" ${status}
 fi
 sync
 
