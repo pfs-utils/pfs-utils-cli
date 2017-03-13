@@ -1,9 +1,0 @@
-#!/bin/sh
-#available DE: kde4,lxde,gnom2
-mpoint=""
-[ $1 ] && mpoint=$1
-if [ -d "${mpoint}/usr/share/applications/" -o -d "${mpoint}/usr/local/share/applications/" ]; then
-   ps -A | grep -q gam_server || killall -1 lxpanel gnome-panel 2>/dev/null
-   touch /usr/share/applications/screensavers
-fi
-

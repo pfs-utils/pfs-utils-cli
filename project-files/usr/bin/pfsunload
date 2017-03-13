@@ -31,6 +31,9 @@ if [ -d "${mountpoint}" ]; then
   stataufs=$?
   sync
   [ "${fupdate}" != "no" ] && [ ${stataufs} -eq 0 ] && pfs_update_caches "${mountpoint}"
+  for script in $(ls $(dirname $0)/runpfsunload-*) ; do 
+	$script "${mountpoint}" &
+  done
   umountb -d "${mountpoint}" #>/dev/null 2>&1
   status=$?
   sync
