@@ -30,10 +30,12 @@ if [ -d "${mountpoint}" ]; then
   mountb -t aufs -o remount,del:"${mountpoint}"/ aufs / #>/dev/null 2>&1
   stataufs=$?
   sync
-  [ "${fupdate}" != "no" ] && [ ${stataufs} -eq 0 ] && pfs_update_caches "${mountpoint}"
-  for script in $(ls $(dirname $0)/runpfsunload-*) ; do 
-	$script "${mountpoint}" &
-  done
+  if [ "${fupdate}" != "no" -a ${stataufs} -eq 0 ] ; then
+	  pfs_update_caches "${mountpoint}"
+	for script in $(ls $(dirname $0)/runpfsunload-*) ; do 
+	  $script "${mountpoint}" &
+	done
+  fi
   umountb -d "${mountpoint}" #>/dev/null 2>&1
   status=$?
   sync

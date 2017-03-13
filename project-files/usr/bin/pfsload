@@ -105,10 +105,12 @@ if [ ${status} -eq 0 ]; then
     status=$?
     sync
     if [ ${status} -eq 0 ]; then
-      [ "${fupdate}" != "no" ] && pfs_update_caches "${mountpoint}"
-      for script in $(ls $(dirname $0)/runpfsload-*) ; do 
-		$script "${mountpoint}" &
-      done 
+      if [ "${fupdate}" != "no" ] ; then 
+		pfs_update_caches "${mountpoint}"
+		for script in $(ls $(dirname $0)/runpfsload-*) ; do 
+			$script "${mountpoint}" &
+		done
+      fi 
     else
       umountb -d "${mountpoint}" >/dev/null
 	  rmdir "${mountpoint}" >/dev/null
