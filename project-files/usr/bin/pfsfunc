@@ -2,7 +2,7 @@
 #library for pfs-utils, GPL v3. https://github.com/pfs-utils/
 #Authors: puppyrus.org : Zay, DdShurick, sfs
 #Author: magos-linux.ru: Betcher
-#VERSION 3.4
+#VERSION 3.6
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
 EXT=pfs
