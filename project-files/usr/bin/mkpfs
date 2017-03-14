@@ -37,7 +37,6 @@ echo "	$(basename $0) -m dir ---> $(basename $0)" '$(find dir -maxdepth 1 -minde
 exit 1
 }
 
-[ "$1" ] || HLP
 allow_only_root
 
 #check kernel
@@ -79,7 +78,7 @@ do
 done
 
 [ "${userout}" = "" ] && userout="./$(basename $(echo $sourcelist | awk '{print $1}')).${EXT}"
-
+[ "$sourcelist" ] || HLP
 #1 dir, in place mode
 if [ -d $sourcelist 2>/dev/null -a "$inplace" == "yes" ] ;then
     eval echo "==== In place mode ====" $devnull
