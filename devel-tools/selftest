@@ -94,7 +94,7 @@ m="$m\npfsrebuild=		$PFSREBUILD"
 rm -r first second 2>/dev/nul
 
 echo "############# pfsunload from ram ##############"
-pfsunload -r ./testmodule.${EXT} && PFSUNLOADr=OK
+pfsunload ./testmodule.${EXT} && PFSUNLOADr=OK
 m="$m\nunload ram=		$PFSUNLOADr"
 
 echo "############# pfsextract ##############"
