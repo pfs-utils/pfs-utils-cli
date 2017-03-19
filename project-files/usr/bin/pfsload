@@ -3,7 +3,6 @@
 #VERSION 3.6
 . $(which pfsfunc)
 allow_only_root
-unset infile fupdate romode copy2ram mountdir copyramdir
 
 mntmode="upper"
 
@@ -13,7 +12,8 @@ do
     "-u" | "--upper") mntmode="upper";;
     "-l" | "--lower") mntmode="lower";;
     "-n" | "--no-update") fupdate="no";;
-    "-r" | "--read-only") romode="yes";;
+    "-r" | "--toram" ) toram="yes" ;;
+    "--ro" | "--read-only" ) romode="yes";;
     "-h" | "--help") infile=""; break;;
     "-"*[A-Za-z]*) exitmsg "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" 1 ;;
     *) infile="${arg}";;
@@ -24,11 +24,29 @@ if [ "${infile}" = "" ]; then
   echo " -u, --upper    (default) Mount filesystem to upper layer (AUFS)."
   echo " -l, --lower    Mount filesystem to lower layer (AUFS)."
   echo " -n, --no-update Do not check for update caches"
-  echo " -r, --read-only Mount read-only"
+  echo " --ro, --read-only Mount read-only"
+  echo " -r, --toram copy module to RAM disk (tmpfs) before loading"
 fi
+ 
+toram () {
+mkdir -p ${copyramdir}
+freeram=$(checkramfreeb)
+filesize="`expr $(du -k "${fsfile}" | cut -f 1)`"
+minram="$(expr ${filesize} + ${TMPFSLIMIT})"
+[ ${minram} -gt ${freeram} ] && exitmsg "Not enouth free RAM space" 3
+[ "$(stat  --format=%T -f $copyramdir )" != "tmpfs" ] && mountb -t tmpfs tmpfs "${copyramdir}"
+if [ -f "${copyramdir}${fsname}" ] ;then 
+	pfsunload -r ${fsname} 
+	exitmsg "File already in ram and mounted" $?
+fi
+#echo "\"${fsname}\" copying to RAM..."
+cp -afL "${fsfile}" "${copyramdir}" || return 2
+echo  "${copyramdir}$(basename ${fsfile})"
+}
 
 if [ -f "${infile}" ]; then
   fsfile="$(realpath "${infile}")"
+  [ $toram ] && fsfile=$(toram)
   devtype="file"
 elif [ -b "${infile}" ]; then
   fsfile="${infile}"
@@ -53,7 +71,6 @@ else
 fi
   
 fsname="$(basename "${fsfile}")"
-
 mountpoint="${prefixmp}${fsname}"
 [ -d "${mountpoint}" ] && rmdir "${mountpoint}" 2>/dev/null
 [ -d "${mountpoint}" ] && exitmsg "Object \"${fsfile}\" is mounted!" 6

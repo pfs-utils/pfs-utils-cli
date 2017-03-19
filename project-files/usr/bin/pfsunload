@@ -8,6 +8,7 @@ for arg in "$@"
 do
   case "${arg}" in
     "-n" | "--no-update") fupdate="no";;
+    "-r" | "--ramfree") ramfree="yes";;
     "-h" | "--help") infile=""; break;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) infile="${arg}";;
@@ -46,6 +47,11 @@ if [ -d "${mountpoint}" ]; then
 else
   echo "Object \"${fsname}\" not mounted." >&2
   status=1
+fi
+
+if [ $ramfree ] ; then
+	pfsramfree "${fsname}" 
+	exitmsg "Ramfree $1 error" $?
 fi
 
 exit ${status}

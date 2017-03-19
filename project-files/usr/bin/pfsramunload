@@ -1,8 +1,0 @@
-#!/bin/sh
-#VERSION 3.6
-. $(which pfsfunc)
-pfsunload "$1" 
-exitmsg "Can't unload $1" $?
-pfsramfree "$1"
-exitmsg "Ramfree $1 error" $?
-
