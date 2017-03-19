@@ -38,7 +38,7 @@ if [ -d "${mountpoint}" ]; then
 	done
   fi
   
-  losetupb |grep $fsname |grep $copyramdir && ramfree=yes 
+  losetupb |grep -q $fsname |grep -q $copyramdir && ramfree=yes 
   
   umountb -d "${mountpoint}" #>/dev/null 2>&1
   status=$?
