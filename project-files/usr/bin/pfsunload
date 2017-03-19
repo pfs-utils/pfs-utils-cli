@@ -51,7 +51,7 @@ fi
 
 if [ $ramfree ] ; then
 	pfsramfree "${fsname}" 
-	exitmsg "Ramfree $1 error" $?
+	exitmsg "Ramfree ${fsname} error" $?
 fi
 
 exit ${status}

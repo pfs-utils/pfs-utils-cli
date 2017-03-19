@@ -10,8 +10,8 @@ MKPFS_MERGE="\e[31mFALSE\e[0m"
 MNTFILE="\e[31mFALSE\e[0m"
 PFSLOAD="\e[31mFALSE\e[0m"
 PFSUNLOAD="\e[31mFALSE\e[0m"
-PFSRAMLOAD="\e[31mFALSE\e[0m"
-PFSRAMUNLOAD="\e[31mFALSE\e[0m"
+PFSLOADr="\e[31mFALSE\e[0m"
+PFSUNLOADr="\e[31mFALSE\e[0m"
 PFSREBUILD="\e[31mFALSE\e[0m"
 PFSEXTRACT="\e[31mFALSE\e[0m"
 PFSEXTRACTd="\e[31mFALSE\e[0m"
@@ -83,9 +83,9 @@ echo "############# pfsunload ##############"
 pfsunload ./testmodule.${EXT} && PFSUNLOAD=OK
 m="$m\npfsunload=		$PFSUNLOAD"
 
-echo "############# pfsramload ##############"
-pfsramload ./testmodule.${EXT} && PFSRAMLOAD=OK
-m="$m\npfsramload=		$PFSRAMLOAD"
+echo "############# pfsload to ram ##############"
+pfsload -r ./testmodule.${EXT} && PFSLOADr=OK
+m="$m\nload to ram=		$PFSLOADr"
 
 echo "############# pfsrebuild ##############"
 [ "$PFSLOAD" == "OK" ] && rm -f ./testmodule.${EXT}
@@ -93,9 +93,9 @@ pfsrebuild testmodule.${EXT} && PFSREBUILD=OK
 m="$m\npfsrebuild=		$PFSREBUILD" 
 rm -r first second 2>/dev/nul
 
-echo "############# pfsramunload ##############"
-pfsramunload ./testmodule.${EXT} && PFSRAMUNLOAD=OK
-m="$m\npfsramunload=		$PFSRAMUNLOAD"
+echo "############# pfsunload from ram ##############"
+pfsunload -r ./testmodule.${EXT} && PFSUNLOADr=OK
+m="$m\nunload ram=		$PFSUNLOADr"
 
 echo "############# pfsextract ##############"
 pfsextract testmodule.${EXT} -o testmodule -f -q && [ -f testmodule/first.${EXT} ] && \
