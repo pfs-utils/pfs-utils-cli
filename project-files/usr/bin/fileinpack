@@ -1,7 +1,7 @@
 #!/bin/sh
 #Find file in mounted or installed .pfs packages, by Zay.
 #VERSION 3.6
-. $(which pfsfunc)
+. $(which pfs)
 
 case "$1" in 
   "") echo "Usage: $(basename "$0") FILE"; exit 1;;

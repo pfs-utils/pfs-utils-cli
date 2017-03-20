@@ -67,7 +67,7 @@ source_dir="$(realpath "$1")"
 [ "$2" ] && dest_dir="$(realpath "$2")" || dest_dir="$source_dir"
 pack_name="$(basename "$1")"
 [ "$3" ] && pack_name="$3"
-[ "$(pwd)" != "/" ] && find "${source_dir}${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \; 2>/dev/null
+#[ "$(pwd)" != "/" ] && find "${source_dir}${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \; 2>/dev/null
 mkdir -p "${dest_dir}${PFSDIR}/mount/${pack_name}" &&
 echo 'name="'$pack_name'"' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs" &&
 find "${source_dir}" ! -type d        | sed "s:$source_dir::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.files" &&
@@ -305,7 +305,13 @@ done
 [ $fcneed ] && fc-cache -f -s &
 }
 
-if [ "$(basename $0)" == "pfsfunc" ] ;then
+checkdeps () {
+# $1 module mount point
+find $1/etc/packages/mount/ -name pfs.depends -exec cat "{}" \; |sort |uniq > /tmp/deps
+finded
+}
+
+if [ "$(basename $0)" == "pfs" ] ;then
 [ $1 ] || usage
 command="$1" 
 shift
