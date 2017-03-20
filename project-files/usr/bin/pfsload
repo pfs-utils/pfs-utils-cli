@@ -3,29 +3,28 @@
 #VERSION 3.6
 . $(which pfs)
 allow_only_root
-
 mntmode="upper"
 
 for arg in "$@"
 do
   case "${arg}" in
-    "-u" | "--upper") mntmode="upper";;
-    "-l" | "--lower") mntmode="lower";;
-    "-n" | "--no-update") fupdate="no";;
-    "-r" | "--toram" ) toram="yes" ;;
+    "-u"   | "--upper") mntmode="upper";;
+    "-l"   | "--lower") mntmode="lower";;
+    "-n"   | "--no-update") fupdate="no";;
+    "-r"   | "--toram" ) toram="yes" ;;
     "--ro" | "--read-only" ) romode="yes";;
-    "-h" | "--help") infile=""; break;;
+    "-h"   | "--help") infile=""; break;;
     "-"*[A-Za-z]*) exitmsg "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" 1 ;;
     *) infile="${arg}";;
   esac
 done
 if [ "${infile}" = "" ]; then
   echo "Usage: $(basename "$0") [OPTIONS] FILESYSTEM${IFS}${IFS}Options:"
-  echo " -u, --upper    (default) Mount filesystem to upper layer (AUFS)."
-  echo " -l, --lower    Mount filesystem to lower layer (AUFS)."
-  echo " -n, --no-update Do not check for update caches"
+  echo " -u,   --upper    (default) Mount filesystem to upper layer (AUFS)."
+  echo " -l,   --lower    Mount filesystem to lower layer (AUFS)."
+  echo " -n,   --no-update Do not check for update caches"
   echo " --ro, --read-only Mount read-only"
-  echo " -r, --toram copy module to RAM disk (tmpfs) before loading"
+  echo " -r,   --toram copy module to RAM disk (tmpfs) before loading"
 fi
  
 toram () {
@@ -109,8 +108,10 @@ if [ ${status} -eq 0 ]; then
     "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null ;;
   esac 
   status=$?
+  
   if [ ${status} -eq 0 ]; then
     sync
+    requires=$(checkdeps "${mountpoint}")
     if [ "${mntmode}" = "upper" ]; then
 		nlayer=1
 		[ -w $(aufs-n 1) ] && nlayer=2
@@ -143,5 +144,9 @@ else
   exitmsg "Mount error!" ${status}
 fi
 sync
+
+for dep in $requires ; do
+	echo "need: $dep"
+done
 
 exit 0
