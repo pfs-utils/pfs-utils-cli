@@ -41,7 +41,7 @@ if [ -f "${copyramdir}/${fsname}" ] ;then
 fi
 #echo "\"${fsname}\" copying to RAM..."
 cp -afL "${fsfile}" "${copyramdir}" || return 2
-echo  "${copyramdir}/$(basename ${fsfile})"
+echo  "${copyramdir}/$(basename ${fsfile})" | sed 's://:/:g'
 }
 
 if [ -f "${infile}" ]; then
