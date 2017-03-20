@@ -35,13 +35,13 @@ filesize="`expr $(du -k "${fsfile}" | cut -f 1)`"
 minram="$(expr ${filesize} + ${TMPFSLIMIT})"
 [ ${minram} -gt ${freeram} ] && exitmsg "Not enouth free RAM space" 3
 [ "$(stat  --format=%T -f $copyramdir )" != "tmpfs" ] && mountb -t tmpfs tmpfs "${copyramdir}"
-if [ -f "${copyramdir}${fsname}" ] ;then 
+if [ -f "${copyramdir}/${fsname}" ] ;then 
 	pfsunload -r ${fsname} 
 	exitmsg "File already in ram and mounted" $?
 fi
 #echo "\"${fsname}\" copying to RAM..."
 cp -afL "${fsfile}" "${copyramdir}" || return 2
-echo  "${copyramdir}$(basename ${fsfile})"
+echo  "${copyramdir}/$(basename ${fsfile})"
 }
 
 if [ -f "${infile}" ]; then
