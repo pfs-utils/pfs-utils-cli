@@ -1,5 +1,5 @@
 #!/bin/sh
-#Read depends of PFS packages, by Zay, GPL v3.
+#Read depends of PFS packages
 #VERSION 3.6
 . $(which pfs)
 

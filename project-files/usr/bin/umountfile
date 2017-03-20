@@ -1,5 +1,5 @@
 #!/bin/sh
-# Unmount file for PuppyRus ("Ext2", "Ext3", "Ext4", "SquashFS", "ISO"), by Zay, GPL v3.
+# Unmount file for PuppyRus ("Ext2", "Ext3", "Ext4", "SquashFS", "ISO")
 #VERSION 3.6
 if [ ! "$1" ]; then
   echo "Usage: $(basename "$0") FILE" >&2; exit 1

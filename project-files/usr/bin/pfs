@@ -1,8 +1,10 @@
 #!/bin/sh
-#library for pfs-utils, GPL v3. https://github.com/pfs-utils/
+#library for pfs-utils (https://github.com/pfs-utils-cli/)
 #Authors: puppyrus.org : Zay, DdShurick, sfs
 #Author: magos-linux.ru: Betcher
+#License: GPL v3
 #VERSION 3.6
+
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
 EXT=pfs

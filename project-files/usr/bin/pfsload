@@ -1,5 +1,5 @@
 #!/bin/sh
-#Mount filesystem to AUFS, by Zay, GPL v3.
+#Mount filesystem to AUFS
 #VERSION 3.6
 . $(which pfs)
 allow_only_root

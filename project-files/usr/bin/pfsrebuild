@@ -1,5 +1,5 @@
 #!/bin/sh
-#rebuild loaded or installed pfs, by betcher, GPL v3.
+#rebuild loaded or installed pfs
 #VERSION 3.6
 . $(which pfs)
 

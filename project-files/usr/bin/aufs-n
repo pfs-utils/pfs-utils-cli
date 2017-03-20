@@ -1,5 +1,5 @@
 #!/bin/sh
-#aufs layers list, by DdS sfs
+#aufs layers list
 #VERSION 3.6
 header () {
 echo "AUFS layers (top layer \"0\" covers all lower )"

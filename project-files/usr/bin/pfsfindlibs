@@ -1,5 +1,5 @@
 #!/bin/sh
-#Find dynamic libraries from all packages (for PuppyRus), by Zay, GPL v3.
+#Find dynamic libraries from all packages (for PuppyRus)
 #VERSION 3.6
 . $(which pfs)
 

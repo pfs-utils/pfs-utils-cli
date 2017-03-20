@@ -1,5 +1,5 @@
 #!/bin/bash
-#Util to move files to second aufs layer, by betcher, GPL v3.
+#Util to move files to second aufs layer
 #VERSION 3.6
 . $(which pfs)
 allow_only_root 
