@@ -309,10 +309,9 @@ done
 
 checkdeps () {
 # $1 module mount point
-find $1/etc/packages/mount/ -name pfs.depends -exec cat "{}" \; |sort |uniq > /tmp/pfs_deps
-pfsinfo |grep -f  /tmp/deps  > /tmp/pfs_finded
-cat /tmp/pfs_deps | grep -v -f  /tmp/pfs_finded
-rm -f /tmp/pfs_* 
+list=$(find $1/etc/packages/mount/ -name pfs.depends -exec cat "{}" \; |sort |uniq)
+founded=$(echo -e "$list\n$(pfsinfo |sort |uniq)" |sort |uniq -d)
+echo -e "$founded\n$list" |sort |uniq -u
 }
 
 if [ "$(basename $0)" == "pfs" ] ;then

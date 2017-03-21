@@ -38,8 +38,7 @@ if [ -d "${mountpoint}" ]; then
 	done
   fi
   
-  losetupb |grep -q $fsname |grep -q $copyramdir && ramfree=yes 
-  
+  losetupb |grep -q "${copyramdir}${fsname}"  && ramfree=yes 
   umountb -d "${mountpoint}" #>/dev/null 2>&1
   status=$?
   sync
@@ -51,7 +50,6 @@ else
   echo "Object \"${fsname}\" not mounted." >&2
   status=1
 fi
-
 if 	[ $ramfree ] ; then
 	[ $saveram ] || pfsramfree "${fsname}" 
 fi
