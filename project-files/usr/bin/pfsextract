@@ -47,11 +47,11 @@ pfsinfo "$pfs" |while read m ;do
 	nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 	[ -d "$n" ] || exitmsg "error mounting aufs" 3
     bundle=$(addlayer "$nn" "$pfs" || exitmsg "can't insert layer to aufs $n" 5)
-    cat "$SYSMNT/aufs${nn}/etc/packages/mount/${m}/pfs.files" | while read F; do 
+    cat "$SYSMNT/aufs${nn}${PFSDIR}/mount/${m}/pfs.files" | while read F; do 
 	touch "$SYSMNT/aufs$nn$F" 2>/dev/null || cp -a "$bundle/$F" "$SYSMNT/aufs${nn}$F"
     done
 
-    emp="$SYSMNT/aufs$nn/etc/packages/mount/$m/pfs.dirs.empty"
+    emp="$SYSMNT/aufs$nn/${PFSDIR}/mount/$m/pfs.dirs.empty"
     [ -f "$emp" ] && cat "$emp" | while read F; do 
 	touch "$SYSMNT/aufs$nn$F" 2>/dev/null || cp -a "$bundle/$F" "$SYSMNT/aufs${nn}$F"
     done

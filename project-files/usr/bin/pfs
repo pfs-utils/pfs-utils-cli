@@ -269,7 +269,7 @@ exitmsg "error create squashfs module" $?
 }
 
 pfsramfree () {
-#rm unmounted modules anf empty dirs from $copyramdir 
+#rm unmounted modules and empty dirs from $copyramdir 
 if [ "$1" ]; then
 	[ -f "$1" ] && fsname="`basename $(realpath "$1")`" || fsname="$(basename "$1")"
 	fullname=$(echo "${copyramdir}/${fsname}" |sed 's://:/:')
@@ -309,7 +309,7 @@ done
 
 checkdeps () {
 # $1 module mount point
-list=$(find $1/etc/packages/mount/ -name pfs.depends -exec cat "{}" \; |sort |uniq)
+list=$(find $1/${PFSDIR}/mount/ -name pfs.depends -exec cat "{}" \; |sort |uniq)
 founded=$(echo -e "$list\n$(pfsinfo |sort |uniq)" |sort |uniq -d)
 echo -e "$founded\n$list" |sort |uniq -u
 }
