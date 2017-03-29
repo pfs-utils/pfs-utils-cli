@@ -111,7 +111,7 @@ if [ ${status} -eq 0 ]; then
   
   if [ ${status} -eq 0 ]; then
     sync
-    requires=$(checkdeps "${mountpoint}")
+    [ "$devtype" == "file" ] && requires=$(checkdeps "${mountpoint}")
     if [ "${mntmode}" = "upper" ]; then
 		nlayer=1
 		[ -w $(aufs-n 1) ] && nlayer=2

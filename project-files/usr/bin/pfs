@@ -309,7 +309,7 @@ done
 
 checkdeps () {
 # $1 module mount point
-list=$(find $1/${PFSDIR}/mount/ -name pfs.depends -exec cat "{}" \; |sort |uniq)
+list=$(find ${1}${PFSDIR}/mount/ -name pfs.depends -exec cat "{}" \; |sort |uniq)
 founded=$(echo -e "$list\n$(pfsinfo |sort |uniq)" |sort |uniq -d)
 echo -e "$founded\n$list" |sort |uniq -u
 }
