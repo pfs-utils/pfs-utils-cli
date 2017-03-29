@@ -4,7 +4,10 @@
 . `which pfs`
 header () {
 echo "AUFS layers (top layer \"0\" covers all lower )"
-printf %3s "N "; printf %-8s "AUFS" ; printf %-65s 'Module mount point';  printf %-5s "MP"; printf "Source\n\n"
+echo ""
+printf %3s "N "; printf %-65s "Mount point " ; printf "AUFS perms\n"
+printf %-68s "   Source " ;  printf  "MP perms\n\n"
+#printf %3s "N "; printf %-8s "AUFS" ; printf %-65s 'Module mount point';  printf %-5s "MP"; printf "Source\n\n"
 }
 
 listing () {
@@ -18,7 +21,9 @@ while true; do
     loop=$(findmnt  $a -o SOURCE | tail -n1 ) ; [ $loop ] || loop=$(df $a |tail -n1 | awk '{print $1}')
     source=$(losetupb |grep "$loop " |awk '{print $NF}') ; [ $source ] || source=$loop
     if [ $human ] ; then 
-      printf %3s "$n "; printf %-8s "$aufs_perm"; printf %-65s $a;  printf %-5s "$mp_perm";  printf "${source}\n"
+      printf %3s "$n "; printf %-65s "$a " ; printf "$aufs_perm\n"
+      printf %-68s "   ${source} " ;  printf  "$mp_perm\n"
+      echo ''
     else
       echo "$n  $aufs_perm $a $mp_perm ${source}"
     fi
