@@ -7,7 +7,13 @@ echo "AUFS layers (top layer \"0\" covers all lower )"
 echo ""
 printf %3s "N "; printf %-65s "Mount point " ; printf "AUFS perms\n"
 printf %-68s "   Source " ;  printf  "MP perms\n\n"
-#printf %3s "N "; printf %-8s "AUFS" ; printf %-65s 'Module mount point';  printf %-5s "MP"; printf "Source\n\n"
+}
+usage () {
+	echo -e "$(basename $0) util, detailed information about root aufs\n" 
+	echo "Usage:" 
+	echo "	$(basename $0)        - human readble format"
+	echo "	$(basename $0) --raw  - format for pipes"
+	echo "	$(basename $0) N      - returns mount point of layer \"N\" "
 }
 
 listing () {
@@ -21,8 +27,18 @@ while true; do
     loop=$(findmnt  $a -o SOURCE | tail -n1 ) ; [ $loop ] || loop=$(df $a |tail -n1 | awk '{print $1}')
     source=$(losetupb |grep "$loop " |awk '{print $NF}') ; [ $source ] || source=$loop
     if [ $human ] ; then 
-      printf %3s "$n "; printf %-65s "$a " ; printf "$aufs_perm\n"
-      printf %-68s "   ${source} " ;  printf  "$mp_perm\n"
+      printf %3s "$n "; 
+      
+      printf %-65s "$a " ; printf %b "${color_default}"
+      [ "$aufs_perm" == "rw" ] && printf %b "${color_green}" ; 
+      printf "$aufs_perm\n" ; printf %b "${color_default}"
+      
+      [ "$source" == "tmpfs" ] && printf %b "${color_blue}" ;
+      echo "$source" |grep -q "^/dev/.*$"  && printf %b "${color_yellow}" ;
+      
+      printf %-68s "   ${source} " ;  printf %b "${color_default}"
+      [ "$mp_perm" == "rw" ] && printf %b "${color_green}" ;
+      printf  "$mp_perm\n" ; printf %b "${color_default}"
       echo ''
     else
       echo "$n  $aufs_perm $a $mp_perm ${source}"
@@ -42,5 +58,5 @@ elif [ "$1" == "--raw" ] ; then
 elif echo $1 |grep -q '^[[:digit:]]*$' ; then
 	cat /sys/fs/aufs/si_*/br$1 |head -n1 |sed 's/=.*//'
 else 
-    help     
+    usage     
 fi  
