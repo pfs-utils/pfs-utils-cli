@@ -30,10 +30,11 @@ usage () {
 }
 
 listing () {
-n=0
+N=0
 while true ;  do 
-    a="$( cat /sys/fs/aufs/si_${prefix}/br$n 2>/dev/null)"
-	[ $a ] || break 
+    a="$( cat /sys/fs/aufs/si_${prefix}/br$N 2>/dev/null)"
+	[ $a ] || break
+	n=$(seq -w 0 99 |sed -n "${N}p") # needed 01 02 03, not 1 2 3
     layer_perm=$(echo $a |awk -F= '{print $2}')
     bundle=$(echo $a |awk -F= '{print $1}')
     bundle_perm=$( [ -w $bundle ] && echo rw || echo ro )
@@ -58,7 +59,7 @@ while true ;  do
       dname_bundle=$(dirname $bundle) ; bname_bundle=$(basename $bundle)
       eval echo "$returnMe"
     fi
-    n=$(expr $n + 1)
+    N=$(expr $N + 1)
 done
 }
 
