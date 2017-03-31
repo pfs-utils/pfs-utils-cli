@@ -156,6 +156,8 @@ return 0
 losetupb () {
 	if [ -x "$(which losetup-FULL)" ]; then
   losetup-FULL $@
+elif   [ -x /sbin/losetup ] ; then
+	/sbin/losetup $@ || exit 1
 elif   [ -x "$(which losetup)" ] ; then
 	losetup $@ || exit 1
 fi 2>/dev/null
