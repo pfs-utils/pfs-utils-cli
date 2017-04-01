@@ -40,7 +40,7 @@ while true ;  do
     bundle=$(echo $a |awk -F= '{print $1}')
     bundle_perm=$( [ -w $bundle ] && echo rw || echo ro )
     loop=$(findmnt  $bundle -o SOURCE | tail -n1 ) ; [ $loop ] || loop=$(df $bundle |tail -n1 | awk '{print $1}')
-    source=$(losetupb |grep "$loop " |awk '{print $NF}') ; [ $source ] || source=$loop
+    source=$(losetupb |grep "$loop " |awk '{print $6}') ; [ $source ] || source=$loop
     if [ $human ] ; then 
       printf %3s "$n "; 
       
