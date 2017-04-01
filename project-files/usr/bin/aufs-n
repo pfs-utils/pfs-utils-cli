@@ -34,6 +34,7 @@ N=0
 while true ;  do 
     a="$( cat /sys/fs/aufs/si_${prefix}/br$N 2>/dev/null)"
 	[ $a ] || break
+	N=$(expr $N + 1)
 	n=$(seq -w 0 99 |sed -n "${N}p") # needed 01 02 03, not 1 2 3
     layer_perm=$(echo $a |awk -F= '{print $2}')
     bundle=$(echo $a |awk -F= '{print $1}')
@@ -59,7 +60,7 @@ while true ;  do
       dname_bundle=$(dirname $bundle) ; bname_bundle=$(basename $bundle)
       eval echo "$returnMe"
     fi
-    N=$(expr $N + 1)
+    
 done
 }
 
