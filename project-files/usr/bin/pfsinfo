@@ -34,11 +34,13 @@ if [ "${pack}" ]; then
 	Msize=$(du -s --block-size 1024 ${pack} |awk '{print $1}') 
 	Usize=$(du -s --block-size 1024  /tmp/squashfs/"${bpack}" |awk '{print $1}')
 	Deps=$(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f -name pfs.depends -exec cat "{}" \; |sort |uniq |grep -v "^$" | tr "\n" "   ")
+	Packs=$(ls -1   --indicator-style=none /tmp/squashfs/${bpack}${PFSDIR}/mount  | tr "\n" "   ")
 	
 	echo "Compression algorithm: $Comptype"
 	echo "Module size: $Msize"
 	echo "Uncompressed size: $Usize"
 	echo "Compression ratio: $( echo "scale=2 ; $Usize / $Msize" |bc), ($( echo "scale=2 ; 100 * $Msize  / $Usize  " |bc)%)"
+	echo "Packages: $Packs"
 	echo "Dependenses: $Deps"
 	echo ''
 	standard_files="pfs.files pfs.depends pfs.dirs.empty"
