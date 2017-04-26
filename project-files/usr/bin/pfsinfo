@@ -26,8 +26,8 @@ if [ "${pack}" ]; then
   disktypeb "${pack}" | grep -qi "squashfs.*version\ *4\."
   exitmsg "File \"$1\" is not PFS!" $?
   if [ "${stat}" ] ; then
-	Comptype=$(unsquashfs -s  "${pack}" |grep ompression |awk '{print $2}')
-	[ $Comptype ] || exitmsg "$pack Is non squshfs module" 1
+	Comptype=$(unsquashfs -s  "${pack}" |grep ompression |awk '{print $NF}' | tr "\n" " ")
+	[ "$Comptype" ] || exitmsg "$pack Is non squshfs module" 1
 	bpack=$(basename ${pack})
 	mkdir -p /tmp/squashfs/"${bpack}"
 	mount -t squashfs -o loop -o ro "${pack}" /tmp/squashfs/"${bpack}"
