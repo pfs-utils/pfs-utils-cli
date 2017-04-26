@@ -21,5 +21,13 @@ f="`basename "$1"`"
 echo "
 --------------- in meta.pfs : ------------------\
 "
-find "$p" \( -type f -o -type l \) -name "$f" |sed 's#^'$p'## ; s/'$f'$//' 
+list=$(find "$p" \( -type f -o -type l \) -name "$f" |sed 's#^'$p'## ; s/'$f'$//')
+aufs-n --raw '$n $dname_source $bname_source' | while read a; do
+	for b in $list ; do
+		if [ "$(echo $a |awk '{print $NF}')" == "$(echo $b |awk -F/ '{print $1}' )" ]  ; then
+		  echo $(echo -n $a |awk '{print $1 " " $2 "/" $3}' ) $(echo $b | sed "s:"$(echo $a |awk '{print $NF}')"::")
+		fi
+	done
+done
+ 
 exit 0
