@@ -9,14 +9,16 @@ case "$1" in
   *) findname="$1";;
 esac
 
-echo "         in packages:"
+echo "         in pfs spec files:"
 find "${PFSDIR}"  -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do   
-cat "${listfiles}" | sed "s:^:$(basename $(dirname $listfiles)) :" ; done | grep /${findname}$ | cut -f1 -d' ' | sort -uf
+cat "${listfiles}" | sed "s:^:"$(basename $(dirname $listfiles))" :" ; done | grep /${findname}$ | cut -f1 -d' ' | sort -uf
+echo ''
+#p=/mnt/live/memory/images/
+p=$prefixmp
 
-p=/mnt/live/memory/images/
 [ -d $p ] || exit 0
 f="`basename "$1"`"
-echo "         in mopdules:"
+echo "         in mounted modules:"
 list=$(find "$p" \( -type f -o -type l \) -name "$f" |sed 's#^'$p'## ; s/'$f'$//')
 aufs-n --raw '$n $dname_source $bname_source' | while read a; do
 	for b in $list ; do
