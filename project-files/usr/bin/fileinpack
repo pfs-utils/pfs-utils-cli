@@ -9,18 +9,14 @@ case "$1" in
   *) findname="$1";;
 esac
 
-find "${PFSDIR}" -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do 
-    cat "${listfiles}" | cut -f2- -d'/' \
-	| sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' -e "s/^/`echo "${listfiles}" | cut -f5 -d'/'`/"
-done | grep -F "${findname}" | cut -f1 -d'/' | sort -uf
+echo "         in packages:"
+find "${PFSDIR}"  -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do   
+cat "${listfiles}" | sed "s:^:$(basename $(dirname $listfiles)) :" ; done | grep /${findname}$ | cut -f1 -d' ' | sort -uf
 
-###sfs (
 p=/mnt/live/memory/images/
 [ -d $p ] || exit 0
 f="`basename "$1"`"
-echo "
---------------- in meta.pfs : ------------------\
-"
+echo "         in mopdules:"
 list=$(find "$p" \( -type f -o -type l \) -name "$f" |sed 's#^'$p'## ; s/'$f'$//')
 aufs-n --raw '$n $dname_source $bname_source' | while read a; do
 	for b in $list ; do
