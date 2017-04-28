@@ -4,7 +4,7 @@
 . $(which pfs)
 
 usage () {
-	echo -e "$(basename $0) util, find diles in mounted modules\n" 
+	echo -e "$(basename $0) util, find file (\$1) in modules mounted to root aufs  and in $changesDir\n" 
 	echo "Usage:" 
 	echo "	$(basename $0)  filename        - find \"filename\"  (human readble format)"
 	echo "	$(basename $0)  filename --raw  - find \"filename\"  (output separated by spaces)"
@@ -75,7 +75,7 @@ if [ ! "$2" ] ;then
 	header
 	listing $1
 	exit
-elif [ "$2" != "-raw" ] ; then
+elif [ "$2" == "--raw" ] ; then
 	listing $1
 	exit
 else 
