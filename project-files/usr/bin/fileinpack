@@ -41,7 +41,7 @@ aufs-n --raw '$n $bundle $dname_source $bname_source' | while read a; do
 				submodule="is_not_pfs"
 			fi
 			n="$(echo $a |awk '{print $1}')"
-			module="$(echo $a |awk '{print $3 $4}')" 
+			module="$(echo $a |awk '{print $3 "/" $4}')" 
 			submodule="$(echo $submodule | tr '\n' '  ')" 
 			path="$(echo $b | sed "s:"$(echo $a |awk '{print $NF}')"::")"
 			if [ $human ] ; then 			
