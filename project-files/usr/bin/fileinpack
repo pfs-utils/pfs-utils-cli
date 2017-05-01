@@ -33,17 +33,19 @@ list="$list1 $list2"
 aufs-n --raw '$n $bundle $dname_source $bname_source' | while read a; do
 	for b in $list ; do
 		if [ "$(echo $a |awk '{print $NF}')" == "$(echo $b |awk -F/ '{print $1}' )" ]  ; then
+			n="$(echo $a |awk '{print $1}')"
+			module="$(echo $a |awk '{print $3 "/" $4}')" 
 			bundle=$(echo $a | awk '{print $2}')
+			path="$(echo $b | sed "s:"$(echo $a |awk '{print $NF}')"::")"
 			modPFSDIR=$bundle${PFSDIR}
 			if [ -d $modPFSDIR ] ; then
-				submodule=$(find  ${modPFSDIR}  -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do  cat "${listfiles}" | sed "s:^:"$(basename $(dirname $listfiles))" :" ; done | grep /${findname}$ | cut -f1 -d' ' |sort |uniq )
+				submodule=$(find  ${modPFSDIR}  -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do  
+				cat "${listfiles}" | sed "s:^:"$(basename $(dirname $listfiles))" :"  
+				done | grep ${path}${findname}$ | cut -f1 -d' ' |sort |uniq |tr '\n' ';' |sed 's/;$//' )
 			else
 				submodule="is_not_pfs"
 			fi
-			n="$(echo $a |awk '{print $1}')"
-			module="$(echo $a |awk '{print $3 "/" $4}')" 
-			submodule="$(echo $submodule | tr '\n' '  ')" 
-			path="$(echo $b | sed "s:"$(echo $a |awk '{print $NF}')"::")"
+			
 			if [ $human ] ; then 			
 				printf %3s "$n "
 				printf %-50s "$module" 
