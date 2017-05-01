@@ -27,7 +27,7 @@ printf %3s "N "; printf %-50s "Module " ; printf %-30s "SubModule" ; printf  "PA
 listing (){
 [ -d $p ] || exit 0
 f="$(basename "$1")"
-list1=$(find "$p" \( -type f -o -type l \) -name "$f" |sed 's#^'$p'## ; s/'$f'$//')
+list1=$(aufs-n --raw '$bundle' |sed 1d |while read bdl ; do   find "$bdl"  \( -type f -o -type l \) -name "$f" |sed 's#^'$(dirname $bdl)/'## ; s/'$f'$//' ; done)
 list2=$(find "$changesDir" \( -type f -o -type l \) -name "$f" |sed 's#^'$changesDir'#tmpfs/# ; s/'$f'$//')
 list="$list1 $list2"
 aufs-n --raw '$n $bundle $dname_source $bname_source' | while read a; do
@@ -64,8 +64,6 @@ case "$1" in
   "-"*[A-Za-z]*) usage; exit 1;;
   *) findname="$1";;
 esac
-p=$prefixmp
-
 
 if  echo $@ |grep -q "\-\-raw" ; then
 	returnMe="$(echo $@ |sed 's/^.*\-*raw//')"
