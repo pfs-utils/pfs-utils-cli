@@ -36,7 +36,7 @@ aufs-n --raw '$n $bundle $dname_source $bname_source' | while read a; do
 			bundle=$(echo $a | awk '{print $2}')
 			modPFSDIR=$bundle${PFSDIR}
 			if [ -d $modPFSDIR ] ; then
-				submodule=$(find  ${modPFSDIR}  -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do  cat "${listfiles}" | sed "s:^:"$(basename $(dirname $listfiles))" :" ; done | grep /${findname}$ | cut -f1 -d' ' )
+				submodule=$(find  ${modPFSDIR}  -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do  cat "${listfiles}" | sed "s:^:"$(basename $(dirname $listfiles))" :" ; done | grep /${findname}$ | cut -f1 -d' ' |sort |uniq )
 			else
 				submodule="is_not_pfs"
 			fi
