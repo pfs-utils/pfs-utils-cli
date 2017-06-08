@@ -12,7 +12,8 @@ EXT=pfs
 copyramdir="/tmp/.mountRAM"
 prefixmp="/mnt/."
 changesDir="/mnt/live/memory/changes/"
-SYSMNT=/$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
+aufsroot="$(`which busybox` mount |egrep '^aufs on / type aufs')" 
+[ "$aufsroot" ] && SYSMNT=/$(cut -f2 -d/ /sys/fs/aufs/si_$(grep ' / aufs' /proc/mounts | cut -f2 -d= | tr ',' ' ' | cut -f1 -d' ')/br0)
 if [ -f /etc/initvars ] ; then
         . /etc/initvars
         copyramdir=${SYSMNT}/copy2ram/
@@ -50,10 +51,10 @@ color_yellow='\033[0;33m'
 color_blue='\033[0;34m'
 color_default='\033[0m'
 
-exitmsg () {
+exitmsg() {
 	if [ "$2" -ne 0 ] ; then
 	echo -ne "$color_red" ; echo "$1" ; echo -ne "$color_default\n"
-	exit $2
+	exit $2 
 	fi
 } 
 
@@ -90,6 +91,7 @@ fi 2>/dev/null
 }
 
 checksfsxzb () {
+[ "$aufsroot" ] || return 1
 grep squashfs /proc/filesystems || return 1
 grep aufs /proc/filesystems     || return 1
 #check xz
@@ -323,5 +325,3 @@ shift
 $command $@
 exitmsg "$command  ERROR!!!" "$?"
 fi 
-
-
