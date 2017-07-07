@@ -155,43 +155,9 @@ find "${rootdir}" -type f -executable | while read chfile; do [ "$(file --brief 
 return 0
 }
 
-losetupb () {
-	if [ -x "$(which losetup-FULL)" ]; then
-  losetup-FULL $@
-elif   [ -x /sbin/losetup ] ; then
-	/sbin/losetup $@ || exit 1
-elif   [ -x "$(which losetup)" ] ; then
-	losetup $@ || exit 1
-fi 2>/dev/null
-return $?
-}
-
-mountb () {
-if [ -x "$(which busybox)" ]; then
-  if busybox --list | grep -q -F mount; then
-    busybox mount $@
-  else
-    [ -x "$(which mount)" ] && mount $@ || return 1
-  fi
-else
-  [ -x "$(which mount)" ] && mount $@ || return 1
-fi
-return $?
-}
-
-umountb () {
-if [ -x "$(which busybox)" ]; then
-  if busybox --list | grep -q -F umount; then
-    busybox umount $@
-  else
-    [ -x "$(which umount)" ] && umount $@ || return 1
-  fi
-else
-  [ -x "$(which umount)" ] && umount $@ || return 1
-fi
-return $?
-}
-
+losetupb() { losetup $@ || losetup-FULL $@   ; }
+  mountb() {   mount $@ || busybox mount $@  ; }
+ umountb() {  umount $@ || busybox mount $@  ; }
 
 mkaufs () {
 #make new aufs
