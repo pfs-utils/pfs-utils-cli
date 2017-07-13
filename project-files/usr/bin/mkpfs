@@ -116,7 +116,7 @@ for i in $bundles ;do
 	mklist "$i" "$n" "$name"
 done 
 
-mksqmod "${n}" "${userout}"
-exitmsg "mksqmod error" $?
+mksqmod "${n}" "${userout}" noexit
+exitmsg "mksqmod error" $?  noexit
 delaufs "$nn" 
 exitmsg "delaufs error" $?
