@@ -54,7 +54,7 @@ color_default='\033[0m'
 exitmsg() {
 	if [ "$2" -ne 0 ] ; then
 	echo -ne "$color_red" ; echo "$1" ; echo -ne "$color_default\n"
-	exit $2 
+	[ "$3" ] || exit $2 
 	fi
 } 
 
@@ -235,7 +235,7 @@ echo $NEWLAYER
 mksqmod(){
 #make module
 eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh $devnull
-exitmsg "error create squashfs module" $?
+exitmsg "error create squashfs module" $? $3
 }
 
 pfsramfree () {
