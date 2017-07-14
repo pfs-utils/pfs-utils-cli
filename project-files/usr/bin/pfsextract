@@ -59,7 +59,8 @@ pfsinfo "$pfs" |while read m ;do
     mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
     [ $dir ] || dir=$(basename $pfs |sed "s/\.${EXT}$//")
 	if [ "$d" ] ; then	
-		mkdir -p "$dir/$m" && cp -a "$SYSMNT/changes$nn"/* "$dir/$m"
+		mkdir -p "$dir/$m" && cp -a "$SYSMNT/changes$nn"/* "$dir/$m" &&
+		rm -R $dir/$m$PFSDIR
 	elif [ "$i" ] ; then
 		cp -a "$SYSMNT/changes$nn"/* /
 		mv -f ${PFSDIR}/mount/$m ${PFSDIR}/install/
