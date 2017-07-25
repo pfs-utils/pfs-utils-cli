@@ -5,6 +5,8 @@
 #License: GPL v3
 #VERSION 3.6
 
+
+PATH=${$PATH}:/sbin
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
 EXT=pfs
@@ -156,9 +158,9 @@ return 0
 }
 
 
-losetupb() { /sbin/losetup $@ || losetup-FULL $@   ; }
-mountb() { mount $@ || busybox mount $@  ; }
-umountb() {  umount $@ || busybox mount $@  ; }
+losetupb() { losetup $@ || losetup-FULL $@   ; }
+mountb()   { mount $@ || busybox mount $@  ; }
+umountb()  { umount $@ || busybox mount $@  ; }
 
 mkaufs () {
 #make new aufs
