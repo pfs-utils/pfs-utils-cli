@@ -6,7 +6,7 @@
 #VERSION 3.6
 
 
-PATH=${$PATH}:/sbin
+PATH=${PATH}:/sbin
 PFSDIR=/etc/packages
 TMPFSLIMIT=100000
 EXT=pfs
