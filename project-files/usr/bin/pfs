@@ -217,7 +217,7 @@ case "$1" in
 esac
 [ "$(grep aufs$N /proc/mounts)" ] || return 4
 MODNAME="$(basename "$NEWLAYER")"
-if df --output=fstype $NEWLAYER |grep -q ^aufs ;then
+if df --output=fstype $NEWLAYER |grep -q ^aufs$ ;then
 	[ "$(grep $SYSMNT/tmpfs$N /proc/mounts)" ] || ( mkdir $SYSMNT/tmpfs$N && mount -t tmpfs tmpfs $SYSMNT/tmpfs$N )
 	cp -auPR "$NEWLAYER" "$SYSMNT/tmpfs$N/"
 	NEWLAYER="${SYSMNT}/tmpfs${N}/$(basename $NEWLAYER)"
