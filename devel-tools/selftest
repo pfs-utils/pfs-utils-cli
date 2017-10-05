@@ -25,6 +25,7 @@ CLEAR () {
 	rm -fr ./testmodule_pfs 2>/dev/null
 	pfsunload ./testmodule.${EXT} 2>/dev/null
 	pfsuninstall ./testmodule.${EXT} 2>/dev/null
+	rmdir /111
 }
 
 ex(){ printf "$m\n====== \e[31mTest  aborted\e[0m =====\n"
