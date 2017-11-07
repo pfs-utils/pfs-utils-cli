@@ -105,7 +105,8 @@ if [ ${status} -eq 0 ]; then
               fi;;
     "dev" )   [ "${romode}" ] && optmnt="ro" || optmnt="rw"
               mountb -t ${fstype} -o ${optmnt} "${fsfile}" "${mountpoint}" >/dev/null ;;
-    "dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null ;;
+    #"dir" )   mountb -t ${fstype} --bind "${fsfile}" "${mountpoint}" >/dev/null ;;
+    "dir" )   mountb --bind "${fsfile}" "${mountpoint}" >/dev/null ;;
   esac 
   status=$?
   
