@@ -5,6 +5,24 @@
 #License: GPL v3
 #VERSION 3.6
 
+#help
+HLP(){
+echo "$0 is a helper library for Pfs-utils scripts" ; echo ""
+echo "Usage:" 
+echo "$0 <function> <pars>"
+echo OR
+echo "source $(realpath $0) ; <function> <pars>" ; echo ""
+echo "Avaliable functions:"
+cat $0 |grep \(\).*{$
+exit 1
+}
+
+for arg in $@
+do
+  case "${arg}" in
+    "-h" | "--help")  HLP ;exit 1;;
+  esac
+done
 
 PATH=${PATH}:/sbin
 PFSDIR=/etc/packages
@@ -289,7 +307,7 @@ echo -e "$founded\n$list" |sort |uniq -u
 }
 
 if [ "$(basename $0)" == "pfs" ] ;then
-[ $1 ] || usage
+[ $1 ] || HLP
 command="$1" 
 shift
 $command $@

@@ -34,7 +34,7 @@ if [ -d "${mountpoint}" ]; then
   sync
   if [ "${fupdate}" != "no" -a ${stataufs} -eq 0 ] ; then
 	  pfs_update_caches "${mountpoint}"
-	for script in $(ls $(dirname $0)/runpfsunload-*) ; do 
+	for script in $(find $(dirname $0) -maxdepth 1 -name "runpfsunload*" -user root) ; do 
 	  $script "${mountpoint}" &
 	done
   fi

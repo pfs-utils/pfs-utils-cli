@@ -1,6 +1,6 @@
 #!/bin/sh
 case "$1" in 
-  "") echo "Usage: $(basename "$0") FILE"; exit 1;;
+  "" | -h | --help ) echo "Usage: $(basename "$0") FILE"; exit 1;;
   "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo $1 | tr -d '-')'" >&2; exit 1;;
   *) findname="$1";;
 esac
