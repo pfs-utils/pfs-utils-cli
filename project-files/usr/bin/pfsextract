@@ -102,13 +102,6 @@ exit
 }
 
 [ "$1" ] || HLP
-allow_only_root
-
-#check kernel
-checksfsxzb >/dev/null 2>&1
-exitmsg "Kernel is not support squashfs/aufs" $?
-
-wh="-regex -e ".wh..wh.""
 
 argslist="$@"
 if  echo $argslist |grep -q "\-*comp .*" ; then
@@ -124,7 +117,7 @@ do
     "-o" | "--out-dir") onuserout="on";;
     "-d" | "--nopfs") d=yes ;;
     "-i" | "--install") i=yes ;;
-    "-h" | "--help")  HLP ;exit 1;;
+    "-h" | "--help")  HLP ;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors"  | "--processors" ) numproc="on";;
@@ -136,6 +129,14 @@ do
         onuserout="off";  numproc="off";;
   esac
 done
+
+allow_only_root
+
+#check kernel
+checksfsxzb >/dev/null 2>&1
+exitmsg "Kernel is not support squashfs/aufs" $?
+wh="-regex -e ".wh..wh.""
+
 
 for item in $sourcelist ; do
 	if [ "$(fs_type $item)" == "squashfs" ] ; then
