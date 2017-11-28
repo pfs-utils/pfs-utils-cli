@@ -242,7 +242,11 @@ if [ "$(cat /proc/mounts |egrep '^'`df "$NEWLAYER" |tail -1 |cut -f1 -d " "`' ' 
 	NEWLAYER="${SYSMNT}/tmpfs${N}/$(basename $NEWLAYER)"
 fi
 case $(file -b $NEWLAYER) in
-	*directory) ;;
+	*directory) 
+		mkdir -p "$SYSMNT/bundles$N/$MODNAME"
+		mount --bind "$NEWLAYER" "/$SYSMNT/bundles$N/$MODNAME"
+		NEWLAYER="$SYSMNT/bundles$N/$MODNAME"
+	;;
 	Squashfs*4.0*|Linux*ext*)
 		mkdir -p "$SYSMNT/bundles$N/$MODNAME"
 		mount -o loop "$NEWLAYER" "/$SYSMNT/bundles$N/$MODNAME"
