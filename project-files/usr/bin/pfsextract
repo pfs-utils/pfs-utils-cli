@@ -147,6 +147,7 @@ done
 [ ! $pfs ] &&  [ $i ]  && [ -d $sourcelist ] && installDir
 [ $pfs ] || exitmsg "There is no source pfs module" 2 
 #echo $sourcelist  |grep -q [[:alnum:]] || unset sourcelist
+sourcelist="`echo $sourcelist |tr -d " "`"
 if [ "$(unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l)" -lt 2 ];then
 	extract_simple
 else
