@@ -286,7 +286,7 @@ fi
 
 pfs_update_caches () {
 #update caches, icons, menus, etc after load/unload modules
-[ "$(find "$1"{,/usr{,/local,/X11R6}}/lib -type f -name "*.so" 2>/dev/null)" ] && ldconfig &
+[ "$(find "$1"{,/usr{,/local,/X11R6}}/lib -type f -name "*.so" 2>/dev/null)" ] && ldconfig #&
 [ -d "$1/usr/share/mime/" ] && update-mime-database /usr/share/mime &
 [ -d "$1/usr/lib/gdk-pixbuf-2.0/" ]  && gdk-pixbuf-query-loaders --update-cache &
 [ -d "$1/usr/share/icons/hicolor/" ] && gtk-update-icon-cache -f -i -q /usr/share/icons/hicolor &
