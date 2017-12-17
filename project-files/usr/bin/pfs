@@ -41,8 +41,8 @@ if [ -f /etc/initvars ] ; then
         changesDir=${SYSMNT}/changes/
 fi
 
-compression="xz -b 512K"
-compression_fast="lz4"
+compression="-b 512K -comp xz"
+compression_fast="-comp lz4"
 if echo $compression |grep -q xz; then
 	if uname -m | grep -q -e "86" -e "32" -e "64" ;then
 	compression="$compression -Xbcj x86" 
@@ -262,7 +262,7 @@ echo $NEWLAYER
 
 mksqmod(){
 #make module
-eval mksquashfs "${1}" "${2}" -comp ${compression} -noappend ${noprogress} ${useproc} $wh $devnull
+eval mksquashfs "${1}" "${2}" ${compression} -noappend ${noprogress} ${useproc} $wh $devnull
 exitmsg "error create squashfs module" $? $3
 }
 
