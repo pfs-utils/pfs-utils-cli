@@ -26,11 +26,11 @@ echo "$0 1.$EXT 2.$EXT -o 3.$EXT	-collect 1.$EXT and 2.$EXT to contaner 3.$EXT"
 echo "$0 * -o ./big.$EXT		-collect all dirs and squashfs modules from current dir to big.$EXT" 
 echo
 echo "Параметры (ключи):"
-echo "	-o / --out-file - указывает название выходного файла (если указать без расширения .$EXT на ввходе будет каталог)."
+echo "	-o / --out-file - указывает название выходного файла (если указать без расширения .$EXT на выходе будет каталог)."
 echo "	-w - не включать AUFS тени."
 echo "	-l / --local - сборка на месте, без использования aufs."
 echo "	-f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
-echo "	--mksqfs / параметры для mksquashfs, компрессия размер блока и проч."
+echo "	--mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
 echo "Алиасы (сокращения):"
 echo " -d | -D - Только каталоги"
 echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.$EXT'
@@ -133,8 +133,8 @@ if echo ${userout} | grep -q "^.*\.$EXT$" ; then
 	mksqmod "${n}" "${userout}" noexit
 else
 	echo "Please wait..."
-	mkdir -p "${userout}"
-	cp -fr "${n}"/* "${userout}"/ 
+	mkdir -p "$(dirname ${userout})"
+	cp -fr "${n}" "${userout}"
 fi
 
 exitmsg "mksqmod error" $?  noexit
