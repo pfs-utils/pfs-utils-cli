@@ -66,8 +66,8 @@ if [ "$status" -gt 0 ] ;then
 LSOF=$( lsof  |grep -v " mem " |awk '{print $9}' |grep "\/..*" | egrep -v "/proc|/sys|/run|/tmp|/dev|/home" | sort -u)
 for a in $LSOF ; do
 [ -f $a ] || continue
-[ -f /memory/changes/$a ] && continue
-[ -f /memory/bundles/$1/$a	] && FILES="$FILES $a"
+[ -f  $SYSMNT/changes/$a ] && continue
+[ -f  $SYSMNT/bundles/$1/$a	] && FILES="$FILES $a"
 done
 fi
 
