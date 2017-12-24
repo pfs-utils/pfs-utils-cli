@@ -63,17 +63,17 @@ if 	[ $ramfree ] ; then
 fi
 
 if [ "$status" -gt 0 ] ;then
-LSOF=$( lsof  |grep -v " mem " |awk '{print $9}' |grep "\/..*" | egrep -v "/proc|/sys|/run|/tmp|/dev|/home" | sort -u)
-for a in $LSOF ; do
-[ -f $a ] || continue
-[ -f  $SYSMNT/changes/$a ] && continue
-[ -f  $SYSMNT/bundles/$1/$a	] && FILES="$FILES $a"
-done
+  LSOF=$( lsof  |awk '{print $9}' |grep "\/..*" | egrep -v "/proc|/sys|/run|/tmp|/dev|/home" | sort -u)
+  for a in $LSOF ; do
+    [ -f $a ] || continue
+    [ -f  $SYSMNT/changes/$a ] && continue
+    [ -f  $SYSMNT/bundles/$1/$a	] && FILES="$FILES $a"
+  done
 fi
 
 if [ "$FILES" ] ; then 
-echo '' ; echo "Open files:"
- for f in $FILES ; do echo $f ; done
+  echo '' ; echo "Open files:"
+  for f in $FILES ; do echo $f ; done
 fi
 
 exit ${status}
