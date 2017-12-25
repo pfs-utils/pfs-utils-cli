@@ -57,18 +57,18 @@ if [ -d "${mountpoint}" ]; then
   sync
 else
   echo "Object \"${fsname}\" not mounted." >&2
-  status=1
+  status=22
 fi
 if 	[ $ramfree ] ; then
 	[ $saveram ] || pfsramfree "${fsname}" 
 fi
 
-if [ "$status" -gt 0 ] ;then
+if [ "$status" -ne 0 -a "$status" -ne 22 ] ;then
   LSOF=$( lsof  |awk '{print $9}' |grep "\/..*" | egrep -v "/proc|/sys|/run|/tmp|/dev|/home" | sort -u)
   for a in $LSOF ; do
-    [ -f $a ] || continue
-    [ -f  $changesDir/$a ] && continue
-    [ -f  $mountpoint/$a	] && FILES="$FILES $a"
+    [ -f "$a" ] || continue
+    [ -f  "$changesDir/$a" ] && continue
+    [ -f  "$mountpoint/$a"	] && FILES="$FILES $a"
   done
 fi
 
