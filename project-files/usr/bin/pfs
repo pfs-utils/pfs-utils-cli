@@ -90,7 +90,7 @@ mklist () {
 #mklist source_dir [dest_dir] [pack_name]
 source_dir="$(realpath "$1")"
 [ "$2" ] && dest_dir="$(realpath "$2")" || dest_dir="$source_dir"
-pack_name="$(basename "$1")"
+pack_name="$(basename "${1%.$EXT}")"
 [ "$3" ] && pack_name="$3"
 #[ "$(pwd)" != "/" ] && find "${source_dir}${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \; 2>/dev/null
 mkdir -p "${dest_dir}${PFSDIR}/mount/${pack_name}" &&
