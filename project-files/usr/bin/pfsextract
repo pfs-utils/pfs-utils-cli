@@ -40,9 +40,10 @@ extract_simple () {
 			mkdir -p ${PFSDIR}/install/$(basename "${pfs%.$EXT}")
 			unsquashfs -l "$pfs" |sed 's/squashfs-root//' | grep "^\/.*"	 > ${PFSDIR}/install/$(basename "${pfs%.$EXT}")/pfs.files 
 			[ $? -ne 0 ] && exitmsg "$i install error" $?
+			return 0
 		fi 
 	else
-		rm -R ${dir}${PFSDIR} 
+		rm -R ${dir}${PFSDIR} 2>/dev/null 
 		return 0 # need zero exit code
 	fi
     
