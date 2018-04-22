@@ -1,6 +1,6 @@
 #!/bin/sh
 #Unmount filesystem from AUFS
-#VERSION 3.6
+#VERSION 4.0
 . $(which pfs)
 HLP () {
   echo "Usage: $(basename "$0") FYLESYSTEM (squashfs module, dir, iso, img, etc) "

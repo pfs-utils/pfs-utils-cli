@@ -1,6 +1,6 @@
 #!/bin/sh
 #Mount filesystem to AUFS
-#VERSION 3.6
+#VERSION 4.0
 . $(which pfs)
 mntmode="upper"
 

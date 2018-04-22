@@ -12,7 +12,7 @@ if ! [ $ver ] ; then
 fi
 filelist="$(find ../project-files -type f) ../VERSION.md"
 for file in  $filelist ;do
-	sed -i "s|VERSION\ *[:digit:]*.*|VERSION\ $ver|" $file
+	sed -i "s|VERSION\ *[[:digit:]]*.*|VERSION\ $ver|" $file
 done
 echo VERSION udated to $ver
 
