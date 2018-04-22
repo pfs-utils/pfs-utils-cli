@@ -51,16 +51,21 @@ extract_simple () {
 
 extract_contaner () {
 #extract packages from contaner
-unsquashfs -d "" -l "$pfs" |grep ${PFSDIR}/mount/[[:alnum:]]*$  |while read m ;do
-    m=$(basename $m)
-    if  [ "`echo $sourcelist| sed 's/^ //'`" ]  ;then
-		echo $sourcelist |grep -q "$m" || continue
+pfsinfo "$pfs"   |while read m ;do
+    if  [ "$(echo $sourcelist| sed 's/^ //')" ]  ;then
+		# do not delet spaces around " $sourclist "
+		echo " $sourcelist " |grep -q   "[^:]$m[^:]" || continue
+	else 
+		echo $m |grep -q ":" && continue
     fi
+    
     eval echo  "package: $m    -- processing..." $devnull
+    m=$(echo $m |sed 's#:#/submod/mount/#g')
     n="$(mkaufs || exitmsg "mkaufs error" 2)"
 	nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 	[ -d "$n" ] || exitmsg "error mounting aufs" 3
     bundle=$(addlayer "$nn" "$pfs" || exitmsg "can't insert layer to aufs $n" 5)
+     
     cat "$SYSMNT/aufs${nn}${PFSDIR}/mount/${m}/pfs.files" | while read F; do 
 	if [ ! -h "$bundle/$F" ];then
 	    touch "$SYSMNT/aufs$nn$F" 2>/dev/null ; cp -a "$bundle/$F" "$SYSMNT/aufs${nn}$F"
@@ -86,14 +91,14 @@ unsquashfs -d "" -l "$pfs" |grep ${PFSDIR}/mount/[[:alnum:]]*$  |while read m ;d
 		mkdir -p "$dir/$m" && cp -a "$SYSMNT/changes$nn"/* "$dir/$m" &&
 		rm -R $dir/$m$PFSDIR
 	elif [ "$i" ] ; then
-	    mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
+	    mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$(basename $m)" 
 		cp -a "$SYSMNT/changes$nn"/* /
 		mv -f ${PFSDIR}/mount/$m ${PFSDIR}/install/
 		eval echo  "package: $m  install complete" $devnull 
     else
 		touch "$SYSMNT/aufs$nn/${PFSDIR}"
 		cp -fr "$SYSMNT/aufs$nn/${PFSDIR}/mount/$m/submod/mount"  "$SYSMNT/changes$nn/${PFSDIR}/"  2>/dev/null || rm -rf $SYSMNT/changes$nn/${PFSDIR} 
-		mkdir -p "$dir" && mksqmod "$SYSMNT/changes$nn" "$dir/$m.$EXT"
+		mkdir -p "$dir" && mksqmod "$SYSMNT/changes$nn" "$dir/"$(basename $m)".$EXT"
     fi
     delaufs $nn ; echo ''
 done 

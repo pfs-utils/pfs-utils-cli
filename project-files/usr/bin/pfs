@@ -94,7 +94,6 @@ pack_name="$(basename "${1%.$EXT}")"
 dest_dir="${dest_root}${PFSDIR}/mount/${pack_name}/"
 mkdir -p $dest_dir
 if [ -d "${source_root}${PFSDIR}/mount" ] ; then
-#deep=$(ls $dest_dir  |grep submod | sed 's/.*submod//')
 mkdir -p "${dest_dir}submod"
 cp  -fr "${source_root}${PFSDIR}/mount"   /tmp/ 
 mv  /tmp/mount "${dest_dir}submod/"
