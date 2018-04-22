@@ -51,7 +51,8 @@ extract_simple () {
 
 extract_contaner () {
 #extract packages from contaner
-pfsinfo "$pfs" |while read m ;do
+unsquashfs -d "" -l "$pfs" |grep ${PFSDIR}/mount/[[:alnum:]]*$  |while read m ;do
+    m=$(basename $m)
     if  [ "`echo $sourcelist| sed 's/^ //'`" ]  ;then
 		echo $sourcelist |grep -q "$m" || continue
     fi
@@ -79,17 +80,19 @@ pfsinfo "$pfs" |while read m ;do
 	    cd $PWD
 	fi
     done
-
-    mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
+      
     [ $dir ] || dir=$(basename $pfs |sed "s/\.${EXT}$//")
 	if [ "$d" ] ; then	
 		mkdir -p "$dir/$m" && cp -a "$SYSMNT/changes$nn"/* "$dir/$m" &&
 		rm -R $dir/$m$PFSDIR
 	elif [ "$i" ] ; then
+	    mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$m" 
 		cp -a "$SYSMNT/changes$nn"/* /
 		mv -f ${PFSDIR}/mount/$m ${PFSDIR}/install/
 		eval echo  "package: $m  install complete" $devnull 
     else
+		touch "$SYSMNT/aufs$nn/${PFSDIR}"
+		cp -fr "$SYSMNT/aufs$nn/${PFSDIR}/mount/$m/submod/mount"  "$SYSMNT/changes$nn/${PFSDIR}/"  2>/dev/null || rm -rf $SYSMNT/changes$nn/${PFSDIR} 
 		mkdir -p "$dir" && mksqmod "$SYSMNT/changes$nn" "$dir/$m.$EXT"
     fi
     delaufs $nn ; echo ''

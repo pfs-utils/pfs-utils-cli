@@ -129,6 +129,9 @@ else
   for i in $bundles ;do
 	name="$(basename "${i%.$EXT}")" 
 	mklist "$i" "$n" "$name"
+	for submod in $(ls -1 ${i}/${PFSDIR}/mount/) ; do
+		rm -rf ${n}/${PFSDIR}/mount/$submod
+	done
   done 
 fi
 
