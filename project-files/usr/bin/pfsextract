@@ -54,7 +54,7 @@ extract_contaner () {
 pfsinfo "$pfs"   |while read m ;do
     if  [ "$(echo $sourcelist| sed 's/^ //')" ]  ;then
 		# do not delet spaces around " $sourclist "
-		echo " $sourcelist " |grep -q   "[^:]$m[^:]" || continue
+		echo " $sourcelist " |grep -q   "[[:space:]]$m[[:space:]]" || continue
 	else 
 		echo $m |grep -q ":" && continue
     fi
