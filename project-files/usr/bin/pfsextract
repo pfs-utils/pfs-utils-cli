@@ -50,14 +50,7 @@ extract_simple () {
 
 extract_contaner () {
 #extract packages from contaner
-pfsinfo "$pfs"   |while read m ;do
-    if  [ "$(echo $sourcelist| sed 's/^ //')" ]  ;then
-		# do not delet spaces around " $sourclist "
-		echo " $sourcelist " |grep -q   "[[:space:]]$m[[:space:]]" || continue
-	else 
-		echo $m |grep -q ":" && continue
-    fi
-  
+for m in $sourcelist ; do
     eval echo  "package: $m    -- processing..." $devnull
     m=$(echo $m |sed 's#:#/submod/mount/#g')
     n="$(mkaufs || exitmsg "mkaufs error" 2)"
@@ -65,14 +58,10 @@ pfsinfo "$pfs"   |while read m ;do
 	[ -d "$n" ] || exitmsg "error mounting aufs" 3
     bundle=$(addlayer "$nn" "$pfs" || exitmsg "can't insert layer to aufs $n" 5)
      
-    cat "$SYSMNT/aufs${nn}${PFSDIR}/mount/${m}/pfs.files" | while read F; do 
-	if [ ! -h "$bundle/$F" ];then
-	    touch "$SYSMNT/aufs$nn$F" 2>/dev/null ; cp -a "$bundle/$F" "$SYSMNT/aufs${nn}$F"
-	else  
-	    cp -a "$bundle/$F" "$SYSMNT/aufs${nn}`dirname "$F"`"
-	fi
+    cat "${n}${PFSDIR}/mount/${m}/pfs.files" | while read F; do 
+	touch "$n$F" || cp -a "$bundle/$F" "${n}$(dirname "$F")"
     done
-
+       
     emp="$SYSMNT/aufs$nn/${PFSDIR}/mount/$m/pfs.dirs.empty"
     [ -f "$emp" ] && cat "$emp" | while read F; do 
 	F=$(echo $F |sed s':\$::')
@@ -80,11 +69,13 @@ pfsinfo "$pfs"   |while read m ;do
 	    touch "$SYSMNT/aufs$nn$F"
 	else
 	    PWD=$(pwd)
-	    cp -a "$bundle/$F" "$SYSMNT/aufs${nn}`dirname "$F"`"
+	    cp -a "$bundle/$F" "${n}$(dirname "$F")"
 	    cd $PWD
 	fi
     done
-      
+    
+	cp -a $SYSMNT/aufs$nn${PFSDIR}/mount/${m}/unique/*  "${n}/" 2>/dev/null 
+          
     [ $dir ] || dir=$(basename $pfs |sed "s/\.${EXT}$//")
 	if [ "$nopfs" ] ; then
 		moddirname=$(basename $m)

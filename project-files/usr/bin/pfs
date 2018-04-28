@@ -96,12 +96,12 @@ mkdir -p $dest_dir
 if [ -d "${source_root}${PFSDIR}/mount" ] ; then
 mkdir -p "${dest_dir}submod"
 cp  -fr "${source_root}${PFSDIR}/mount"   /tmp/ 
-mv  /tmp/mount "${dest_dir}submod/"
+mv  -f /tmp/mount "${dest_dir}submod/"
 rm -rf /tmp/mount
 fi
 echo 'name="'$pack_name'"' > "${dest_dir}/pfs.specs" &&
 find "${source_root}" ! -type d        | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.files" &&
-find "${source_root}"   -type d -empty | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.dirs.empty" #&&
+find "${source_root}"   -type d -empty | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.dirs.empty"
 }
 
 checkramfreeb () {

@@ -3,6 +3,7 @@
 #VERSION 4.0
 . $(which pfs)
 
+TMPFS=tmpfs
 usage () {
 	echo -e "$(basename $0) util, find file (\$1) in modules mounted to root aufs  and in $changesDir\n" 
 	echo "Usage:" 
@@ -28,7 +29,7 @@ listing (){
 [ -d $p ] || exit 0
 f="$(basename "$1")"
 list1=$(aufs-n --raw '$bundle' |sed 1d |while read bdl ; do   find "$bdl"  \( -type f -o -type l \) -name "$f" |sed 's#^'$(dirname $bdl)/'## ; s/'$f'$//' ; done)
-list2=$(find "$changesDir" \( -type f -o -type l \) -name "$f" |sed 's#^'$changesDir'#tmpfs/# ; s/'$f'$//')
+list2=$(find "$changesDir" \( -type f -o -type l \) -name "$f" |sed 's#^'$changesDir'#$TMPFS/# ; s/'$f'$//')
 list="$list1 $list2"
 aufs-n --raw '$n $bundle $dname_source $bname_source' | while read a; do
 	for b in $list ; do
