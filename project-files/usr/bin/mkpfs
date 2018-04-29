@@ -128,11 +128,10 @@ else
   for i in $bundles ;do
 	name="$(basename "${i%.$EXT}")" 
 	mklist "$i" "$n" "$name"
-	for submod in $(ls -1 ${i}/${PFSDIR}/mount/ 2>/dev/null ); do
-		rm -rf ${n}${PFSDIR}mount/$submod
+	for submod in $(ls -1 ${i}${PFSDIR}/mount/ 2>/dev/null); do
+		rm -rf ${n}${PFSDIR}/mount/$submod
 	done
   done
-
 #########################
 	for i in $bundles ; do
     uniqfiles=$(diff -rq $i $n |grep -v "[[:alnum:]]: [[:alnum:]]" | sed "s#^.*$i##" |cut -d" " -f1)

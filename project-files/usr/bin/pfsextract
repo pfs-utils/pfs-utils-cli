@@ -73,7 +73,7 @@ for m in $sourcelist ; do
 	    cd $PWD
 	fi
     done
-    
+    echo "cp -a $SYSMNT/aufs$nn${PFSDIR}/mount/${m}/unique/*  "${n}/" "
 	cp -a $SYSMNT/aufs$nn${PFSDIR}/mount/${m}/unique/*  "${n}/" 2>/dev/null 
           
     [ $dir ] || dir=$(basename $pfs |sed "s/\.${EXT}$//")
