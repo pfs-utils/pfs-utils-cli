@@ -39,7 +39,7 @@ fi
 
 ADDMEMORY () {
 df ./ |grep -q ^/dev/sd.* || exitmsg  "Current dir must be real disk" 2
-df ${SYSMNT}/changes/ |cut -d" " -f1 |grep -q tmpfs ||    exitmsg  "Error: Only Clean mode supported" 3
+[ $(aufs-n --raw '$source' |head -n1) != tmpfs ]  ||    exitmsg  "Error: Only Clean mode supported" 3
 
 # создавать swap или использовать готовый
 
@@ -66,8 +66,9 @@ else
   size=$(du -m $1 |  awk '{print $1}')
 fi
 # увеличиваем tmpfs
+changes=$(df "$(aufs-n --raw '$bundle' |head -n1)" |tail -n1 |awk '{print $NF}')
 newsize=$(expr $size + $(df -m | grep -m 1 /$ | awk '{print $2}'))
-mount -o remount,size=${newsize}M $SYSMNT 
+mount -o remount,size=${newsize}M $changes 
 # результат
 df /  -BM
 swapon -s
