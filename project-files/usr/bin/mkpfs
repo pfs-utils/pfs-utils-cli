@@ -16,6 +16,25 @@ M(){
     [ "${userout}_" = "_" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").$EXT"
 }
 
+######################### testing
+save_duplicates() {
+	echo "save_duplicates enabled"
+	for i in $bundles ; do
+    uniqfiles=$(diff -rq $i $n |grep -v "[[:alnum:]]: [[:alnum:]]" | sed "s#^.*$i##" |cut -d" " -f1)
+	if [[ -n "$uniqfiles" ]] ; then
+		dpath=$(pwd)
+		dest_dir="$(realpath "$n")${PFSDIR}/mount/$(basename "${i%.$EXT}")/"
+		mkdir -p ${dest_dir}/unique
+		for file in $uniqfiles ; do 
+			echo "$file -- saved as unique for $(basename $i) submodule"
+			cd ${i}
+			cp -fr  --parents ".$file" ${dest_dir}/unique/ 
+		done
+		cd $dpath
+	fi
+	done
+}
+######################### testing
 
 #help
 HLP(){
@@ -27,11 +46,13 @@ echo "$0 * -o ./big.$EXT		-collect all dirs and squashfs modules from current di
 echo
 echo "Параметры (ключи):"
 echo "	-o / --out-file - указывает название выходного файла (если указать без расширения .$EXT на выходе будет каталог)."
-echo "	-w - не включать AUFS тени."
-echo "	-l / --local - сборка на месте, без использования aufs."
-echo "	-f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
+echo "  -w - не включать AUFS тени."
+echo "  -l / --local - сборка на месте, без использования aufs."
+echo "  -f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
 echo "  --mkilst  add files list to simple (non contaner) module"
-echo "	--mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
+echo "  --save-duplicates  при сборке контейнеров сохранять одноименные файлы из разных источников если они отличаются, "
+echo "                     при распаковке файлы будут возвращены на место"
+echo "  --mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
 echo "Алиасы (сокращения):"
 echo " -d | -D - Только каталоги"
 echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.$EXT'
@@ -65,6 +86,7 @@ do
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
     "-processors" | "--processors" ) numproc="on";;
+    "-save-duplicates" | "--save-duplicates" ) save_dups=on;; 
     "-w") wh="-regex -e ".wh..wh."";;
     "-l" | "--local" ) inplace=yes ;;
     "--mklist" ) make_list=yes ;;
@@ -132,22 +154,9 @@ else
 		rm -rf ${n}${PFSDIR}/mount/$submod
 	done
   done
-#########################
-	for i in $bundles ; do
-    uniqfiles=$(diff -rq $i $n |grep -v "[[:alnum:]]: [[:alnum:]]" | sed "s#^.*$i##" |cut -d" " -f1)
-	if [[ -n "$uniqfiles" ]] ; then
-		dpath=$(pwd)
-		dest_dir="$(realpath "$n")${PFSDIR}/mount/$(basename "${i%.$EXT}")/"
-		mkdir -p ${dest_dir}/unique
-		for file in $uniqfiles ; do 
-			echo "$file -- saved as unique for $(basename $i) submodule"
-			cd ${i}
-			cp -fr  --parents ".$file" ${dest_dir}/unique/ 
-		done
-		cd $dpath
-	fi
-	done
-#########################
+######################
+[ $save_dups ] && save_duplicates
+######################
 fi
 
 
