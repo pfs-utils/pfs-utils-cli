@@ -207,7 +207,7 @@ else
 	rm -rf $SYSMNT/changes$1
 fi 2>/dev/null
 if [ -d $SYSMNT/bundles$1 ]; then
-	ls -1 $SYSMNT/bundles$1 | while read D
+	ls -1A $SYSMNT/bundles$1 | while read D
 	do
 		umount -d $SYSMNT/bundles$1/$D && 	rmdir $SYSMNT/bundles$1/$D
 	done
