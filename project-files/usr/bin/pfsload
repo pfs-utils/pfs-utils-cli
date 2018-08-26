@@ -17,7 +17,7 @@ HLP() {
 toram () {
 mkdir -p ${copyramdir}
 freeram=$(checkramfreeb)
-filesize="`expr $(du -k "${fsfile}" | cut -f 1)`"
+filesize="$(du -k "${fsfile}" | cut -f 1)"
 minram="$(expr ${filesize} + ${TMPFSLIMIT})"
 [ "${minram}" -gt "${freeram}" ] && exitmsg "Not enouth free RAM space" 3
 [ "$(stat  --format=%T -f $copyramdir )" != "tmpfs" ] && mountb -t tmpfs tmpfs "${copyramdir}"
