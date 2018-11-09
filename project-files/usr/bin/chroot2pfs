@@ -1,0 +1,110 @@
+#!/bin/bash
+# Description: create pfs module from changes in chroot
+# Author : Alexandr Betkher (betcher) <http://magos-linux.ru>
+. /etc/initvars
+. `which pfs`
+
+mod_path=$SYSMNT/bundles 
+buildDir=$SYSMNT/tmp/$$-tmp
+filter="??*" # нужен для пересборки, чтоб не собирать все что в контейнере, нужно приделать ключ.
+
+
+function umount_all () {
+for tm in {sys,proc,dev}; do
+    while (grep -q $root_br/$tm /proc/mounts ) ; do
+        umount $root_br/$tm
+    done
+done
+}
+
+argslist="$@"
+if  echo $argslist |grep -q "\-*command.*" ; then
+    command="$(echo $@ |sed 's/^.*\-*command//')"
+    argslist="$(echo $@ |sed 's/\-*command.*$//')"
+fi
+
+# функция для пересборки модулей по сохраненным "$@"
+if $(file $1 2>/dev/null |grep -q quashfs    ); then
+	mkdir $SYSMNT/tmp 
+	echo "rebuilding ${1}..."
+	chroot2pfs=$(realpath $0)
+	[ $2 ] && filter="$2"
+	unsquashfs -d $buildDir  $1 -e /var/lib/chroot2pfs/*
+	mv $buildDir/var/lib/chroot2pfs/* $buildDir
+	rm -fr $buildDir/var
+	CPWD=$(pwd)
+	cd $buildDir
+	for mod in $(find ./  -type d -name "$filter") ; do
+		cd $mod
+		$chroot2pfs  $(echo $(cat ./cmdline)) | tee ./chroot2pfs.out
+		module=$(cat ./chroot2pfs.out | tail -n1)
+		[ -f $CPWD/$(basename $module) ] && mv $CPWD/$(basename $module) $CPWD/$(basename $module).old
+		mv $module $CPWD
+		cd ..
+	done
+	cd $CPWD
+	rm -rf $buildDir
+	exit 
+fi
+
+for arg in $argslist
+do
+  case "${arg}" in
+    "-h" | "--help" ) HLP;;
+    "-n" | "-o" | "--name") name="yes";;
+    "-m" | "--mask") mask="yes" ;;
+    "-f" | "--fast") fast_alg="-f" ;;
+    "-b"  | "--rebuildable" ) rebuildable="yes" ;;
+    "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
+    *) if [ "${name}" = "yes" ]; then NAME="${arg}"
+        elif [ "${mask}" = "yes" ]; then MASK="${arg}" ; fi
+        name="no";  mask="no";;
+  esac
+done
+
+if [ $(id -un) != "root" ] ; then 
+echo "Must be root"
+exit 2
+fi
+
+#Имя обязательно, так как зацепиться не за что
+[ $NAME ] || read -p "Please enter name for module:      " NAME  
+
+#make root aufs
+root_br="$(mkaufs || exitmsg "mkaufs error" 2)"
+nn="$(echo "$root_br" | sed -n 's/^.*\([0-9]\)$/\1/p')"
+[ -d "$root_br" ] || exitmsg "error mounting aufs" 3
+
+#add sources as aufs layers
+for  i in $(ls -1 $mod_path) ;do
+    eval addlayer "$nn" "$mod_path/$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
+done 
+
+mkdir -p $root_br/{dev,proc,sys}
+
+for tm in {dev,proc,sys}; do
+    [ /$tm ] && mount -o bind /$tm $root_br/$tm
+done
+
+mkdir -p $root_br/tmp
+
+cp /etc/resolv.conf $root_br/etc/resolv.conf
+chroot $root_br $command
+
+umount_all
+
+mod_br=$SYSMNT/changes$nn
+rm -rf $mod_br/tmp >/dev/null
+rm -rf $root_br/{dev,proc,sys} >/dev/null
+
+#сохраняем в модуль $@ для последующих пересборок
+#надо подумать что еще полезно сохранить
+mkdir -p $mod_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")
+date > $mod_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/date
+echo $@ > $mod_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/cmdline
+
+mkpfs $mod_br -o $NAME && MODULE="$(readlink -e ${NAME})" 
+delaufs $nn
+# по этой строке имя модуля получается при пересборке.
+echo $MODULE 
+
