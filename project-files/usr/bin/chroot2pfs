@@ -1,13 +1,11 @@
 #!/bin/bash
 # Description: create pfs module from changes in chroot
 # Author : Alexandr Betkher (betcher) <http://magos-linux.ru>
-. /etc/initvars
-. `which pfs`
-
-mod_path=$SYSMNT/bundles 
+. `which pfs` 
+ 
 buildDir=$SYSMNT/tmp/$$-tmp
-filter="??*" # нужен для пересборки, чтоб не собирать все что в контейнере, нужно приделать ключ.
-
+filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
+mask="." # маска для модулей, точка потому, что это grep (в filter маска для find -name, в mask для grep не  хорошо)
 
 function umount_all () {
 for tm in {sys,proc,dev}; do
@@ -54,18 +52,16 @@ do
     "-n" | "-o" | "--name") name="yes";;
     "-m" | "--mask") mask="yes" ;;
     "-f" | "--fast") fast_alg="-f" ;;
-    "-b"  | "--rebuildable" ) rebuildable="yes" ;;
+    "-s" | "--script" ) script="yes" ;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
-    *) if [ "${name}" = "yes" ]; then NAME="${arg}"
-        elif [ "${mask}" = "yes" ]; then MASK="${arg}" ; fi
-        name="no";  mask="no";;
+    *) if [ "${name}" == "yes" ]; then NAME="${arg}"
+		elif [ "${script}" == "yes" ]; then SCRIPT="${arg}" 
+        elif [ "${mask}" == "yes" ]; then MASK="${arg}" ; fi
+        name="no";  mask="no"; script="no";;
   esac
 done
 
-if [ $(id -un) != "root" ] ; then 
-echo "Must be root"
-exit 2
-fi
+allow_only_root
 
 #Имя обязательно, так как зацепиться не за что
 [ $NAME ] || read -p "Please enter name for module:      " NAME  
@@ -76,8 +72,8 @@ nn="$(echo "$root_br" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 [ -d "$root_br" ] || exitmsg "error mounting aufs" 3
 
 #add sources as aufs layers
-for  i in $(ls -1 $mod_path) ;do
-    eval addlayer "$nn" "$mod_path/$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
+for  i in $(aufs-n --raw '$bname_source $bundle' | sed '1d' |grep "$MASK" | awk '{print $2}') ;do
+    eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
 done 
 
 mkdir -p $root_br/{dev,proc,sys}
@@ -88,8 +84,20 @@ done
 
 mkdir -p $root_br/tmp
 
-cp /etc/resolv.conf $root_br/etc/resolv.conf
-chroot $root_br $command
+#сохраняем в модуль $@ для последующих пересборок
+#надо подумать что еще полезно сохранить
+
+#cp /etc/resolv.conf $root_br/etc/resolv.conf # у Антона было, у меня без этого работает
+mkdir -p $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")
+date > $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/date
+echo $@ > $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/cmdline
+if [ "$SCRIPT" ] ; then
+	[ -f  "$root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)" ]  || cp  $SCRIPT  $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/
+	chmod +x $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
+	chroot $root_br /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
+else 
+	chroot $root_br $command
+fi
 
 umount_all
 
@@ -97,11 +105,6 @@ mod_br=$SYSMNT/changes$nn
 rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys} >/dev/null
 
-#сохраняем в модуль $@ для последующих пересборок
-#надо подумать что еще полезно сохранить
-mkdir -p $mod_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")
-date > $mod_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/date
-echo $@ > $mod_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/cmdline
 
 mkpfs $mod_br -o $NAME && MODULE="$(readlink -e ${NAME})" 
 delaufs $nn
