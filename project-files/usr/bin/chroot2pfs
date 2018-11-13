@@ -5,13 +5,24 @@
  
 buildDir=$SYSMNT/tmp/$$-tmp
 filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
-mask="." # маска для модулей, точка потому, что это grep (в filter маска для find -name, в mask для grep не  хорошо)
 
 function umount_all () {
 for tm in {sys,proc,dev}; do
     while (grep -q $root_br/$tm /proc/mounts ) ; do
         umount $root_br/$tm
     done
+done
+}
+
+get_layers () {
+layers=""
+local layers
+[ "$MASK" ] && layers=$(aufs-n --hidetop  --reverse --raw '$bname_source $bundle' |grep "$MASK" | awk '{print $2}')
+[ "$MLIST" ] && layers="$layers $(echo "$MLIST" |sed 's/;/ /g')"
+[ "$FLIST" ] && layers="$layers $(cat $FLIST)"
+[[ -z  $layers ]] && layers=$(aufs-n --hidetop --reverse --raw '$bname_source $bundle'  | awk '{print $2}')
+for item in $layers ; do 
+[ -e $item ] && echo $item || exitmsg "	layer:   $item is not exists" 4
 done
 }
 
@@ -50,14 +61,17 @@ do
   case "${arg}" in
     "-h" | "--help" ) HLP;;
     "-n" | "-o" | "--name") name="yes";;
-    "-m" | "--mask") mask="yes" ;;
     "-f" | "--fast") fast_alg="-f" ;;
     "-s" | "--script" ) script="yes" ;;
+    "-m" | "--mask") mask="yes" ;;
+    "--mlist" ) mlist="yes" ;;
+    "--flist" ) flist="yes" ;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${name}" == "yes" ]; then NAME="${arg}"
-		elif [ "${script}" == "yes" ]; then SCRIPT="${arg}" 
+		elif [ "${mlist}" == "yes" ]; then MLIST="${arg}"
+		elif [ "${flist}" == "yes" ]; then FLIST="${arg}" 
         elif [ "${mask}" == "yes" ]; then MASK="${arg}" ; fi
-        name="no";  mask="no"; script="no";;
+        mlist=no; flist=no; name="no";  mask="no"; script="no";;
   esac
 done
 
@@ -70,9 +84,10 @@ allow_only_root
 root_br="$(mkaufs || exitmsg "mkaufs error" 2)"
 nn="$(echo "$root_br" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 [ -d "$root_br" ] || exitmsg "error mounting aufs" 3
+echo "aufs number: $nn"
 
 #add sources as aufs layers
-for  i in $(aufs-n --raw '$bname_source $bundle' | sed '1d' |grep "$MASK" | awk '{print $2}') ;do
+for  i in $(get_layers) ;do
     eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
 done 
 
@@ -105,8 +120,9 @@ mod_br=$SYSMNT/changes$nn
 rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys} >/dev/null
 
-
 mkpfs $mod_br -o $NAME && MODULE="$(readlink -e ${NAME})" 
+echo "delaufs $nn"
+
 delaufs $nn
 # по этой строке имя модуля получается при пересборке.
 echo $MODULE 
