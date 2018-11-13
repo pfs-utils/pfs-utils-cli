@@ -5,6 +5,7 @@
  
 buildDir=$SYSMNT/tmp/$$-tmp
 filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
+fast_alg=""
 
 function umount_all () {
 for tm in {sys,proc,dev}; do
@@ -120,7 +121,7 @@ mod_br=$SYSMNT/changes$nn
 rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys} >/dev/null
 
-mkpfs $mod_br -o $NAME && MODULE="$(readlink -e ${NAME})" 
+mkpfs $mod_br  $fast_alg  -o $NAME && MODULE="$(readlink -e ${NAME})" 
 echo "delaufs $nn"
 
 delaufs $nn
