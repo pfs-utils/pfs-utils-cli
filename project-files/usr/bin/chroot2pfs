@@ -16,7 +16,7 @@ echo "-h | --help - this help"
 echo "--command  - команда для выролнения в чруте, параметр должен быть последним в строке"
 echo "--script - скрипт, который будет перенесен в чрут и запущен в нем"
 echo "-m | --mask - маска для системных бандлов из которых будет создана aufs для chroot"
-echo "--mlist - список модулей и папок для создания aufs, расзделеитель в списке - \" ; \" "
+echo "--mlist - список модулей и папок для создания aufs, расзделеитель в списке - \" ; \" или \" , \" "
 echo "--flist   - список модулей и папок из файла"
 echo "-f | --fast - fast compression alg"
 echo "-n | -o | --name - name for the module (если без расширения $EXT, то в папку соберет)"
@@ -35,7 +35,7 @@ get_layers () {
 layers=""
 local layers
 [ "$MASK" ] && layers=$(aufs-n --hidetop  --reverse --raw '$bname_source $bundle' |grep "$MASK" | awk '{print $2}')
-[ "$MLIST" ] && layers="$layers $(echo "$MLIST" |sed 's/;/ /g')"
+[ "$MLIST" ] && layers="$layers $(echo "$MLIST" |sed 's/[\,,;]/ /g')"
 [ "$FLIST" ] && layers="$layers $(cat $FLIST)"
 [[ -z  $layers ]] && layers=$(aufs-n --hidetop --reverse --raw '$bname_source $bundle'  | awk '{print $2}')
 for item in $layers ; do 
