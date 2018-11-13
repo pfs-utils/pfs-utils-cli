@@ -7,6 +7,22 @@ buildDir=$SYSMNT/tmp/$$-tmp
 filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
 fast_alg=""
 
+HLP () {
+echo "Usage: 	$(basename $0) <$(basename $0) keys> <--command>  - command which will be execute in  chroot"
+echo "				$(basename $0) <$(basename $0) keys> <--script> - script which will be copied to chroot and run" 
+echo "				$(basename $0) module.$EXT  - rebuild module" 
+echo "$(basename $0) keys:"
+echo "-h | --help - this help"
+echo "--command  - команда для выролнения в чруте, параметр должен быть последним в строке"
+echo "--script - скрипт, который будет перенесен в чрут и запущен в нем"
+echo "-m | --mask - маска для системных бандлов из которых будет создана aufs для chroot"
+echo "--mlist - список модулей и папок для создания aufs, расзделеитель в списке - \" ; \" "
+echo "--flist   - список модулей и папок из файла"
+echo "-f | --fast - fast compression alg"
+echo "-n | -o | --name - name for the module (если без расширения $EXT, то в папку соберет)"
+exit 
+}
+
 function umount_all () {
 for tm in {sys,proc,dev}; do
     while (grep -q $root_br/$tm /proc/mounts ) ; do
