@@ -13,7 +13,7 @@ echo "				$(basename $0) <$(basename $0) keys> <--script> - script which will be
 echo "				$(basename $0) module.$EXT  - rebuild module" 
 echo "$(basename $0) keys:"
 echo "-h | --help - this help"
-echo "--command  - команда для выролнения в чруте, параметр должен быть последним в строке"
+echo "--command  - команда для выполнения в чруте, параметр должен быть последним в строке"
 echo "--script - скрипт, который будет перенесен в чрут и запущен в нем"
 echo "-m | --mask - маска для системных бандлов из которых будет создана aufs для chroot"
 echo "--mlist - список модулей и папок для создания aufs, расзделеитель в списке - \" ; \" или \" , \" "

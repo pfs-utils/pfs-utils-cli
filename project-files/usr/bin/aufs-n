@@ -91,7 +91,7 @@ echo $@ |grep -q "\-\-reverse" && reverse=yes
 echo $@ |grep -q "\-\-hidetop" && hidetop=yes 
 
 
-if echo $@ |grep -qv "\-\-raw" ;then 
+if ! [ $1 ]  ;then 
 	human=yes
 	header
 	listing
