@@ -35,7 +35,7 @@ else
 fi
 
 #mountpoint="${prefixmp}${fsname}"
-mountpoint="$(awk '/'${fsname}'/ {print $2}' /proc/mounts)"
+mountpoint="$(awk  '{print $2}' /proc/mounts | grep  "/${fsname}$" )"
 if [ -d "${mountpoint}" ]; then
   sync
   mountb -t aufs -o remount,del:"${mountpoint}"/ aufs /  2>/dev/null
