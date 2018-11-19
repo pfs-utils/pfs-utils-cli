@@ -3,6 +3,7 @@
 # Author : Alexandr Betkher (betcher) <http://magos-linux.ru>
 . `which pfs` 
  
+CHROOT="chroot"
 buildDir=$SYSMNT/tmp/$$-tmp
 filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
 fast_alg=""
@@ -83,17 +84,24 @@ do
     "-m" | "--mask") mask="yes" ;;
     "--mlist" ) mlist="yes" ;;
     "--flist" ) flist="yes" ;;
+    "-c" | "--contaner" ) contaner=yes;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${name}" == "yes" ]; then NAME="${arg}"
 		elif [ "${mlist}" == "yes" ]; then MLIST="${arg}"
-		elif [ "${flist}" == "yes" ]; then FLIST="${arg}" 
+		elif [ "${flist}" == "yes" ]; then FLIST="${arg}"
+		elif [ "${contaner}" == "yes" ]; then CONTANER="${arg}" 
         elif [ "${mask}" == "yes" ]; then MASK="${arg}" ; fi
-        mlist=no; flist=no; name="no";  mask="no"; script="no";;
+        mlist=no; flist=no; name="no";  mask="no"; script="no"; contaner="no";;
   esac
 done
 
 allow_only_root
 
+ps -C systemd >/dev/null ; S=$? 
+which systemd-nspawn >/dev/null ; N=$? 
+[ "$N" == 0 -a "$S" == 0 ] && CHROOT="nspawn"
+[ $CONTANER ] &&  CHROOT="$CONTANER"
+echo "Using:  $CHROOT"
 #Имя обязательно, так как зацепиться не за что
 [ $NAME ] || read -p "Please enter name for module:      " NAME  
 
@@ -108,13 +116,12 @@ for  i in $(get_layers) ;do
     eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
 done 
 
-mkdir -p $root_br/{dev,proc,sys}
-
+if [ $CHROOT == "chroot" ] ; then
+mkdir -p $root_br/{dev,proc,sys,tmp}
 for tm in {dev,proc,sys}; do
     [ /$tm ] && mount -o bind /$tm $root_br/$tm
 done
-
-mkdir -p $root_br/tmp
+fi
 
 #сохраняем в модуль $@ для последующих пересборок
 #надо подумать что еще полезно сохранить
@@ -125,10 +132,19 @@ date > $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/date
 echo $@ > $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/cmdline
 if [ "$SCRIPT" ] ; then
 	[ -f  "$root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)" ]  || cp  $SCRIPT  $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/
-	chmod +x $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
-	chroot $root_br /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
+	chmod +x $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT) 
+fi
+
+if [ $CHROOT == "nspawn" ] ; then
+md5sum /bin/bash | awk '{print $1}' > $root_br/etc/machine-id #  nspawn do not works without machine-id
+[ "$SCRIPT" ] || systemd-nspawn -D $root_br   -M nspawn_machine $command 
+[ "$SCRIPT" ] &&  systemd-nspawn -D $root_br   -M nspawn_machine  /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
+elif [ $CHROOT == "chroot" ] ; then
+[ "$SCRIPT" ] || chroot $root_br $command
+[ "$SCRIPT" ]	&& chroot $root_br /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
 else 
-	chroot $root_br $command
+BADCONTANER=yes 
+echo "Wrong contaner type, must be \"chroot\" or \"nspawn\""
 fi
 
 umount_all
@@ -137,7 +153,7 @@ mod_br=$SYSMNT/changes$nn
 rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys} >/dev/null
 
-mkpfs $mod_br  $fast_alg  -o $NAME && MODULE="$(readlink -e ${NAME})" 
+[ $BADCONTANER ] || mkpfs $mod_br  $fast_alg  -o $NAME && MODULE="$(readlink -e ${NAME})" 
 echo "delaufs $nn"
 
 delaufs $nn
