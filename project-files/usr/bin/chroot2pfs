@@ -21,6 +21,7 @@ echo "--mlist - список модулей и папок для создани�
 echo "--flist   - список модулей и папок из файла"
 echo "-f | --fast - fast compression alg"
 echo "-n | -o | --name - name for the module (если без расширения $EXT, то в папку соберет)"
+echo "-c | --contaner  Тип виртуализации, доступные варианты  \"chroot\", \"nspawn\" (systemd-nspawn)" 
 echo "--mkscript - создать скрипт-шаблон"
 exit 
 }
@@ -44,7 +45,7 @@ rm -rf  /var/tmp  /var/cache/{urpmi,ldconfig}  /etc/{urpmi,ld.so.cache,localtime
 /var/lib/{rpm,urpmi,menu} /usr/share/applications/mimeinfo.cache  /.wh* 2>/dev/null
 find "$mod_br/usr/share/icons" -type f -name icon-theme.cache 2>/dev/null | xargs rm -f
 EOF
-echo "WARNING. Do not run ./script-examle.sh in system, use for chroot2pfs only"
+echo "WARNING. Do not run ./script-examle.sh in system, use for $(basename $0) only"
 echo "Do not make ./script-examle.sh executable, $(basename $0) will do it automaticly"
 exit
 }
@@ -101,7 +102,7 @@ if  $(file $(echo $modules |awk '{print $1}') 2>/dev/null | grep -q quashfs); th
     echo "rebuilding $rmod in $buildDir"
     u2pfs_current=$(realpath $0)
     unsquashfs -d $buildDir "$rmod" -e /var/lib/chroot2pfs -n >/dev/null
-    mv $buildDir/var/lib/chroot2pfs/* $buildDir
+    mv $buildDir/var/lib/chroot2pfs/* $buildDir  || exitmsg "Module $rmod was made by another program" 7
     rm -fr $buildDir/var
     CPWD=$(pwd)
     cd $buildDir
