@@ -123,9 +123,6 @@ fi
 
 allow_only_root
 
-ps -C systemd >/dev/null ; S=$? 
-which systemd-nspawn >/dev/null ; N=$? 
-[ "$N" == 0 -a "$S" == 0 ] && CHROOT="nspawn"
 [ $CONTANER ] &&  CHROOT="$CONTANER"
 echo "Using:  $CHROOT"
 #Имя обязательно, так как зацепиться не за что
