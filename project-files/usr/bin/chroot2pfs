@@ -127,6 +127,8 @@ allow_only_root
 echo "Using:  $CHROOT"
 #Имя обязательно, так как зацепиться не за что
 [ $NAME ] || read -p "Please enter name for module:      " NAME  
+[ -f "${NAME}" ] && exitmsg "Output file '$NAME' already exist" 6
+[ -d "${NAME}" ] && exitmsg "Output diectory '$NAME' already exist" 6
 
 #make root aufs
 root_br="$(mkaufs || exitmsg "mkaufs error" 2)"
