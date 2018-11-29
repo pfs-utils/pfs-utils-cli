@@ -4,6 +4,7 @@
 . `which pfs` 
  
 CHROOT="chroot"
+TRIM="--trim"
 buildDir=$SYSMNT/$$-tmp
 filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
 fast_alg=""
@@ -22,7 +23,7 @@ echo "--flist   - список модулей и папок из файла"
 echo "-f | --fast - fast compression alg"
 echo "-n | -o | --name - name for the module (если без расширения $EXT, то в папку соберет)"
 echo "-c | --contaner  Тип виртуализации, доступные варианты  \"chroot\", \"nspawn\" (systemd-nspawn)" 
-echo "--mkscript - создать скрипт-шаблон"
+echo "--notrim "
 exit 
 }
 
@@ -32,22 +33,6 @@ for tm in {sys,proc,dev}; do
         umount $root_br/$tm
     done
 done
-}
-
-mk_template () {
- cat <<EOF >  ./script-examle.sh
-#!/bin/bash
-# apt-get install package
-# urpmi package
-# pacman -S package
-# /bin/bash
-rm -rf  /var/tmp  /var/cache/{urpmi,ldconfig}  /etc/{urpmi,ld.so.cache,localtime,machine-id,resolv.conf} \ 
-/var/lib/{rpm,urpmi,menu} /usr/share/applications/mimeinfo.cache  /.wh* 2>/dev/null
-find "$mod_br/usr/share/icons" -type f -name icon-theme.cache 2>/dev/null | xargs rm -f
-EOF
-echo "WARNING. Do not run ./script-examle.sh in system, use for $(basename $0) only"
-echo "Do not make ./script-examle.sh executable, $(basename $0) will do it automaticly"
-exit
 }
 
 get_layers () {
@@ -61,8 +46,6 @@ for item in $layers ; do
 [ -e $item ] && echo $item || exitmsg "	layer:   $item is not exists" 4
 done
 }
-
-[ "$1" == "--mkscript" ] && mk_template
 
 argslist="$@"
 if  echo $argslist |grep -q "\-*command.*" ; then
@@ -82,6 +65,7 @@ do
     "--mlist" ) mlist="yes" ;;
     "--flist" ) flist="yes" ;;
     "-c" | "--contaner" ) contaner=yes;;
+    "--notrim" ) TRIM="";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${name}" == "yes" ]; then NAME="${arg}"
 		elif [ "${mlist}" == "yes" ]; then MLIST="${arg}"
@@ -178,7 +162,7 @@ rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys,tmp} >/dev/null
 rmdir "$mod_br"/{dev,proc,sys,lost+found} "$mod_br/var/cache" "$mod_br/var/lib" "$mod_br/var" "$mod_br/etc" 2>/dev/null
 
-[ $BADCONTANER ] || mkpfs $mod_br  $fast_alg  -o $NAME && MODULE="$(readlink -e ${NAME})" 
+[ $BADCONTANER ] || mkpfs $mod_br  $fast_alg  $TRIM -o $NAME && MODULE="$(readlink -e ${NAME})" 
 echo "delaufs $nn"
 
 delaufs $nn

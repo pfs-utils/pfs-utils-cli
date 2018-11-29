@@ -86,6 +86,32 @@ allow_only_root() {
     fi
 }
 
+###############################################
+trim () {
+[ "$1" ] && r="$1" || return 1
+[ -d "$r" ] || return 2
+cat <<EOF | while read a ; do rm -f "$a" ; done
+$r/var/log
+$r/run
+$r/etc/udev/hwdb.bin
+$r/etc/ld.so.cache
+$r/var/cache/ldconfig/aux-cache
+$r/var/cache/fontconfig
+$r/var/cache/ldconfig
+$r/usr/local/share/applications/mimeinfo.cache
+$r/usr/share/applications/mimeinfo.cache
+EOF
+find "$r/usr/share/icons" -type f -name icon-theme.cache 2>/dev/null | xargs rm -f
+#$r/var/lib/chroot2pfs
+#$r/var/cache/pacman/pkg
+#$r/var/lib/pacman/sync
+}
+###############################################
+
+
+
+
+
 mklist () {
 source_root="$(realpath "$1")"
 [ "$2" ] && dest_root="$(realpath "$2")" || dest_root="$source_root"
