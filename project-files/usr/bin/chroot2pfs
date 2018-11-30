@@ -156,13 +156,13 @@ echo "Wrong contaner type, must be \"chroot\" or \"nspawn\""
 fi
 
 umount_all
-
+read qqqqq
 mod_br=$SYSMNT/changes$nn
 rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys,tmp} >/dev/null
 rmdir "$mod_br"/{dev,proc,sys,lost+found} "$mod_br/var/cache" "$mod_br/var/lib" "$mod_br/var" "$mod_br/etc" 2>/dev/null
 
-[ $BADCONTANER ] || mkpfs $mod_br  $fast_alg  $TRIM -o $NAME && MODULE="$(readlink -e ${NAME})" 
+[ $BADCONTANER ] || mkpfs -l $mod_br  $fast_alg  $TRIM -o $NAME && MODULE="$(readlink -e ${NAME})" 
 echo "delaufs $nn"
 
 delaufs $nn
