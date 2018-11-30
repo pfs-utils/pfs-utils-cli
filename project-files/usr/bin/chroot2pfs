@@ -5,6 +5,7 @@
  
 CHROOT="chroot"
 TRIM="--trim"
+WH="-w"
 buildDir=$SYSMNT/$$-tmp
 filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
 fast_alg=""
@@ -23,7 +24,8 @@ echo "--flist   - список модулей и папок из файла"
 echo "-f | --fast - fast compression alg"
 echo "-n | -o | --name - name for the module (если без расширения $EXT, то в папку соберет)"
 echo "-c | --contaner  Тип виртуализации, доступные варианты  \"chroot\", \"nspawn\" (systemd-nspawn)" 
-echo "--notrim "
+echo "--notrim  - не удалять заведомо не нужные в модуле файлы (мусор)"
+echo "--wh - не удалять специальные файлы aufs (тени)"
 exit 
 }
 
@@ -66,6 +68,7 @@ do
     "--flist" ) flist="yes" ;;
     "-c" | "--contaner" ) contaner=yes;;
     "--notrim" ) TRIM="";;
+    "--wh" ) WH="";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${name}" == "yes" ]; then NAME="${arg}"
 		elif [ "${mlist}" == "yes" ]; then MLIST="${arg}"
@@ -162,7 +165,7 @@ rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys,tmp} >/dev/null
 rmdir "$mod_br"/{dev,proc,sys,lost+found} "$mod_br/var/cache" "$mod_br/var/lib" "$mod_br/var" "$mod_br/etc" 2>/dev/null
 
-[ $BADCONTANER ] || mkpfs -l $mod_br  $fast_alg  $TRIM -o $NAME && MODULE="$(readlink -e ${NAME})" 
+[ $BADCONTANER ] || mkpfs $mod_br -l $fast_alg  $WH $TRIM   -o $NAME && MODULE="$(readlink -e ${NAME})" 
 echo "delaufs $nn"
 
 delaufs $nn
