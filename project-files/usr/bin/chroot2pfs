@@ -5,7 +5,7 @@
  
 CHROOT="chroot"
 TRIM="--trim"
-WH="-w"
+WH=""
 buildDir=$SYSMNT/$$-tmp
 filter="??*" # нужен для пересборки сабмодуля из кoнтейнера, чтоб не собирать все что в контейнере,  нужно приделать ключ. Пока не важно.
 fast_alg=""
@@ -68,7 +68,7 @@ do
     "--flist" ) flist="yes" ;;
     "-c" | "--contaner" ) contaner=yes;;
     "--notrim" ) TRIM="";;
-    "--wh" ) WH="";;
+    "-w" | "--wh" ) WH="--wh";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${name}" == "yes" ]; then NAME="${arg}"
 		elif [ "${mlist}" == "yes" ]; then MLIST="${arg}"
@@ -159,7 +159,7 @@ echo "Wrong contaner type, must be \"chroot\" or \"nspawn\""
 fi
 
 umount_all
-read qqqqq
+
 mod_br=$SYSMNT/changes$nn
 rm -rf $mod_br/tmp >/dev/null
 rm -rf $root_br/{dev,proc,sys,tmp} >/dev/null
