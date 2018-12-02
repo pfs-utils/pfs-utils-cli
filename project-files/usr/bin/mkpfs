@@ -103,7 +103,7 @@ do
 done
 
 [ "$sourcelist" ] || HLP 
-[ "$inplace" == "yes" -a  "$WH"  != "yes" ] && wh='-wildcards -e "... .wh.*"'
+[ "$inplace" == "yes" -a  "$WH"  != "yes" ] && wh='-wildcards -e "... /.wh.*"'
 
 allow_only_root
 
