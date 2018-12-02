@@ -17,6 +17,8 @@ PFSEXTRACT="\e[31mFALSE\e[0m"
 PFSEXTRACTd="\e[31mFALSE\e[0m"
 PFSEXTRACT_SIMPLE="\e[31mFALSE\e[0m"
 PFSUNINSTALL="\e[31mFALSE\e[0m"
+CHROOT2PFS="\e[31mFALSE\e[0m"
+
 
 CLEAR () {
 	rm -f ./first.${EXT} 2>/dev/null
@@ -122,6 +124,15 @@ rm -r ./testmodule.${EXT} 2>/dev/null
 mkpfs -d testmodule  && MKPFSd=OK
 m="$m\nmkpfs -d=		$MKPFSd"
 rm -r testmodule #2>/dev/null
+
+echo "############# chroot2pfs  ##############"
+chroot2pfs -o ./chroot2pfs.${EXT} --command mkdir /testdir
+pfsload ./chroot2pfs.${EXT}
+[ -d /testdir ] &&  CHROOT2PFS=OK
+m="$m\nchroot2pfs=		$CHROOT2PFS"
+pfsunload  chroot2pfs.${EXT}
+rm -r chroot2pfs.${EXT}
+
 
 CLEAR
 	printf "$m\n====== \e[32mTest finished\e[0m =====\n"

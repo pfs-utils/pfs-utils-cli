@@ -103,7 +103,7 @@ do
 done
 
 [ "$sourcelist" ] || HLP 
-[ "$inplace" == "yes" -a  "$WH"  != "yes" ] && wh="-regex -e ".wh..wh.""
+[ "$inplace" == "yes" -a  "$WH"  != "yes" ] && wh="-regex -e ".wh.*wh""
 
 allow_only_root
 
