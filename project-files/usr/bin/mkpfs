@@ -139,7 +139,7 @@ else
 	rmdir ${userout} 2>/dev/null
 	[ -d "${userout}" ] && exitmsg "Output diectory already exist" 6
 	mkdir -p "$(dirname ${userout})"
-	cp -fr "${n}" "${userout}"
+	cp -auPR "${n}" "${userout}"
 fi
 
 exitmsg "mksqmod error" $?  noexit
