@@ -26,6 +26,7 @@ echo "-n | -o | --name - name for the module (если без расширени
 echo "-c | --contaner  Тип виртуализации, доступные варианты  \"chroot\", \"nspawn\" (systemd-nspawn)" 
 echo "--notrim  - не удалять заведомо не нужные в модуле файлы (мусор)"
 echo "--wh - не удалять специальные файлы aufs (тени)"
+echo "--bind - список каталогов для монтирования в чрут в формате /SOURCE/DIR1::/TARGET/DIR1,/SOURCE/DIR2::/TARGET/DIR2"
 exit 
 }
 
@@ -63,7 +64,8 @@ do
     "-f" | "--fast") fast_alg="-f" ;;
     "-s" | "--script" ) script="yes" ;;
     "-m" | "--mask") mask="yes" ;;
-    "-b" | --builddir ) bdir="yes" ;; # for rebuild only
+    "--builddir") bdir="yes" ;; # for rebuild only
+    "-b" | "--bind") bind="yes" ;;
     "--mlist" ) mlist="yes" ;;
     "--flist" ) flist="yes" ;;
     "-c" | "--contaner" ) contaner=yes;;
@@ -77,8 +79,9 @@ do
 		elif [ "${bdir}" = "yes" ]; then   buildDir="$(readlink -e ${arg})/$$-tmp"
 		elif [ "${contaner}" == "yes" ]; then CONTANER="${arg}" 
         elif [ "${mask}" == "yes" ]; then MASK="${arg}"
+        elif [ "${bind}" == "yes" ]; then BIND="${arg}"
         else modules="${arg} ${modules}" ; fi
-        mlist="no"; flist="no"; name="no";  mask="no"; bdir="no"; script="no"; contaner="no";;
+        mlist="no"; flist="no"; name="no";  mask="no"; bdir="no"; bind="no"; script="no"; contaner="no";;
   esac
 done
 
@@ -146,6 +149,16 @@ if [ "$SCRIPT" ] ; then
 	chmod +x $root_br/var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT) 
 fi
 
+if [ "$BIND" ] ; then
+binds="$(echo "$BIND" |sed 's/[\,]/ /g')"
+for bnd in $binds ; do
+	extdir=$(echo $bnd |sed 's/::/#/' |cut -d "#" -f1)
+	indir="$root_br/$(echo $bnd |sed 's/::/#/' |cut -d "#" -f2)"
+	mkdir -p "$indir"
+	mount -o bind "$extdir" "$indir"
+done
+ fi
+
 if [ $CHROOT == "nspawn" ] ; then
 md5sum /bin/bash | awk '{print $1}' > $root_br/etc/machine-id #  nspawn do not works without machine-id
 [ "$SCRIPT" ] || systemd-nspawn -D $root_br   -M ${NAME%.$EXT} $command 
@@ -166,9 +179,10 @@ rm -rf $mod_br/{dev,proc,sys,tmp} >/dev/null
 rmdir "$mod_br"/{dev,proc,sys,lost+found} "$mod_br/var/cache" "$mod_br/var/lib" "$mod_br/var" "$mod_br/etc" 2>/dev/null
 
 [ $BADCONTANER ] || mkpfs $mod_br -l $fast_alg  $WH  $TRIM   -o $NAME && MODULE="$(readlink -e ${NAME})" 
+umount "$indir"
 echo "delaufs $nn"
-
 delaufs $nn
+
 # по этой строке имя модуля получается при пересборке.
 echo $MODULE 
 
