@@ -30,7 +30,7 @@ echo "	-o / --out-file - указывает название выходного 
 echo "	-w - не включать AUFS тени."
 echo "	-l / --local - сборка на месте, без использования aufs."
 echo "	-f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
-echo "  --mkilst  add files list to simple (non contaner) module"
+echo "  --mklist  add files list to simple (non contaner) module"
 echo "	--mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
 echo "Алиасы (сокращения):"
 echo " -d | -D - Только каталоги"
