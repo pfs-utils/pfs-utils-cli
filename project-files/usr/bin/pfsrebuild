@@ -51,7 +51,7 @@ if [ -n "${bundle}" -o -f ${fileslist} ] ; then
   if [[ -f  ${dirsempty} ]] ; then
 	cat $dirsempty | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' | while read emptydir ; do
 	#it is a hack to save owner and permissions for empty dirs
-	cp -a --parents $emptydir/not_existing_filename ${buildir}/ 2>/dev/null
+	cp -apx --parents $emptydir/not_existing_filename ${buildir}/ 2>/dev/null
 	done
   fi
   # --nopfs parameter - make build dir and exit 
