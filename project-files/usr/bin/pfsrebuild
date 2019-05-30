@@ -24,7 +24,7 @@ fileslist="${PFSDIR}/install/${package_name}/pfs.files"
 dirsempty=$(echo $fileslist | sed 's/pfs.files/pfs.dirs.empty/')
 
 # find pfs files in pfs contaners
-if [  -d ${prefixmp}${package_name}.${EXT}${PFSDIR}/mount/   -a ! -f $fileslist ] ; then
+if [  -n "$bundle" -a -d ${bundle}${PFSDIR}/mount/   ] ; then
 	package_list=$(ls ${bundle}${PFSDIR}/mount/)
 	echo "$package_list"
 	if [[ -n $package_list ]] ; then
@@ -43,7 +43,7 @@ if [  -d ${prefixmp}${package_name}.${EXT}${PFSDIR}/mount/   -a ! -f $fileslist 
 exit
 fi
 
-if [ -f ${fileslist} -o ! -d "${bundle}${PFSDIR}/mount/ " ] ; then 
+if [ -n "${bundle}" -o -f ${fileslist} ] ; then 
   buildir="./build_${package_name}/${package_name}"
   mkdir -p "$buildir"
   [ -f ${fileslist} ]  ||  mklist ${bundle} / ${package_name}
@@ -62,8 +62,7 @@ if [ -f ${fileslist} -o ! -d "${bundle}${PFSDIR}/mount/ " ] ; then
 	exitmsg "can't create module" $?
   fi
   rm -rf ./build_${package_name}
-  else
+else
   echo "Package \"$package_name\" is not installed!" >&2; #exit 1
 fi
-
 exit 0
