@@ -122,8 +122,10 @@ fi
 allow_only_root
 
 [ $CONTANER ] &&  CHROOT="$CONTANER"
+
 echo "Using:  $CHROOT"
 #Имя обязательно, так как зацепиться не за что
+[ $NOMOD ] && NAME=nomod
 [ $NAME ] || read -p "Please enter name for module:      " NAME  
 [ -f "${NAME}" ] && exitmsg "Output file '$NAME' already exist" 6
 [ -d "${NAME}" ] && exitmsg "Output diectory '$NAME' already exist" 6
