@@ -27,6 +27,8 @@ echo "-c | --contaner  Тип виртуализации, доступные в�
 echo "--notrim  - не удалять заведомо не нужные в модуле файлы (мусор)"
 echo "--wh - не удалять специальные файлы aufs (тени)"
 echo "--bind - список каталогов для монтирования в чрут в формате /SOURCE/DIR1::/TARGET/DIR1,/SOURCE/DIR2::/TARGET/DIR2"
+echo "-X - рарешить подключение к текущей X сессии. Нужно для запуска в чрут приложений с GUI"
+echo "--nomod - не создавать модуль с изменениями"
 exit 
 }
 
@@ -71,6 +73,8 @@ do
     "-c" | "--contaner" ) contaner=yes;;
     "--notrim" ) TRIM="";;
     "-w" | "--wh" ) WH="--wh";;
+    "-X" ) X="yes";;
+    "--nomod" ) NOMOD="yes";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
     *) if [ "${name}" == "yes" ]; then NAME="${arg}"
 		elif [ "${mlist}" == "yes" ]; then MLIST="${arg}"
@@ -163,18 +167,26 @@ for bnd in $binds ; do
 done
  fi
 
+if [ "$X" == "yes" ] ; then
+	if ! xhost |grep -q "LOCAL:" ; then
+		xhost +local:
+		remove_X_perm=yes
+	fi
+fi
+
 if [ $CHROOT == "nspawn" ] ; then
 md5sum /bin/bash | awk '{print $1}' > $root_br/etc/machine-id #  nspawn do not works without machine-id
-[ "$SCRIPT" ] || systemd-nspawn -D $root_br   -M ${NAME%.$EXT} $command 
-[ "$SCRIPT" ] &&  systemd-nspawn -D $root_br   -M ${NAME%.$EXT}  /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
+[ "$SCRIPT" ] || systemd-nspawn -D $root_br   -M ${NAME%.$EXT} --setenv=DISPLAY="$DISPLAY" --bind=/tmp/.X11-unix $command 
+[ "$SCRIPT" ] &&  systemd-nspawn -D $root_br   -M ${NAME%.$EXT}  --setenv=DISPLAY="$DISPLAY" --bind=/tmp/.X11-unix /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
 elif [ $CHROOT == "chroot" ] ; then
-[ "$SCRIPT" ] || chroot $root_br $command
-[ "$SCRIPT" ] && chroot $root_br /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
+[ "$SCRIPT" ] || chroot $root_br env -i DISPLAY="$DISPLAY" $command
+[ "$SCRIPT" ] && chroot $root_br env -i DISPLAY="$DISPLAY" /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
 else 
-BADCONTANER=yes 
+NOMOD=yes 
 echo "Wrong contaner type, must be \"chroot\" or \"nspawn\""
 fi
 
+[ $remove_X_perm ] && xhost -local: 
 umount_all
 
 mod_br=$SYSMNT/changes$nn
@@ -182,7 +194,7 @@ rm -rf $mod_br/tmp >/dev/null
 rm -rf $mod_br/{dev,proc,sys,tmp} >/dev/null
 rmdir "$mod_br"/{dev,proc,sys,lost+found} "$mod_br/var/cache" "$mod_br/var/lib" "$mod_br/var" "$mod_br/etc" 2>/dev/null
 
-[ $BADCONTANER ] || mkpfs $mod_br -l $fast_alg  $WH  $TRIM   -o $NAME && MODULE="$(readlink -e ${NAME})" 
+[ $NOMOD ] || mkpfs $mod_br -l $fast_alg  $WH  $TRIM   -o $NAME && MODULE="$(readlink -e ${NAME})" 
 umount "$indir"
 echo "delaufs $nn"
 delaufs $nn
