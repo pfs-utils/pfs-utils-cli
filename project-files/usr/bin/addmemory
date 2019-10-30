@@ -1,7 +1,13 @@
 #!/bin/bash
 #addmemory
-#VERSION 4.0
-. $(which pfs)
+#VERSION 4.1
+
+if [ -f $(dirname $0)/pfs ] ;  then
+    source $(dirname $0)/pfs
+else 
+    source  $(which pfs) || exit 13 
+fi    
+
 
 HELP () {
 

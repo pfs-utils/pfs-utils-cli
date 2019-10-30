@@ -1,8 +1,14 @@
 #!/bin/bash
-if [ $(id -un) != "root" ] ; then
-echo "Только с правами root"
-exit 1
-fi
+#Util to find new and changed files
+#VERSION 4.1
+
+if [ -f $(dirname $0)/pfs ] ;  then
+    source $(dirname $0)/pfs
+else 
+    source  $(which pfs) || exit 13 
+fi    
+
+allow_only_root
 
 PWD=$(pwd)
 start=no

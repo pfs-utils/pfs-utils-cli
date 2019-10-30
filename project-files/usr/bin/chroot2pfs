@@ -3,7 +3,11 @@
 # Author : Alexandr Betkher (betcher) <http://magos-linux.ru>
 #190807 sfs 
 
-. `which pfs` 
+if [ -f $(dirname $0)/pfs ] ;  then
+    source $(dirname $0)/pfs
+else 
+    source  $(which pfs) || exit 13 
+fi    
  
 CHROOT="chroot"
 TRIM="--trim" ##sfs
