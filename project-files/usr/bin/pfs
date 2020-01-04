@@ -368,7 +368,7 @@ done
 }
 
 
-if [ "$(basename $0)" == "pfs" ] ;then
+if [ "$(basename $0)" = "pfs" ] ;then
 [ $1 ] || HELP
 command="$1" 
 shift

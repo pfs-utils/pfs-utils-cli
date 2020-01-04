@@ -36,7 +36,7 @@ allow_only_root
 if [ -f "${infile}" ] ; then 
 	findit="[[:punct:]]$(basename $(readlink -e "${infile}"))$" 
 	checksfsxzb >/dev/null || exitmsg "Kernel not support PFS!" 3
-elif [ "$(echo $infile | sed 's/^[[:digit:]].$/digit/')" == "digit" ] ; then 
+elif [ "$(echo $infile | sed 's/^[[:digit:]].$/digit/')" = "digit" ] ; then 
 	findit="^$infile[[:space:]]"
 else
 	findit="[[:punct:]]$(basename "${infile%.$EXT}").${EXT}$"

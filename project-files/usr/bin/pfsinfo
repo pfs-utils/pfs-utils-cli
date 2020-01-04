@@ -53,7 +53,7 @@ if [ "${pack}" ]; then
 	echo "Module size: $Msize"
 	echo "Uncompressed size: $Usize"
 	echo "Compression ratio: $( echo "scale=2 ; $Usize / $Msize" |bc), ($( echo "scale=2 ; 100 * $Msize  / $Usize  " |bc)%)"
-	if [ "$ispfs" == "yes" ] ; then
+	if [ "$ispfs" = "yes" ] ; then
 		Deps=$(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f -name pfs.depends -exec cat "{}" \; |sort |uniq |grep -v "^$" | tr "\n" "   ")
 		Packs=$(ls -1   --indicator-style=none /tmp/squashfs/${bpack}${PFSDIR}/mount  | tr "\n" "   ")
 		echo "Packages: $Packs"
