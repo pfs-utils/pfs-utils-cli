@@ -3,9 +3,9 @@
 #VERSION 4.1
 
 if [ -f $(dirname $0)/pfs ] ;  then
-    source $(dirname $0)/pfs
+    . $(dirname $0)/pfs
 else 
-    source  $(which pfs) || exit 13 
+    . $(which pfs) || exit 13 
 fi    
 
 D(){
@@ -50,7 +50,7 @@ echo "$0 * -o ./big.$EXT		-collect all dirs and squashfs modules from current di
 echo
 echo "Параметры (ключи):"
 echo "	-o / --out-file - указывает название выходного файла (если указать без расширения .$EXT на выходе будет каталог)."
-echo "  -w - не включать AUFS тени."
+echo "  -w - не удалять тени AUFS (только совместно с ключем -l)"
 echo "  -l / --local - сборка на месте, без использования aufs."
 echo "  -f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
 echo "  --mkilst  add files list to simple (non contaner) module"

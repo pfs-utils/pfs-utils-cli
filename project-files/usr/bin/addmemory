@@ -3,9 +3,9 @@
 #VERSION 4.1
 
 if [ -f $(dirname $0)/pfs ] ;  then
-    source $(dirname $0)/pfs
+    . $(dirname $0)/pfs
 else 
-    source  $(which pfs) || exit 13 
+    . $(which pfs) || exit 13 
 fi    
 
 
