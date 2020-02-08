@@ -302,8 +302,11 @@ echo $NEWLAYER
 
 mksqmod(){
 #make module
-eval mksquashfs "${1}" "${2}" ${compression} -noappend ${noprogress} ${useproc} $wh $devnull
+excludes=""
+[ -f /tmp/mkpfs_excludes ] && excludes="-ef /tmp/mkpfs_excludes" 
+eval mksquashfs "${1}" "${2}" ${compression} ${excludes} -noappend ${noprogress} ${useproc} $wh $devnull
 exitmsg "error create squashfs module" $? $3
+rm /tmp/mkpfs_excludes 2>/dev/null
 }
 
 pfsramfree () {

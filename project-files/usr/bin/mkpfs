@@ -122,7 +122,7 @@ fi
 #1 dir, in place mode
 if [ -d $sourcelist 2>/dev/null -a "$inplace" = "yes" ] ;then
 	eval echo "==== In place mode ====" $devnull
-    [ "$wh" ] ||  eval  echo "=== save aufs shadows \(.wh*\) ===" $devnull
+    [ "$wh" ] ||  eval  echo "=== save aufs whiteout \(.wh*\) ===" $devnull
     [ ! "$(ls -a $sourcelist)" ] && exitmsg "directory '$sourcelist' empty" 1
     [ $make_list ] && mklist $sourcelist $sourcelist ${userout%.$EXT} 
     if echo ${userout} | grep -q "^.*\.$EXT$" ; then 
@@ -176,8 +176,21 @@ else
 [ $save_dups ] && save_duplicates
 ######################
 fi
-
 [ $TRIM ] && trim $n
+
+if [ $WH ] ; then
+	find $n |sed "s:$n/::" > /tmp/allfiles-wh
+	mount -t aufs -o remount,shwh $n
+	for line in $(find $n  |sed "s:$n/::" |sed 's:/.wh.:/:' |sort |uniq -d) ; do
+		if grep -q $line /tmp/allfiles-wh ; then
+			echo $line |sed -r 's:(^.*/)(.*$):\1.wh.\2:' >> /tmp/mkpfs_excludes
+		else
+			#это возможно не нужно
+			echo $line  >> /tmp/mkpfs_excludes
+		fi
+	done
+	rm /tmp/allfiles-wh
+fi
 
 if echo ${userout} | grep -q "^.*\.$EXT$" ; then 
 	mksqmod "${n}" "${userout}" noexit
@@ -191,6 +204,7 @@ else
 	mkdir -p "$(dirname ${userout})"
 	cp -fax "${n}" "${userout}"
 fi
+rm -rf $SYSMNT/lost_wh$N 2>/dev/null
 exitmsg "mksqmod error" $?  noexit
 delaufs "$nn"
 exitmsg "delaufs error" $?
