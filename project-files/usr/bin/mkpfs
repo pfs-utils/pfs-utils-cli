@@ -176,16 +176,15 @@ else
 [ $save_dups ] && save_duplicates
 ######################
 fi
-[ $TRIM ] && trim $n
+[ $TRIM ] && trim0 $n
 
 if [ $WH ] ; then
 	echo ".wh..*" > /tmp/mkpfs_excludes
 	find $n |sed "s:$n/:/:" > /tmp/allfiles-wh
 	mount -t aufs -o remount,shwh $n
-	for line in $(find $n  |sed -r 's:/.wh.|/.wh..wh.:/:' |sed "s:$n/:/:"  |sort |uniq -d) ; do
-		grep -q $line /tmp/allfiles-wh && echo $line |sed -r 's:^(.*/)(.*$):\1.wh.\2:' >> /tmp/mkpfs_excludes
+	for line in $(find $n  |sed -re 's:/.wh.|/.wh..wh.:/:' -e "s:$n/:/:"  |sort |uniq -d) ; do
+		grep $line /tmp/allfiles-wh |sed -re 's:^(.*/)(.*$):\1.wh.\*\2:' -e 's:^/::' >> /tmp/mkpfs_excludes
 	done
-	sed -i 's:^/::' /tmp/mkpfs_excludes
 	rm /tmp/allfiles-wh
 fi
 
