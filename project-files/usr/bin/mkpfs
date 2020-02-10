@@ -179,16 +179,13 @@ fi
 [ $TRIM ] && trim $n
 
 if [ $WH ] ; then
-	find $n |sed "s:$n/::" > /tmp/allfiles-wh
+	echo ".wh..*" > /tmp/mkpfs_excludes
+	find $n |sed "s:$n/:/:" > /tmp/allfiles-wh
 	mount -t aufs -o remount,shwh $n
-	for line in $(find $n  |sed "s:$n/::" |sed 's:/.wh.:/:' |sort |uniq -d) ; do
-		if grep -q $line /tmp/allfiles-wh ; then
-			echo $line |sed -r 's:(^.*/)(.*$):\1.wh.\2:' >> /tmp/mkpfs_excludes
-		else
-			#это возможно не нужно
-			echo $line  >> /tmp/mkpfs_excludes
-		fi
+	for line in $(find $n  |sed -r 's:/.wh.|/.wh..wh.:/:' |sed "s:$n/:/:"  |sort |uniq -d) ; do
+		grep -q $line /tmp/allfiles-wh && echo $line |sed -r 's:^(.*/)(.*$):\1.wh.\2:' >> /tmp/mkpfs_excludes
 	done
+	sed -i 's:^/::' /tmp/mkpfs_excludes
 	rm /tmp/allfiles-wh
 fi
 
