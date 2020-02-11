@@ -50,7 +50,7 @@ echo "$0 * -o ./big.$EXT		-collect all dirs and squashfs modules from current di
 echo
 echo "Параметры (ключи):"
 echo "	-o / --out-file - указывает название выходного файла (если указать без расширения .$EXT на выходе будет каталог)."
-echo "  -w - не удалять тени AUFS (только совместно с ключем -l)"
+echo "  -w - сохранить тени AUFS"
 echo "  -l / --local - сборка на месте, без использования aufs."
 echo "  -f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
 echo "  --mkilst  add files list to simple (non contaner) module"
@@ -125,6 +125,7 @@ if [ -d $sourcelist 2>/dev/null -a "$inplace" = "yes" ] ;then
     [ "$wh" ] ||  eval  echo "=== save aufs whiteout \(.wh*\) ===" $devnull
     [ ! "$(ls -a $sourcelist)" ] && exitmsg "directory '$sourcelist' empty" 1
     [ $make_list ] && mklist $sourcelist $sourcelist ${userout%.$EXT} 
+    [ $TRIM ] && trim $sourcelist
     if echo ${userout} | grep -q "^.*\.$EXT$" ; then 
 		mksqmod $sourcelist "${userout}" && exit 0 
 		exitmsg "mkpfs error" 2
@@ -176,8 +177,8 @@ else
 [ $save_dups ] && save_duplicates
 ######################
 fi
-[ $TRIM ] && trim0 $n
 
+[ $TRIM ] && trim $n
 if [ $WH ] ; then
 	echo ".wh..*" > /tmp/mkpfs_excludes
 	find $n |sed "s:$n/:/:" > /tmp/allfiles-wh
