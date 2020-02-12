@@ -1,4 +1,4 @@
-.TH pfs-utils 8  "marсh, 2017" "version 3.*" "PFS-UTILS"
+.TH pfs-utils 12  "February, 2020" "version 4.*" "PFS-UTILS"
 .SH NAME
 pfs-utils \- scripts kit to manage squashfs modules for live linux distributions 
 .SH DESCRIPTION
@@ -19,6 +19,14 @@ Scripts collection to create, merge, extract and load/unload pfs modules
 \- sync2layer \- create layer and move changes from top RW layer to new
 .TP
 \- pfsinfo \- list packsges in module
+.TP
+\- pfsfind \- find files in PFS modules
+.TP
+\- chroot2pfs \- creating the PFS module from changes made in the chroot created from the specified modules
+.TP
+\- addmemory \- increasing the size of the root aufs due the swap file
+.TP
+\- syschanges \- tracking changes in the rw layer of root aufs
 .TP
 \- pfs \- pfs-utils scripts library 
 .SH EXIT STATUS
