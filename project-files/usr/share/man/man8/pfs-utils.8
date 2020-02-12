@@ -4,13 +4,15 @@ pfs-utils \- scripts kit to manage squashfs modules for live linux distributions
 .SH DESCRIPTION
 Scripts collection to create, merge, extract and load/unload pfs modules
 .TP
+\- aufs-n \- the list of layers in the order they are mounted to the root aufs
+.TP
 \- mkpfs \- create and merge modules
 .TP
 \- pfsextraxt \- extract packages from module, install packages 
 .TP
-\- pfsload \- insert modules (dirs, images) to root file system  
+\- pfsload \- mount modules (dirs, images) to the root aufs  
 .TP
-\- pfsunload \- remove modules from root file system
+\- pfsunload \- unmount modules from root aufs
 .TP
 \- pfsuninstall \- remove package files from system
 .TP
@@ -32,10 +34,10 @@ Scripts collection to create, merge, extract and load/unload pfs modules
 .SH EXIT STATUS
 all utils returns a zero exit status if the job finished susfull.
 .SH AUTHOR
-forum.puppyrus.org team (sfs, zay, DdShuruck)
+forum.puppyrus.org team (sfs, zay, DdShuruck, betcher)
 .TP
-Wiki:   http://wiki.puppyrus.org/puppyrus/pr218/pfs3
+Wiki:   http://wiki.puppyrus.org/puppyrus/pr218/pfs4
 .TP
-Forum:  http://forum.puppyrus.org/index.php?board=30.0
+Forum:  http://forum.puppyrus.org/index.php?board=188.0
 .SH SEE ALSO
 mksquashfs(1)
