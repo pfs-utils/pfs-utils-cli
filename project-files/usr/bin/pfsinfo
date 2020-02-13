@@ -1,7 +1,12 @@
 #!/bin/sh
 #Read list PFS packages
-#VERSION 3.6
-. $(which pfs)
+#VERSION 4.1
+
+if [ -f $(dirname $0)/pfs ] ;  then
+    . $(dirname $0)/pfs
+else 
+    . $(which pfs) || exit 13 
+fi    
 
 HLP(){
 echo   "Usage: $0 <par>" 
@@ -48,7 +53,7 @@ if [ "${pack}" ]; then
 	echo "Module size: $Msize"
 	echo "Uncompressed size: $Usize"
 	echo "Compression ratio: $( echo "scale=2 ; $Usize / $Msize" |bc), ($( echo "scale=2 ; 100 * $Msize  / $Usize  " |bc)%)"
-	if [ "$ispfs" == "yes" ] ; then
+	if [ "$ispfs" = "yes" ] ; then
 		Deps=$(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f -name pfs.depends -exec cat "{}" \; |sort |uniq |grep -v "^$" | tr "\n" "   ")
 		Packs=$(ls -1   --indicator-style=none /tmp/squashfs/${bpack}${PFSDIR}/mount  | tr "\n" "   ")
 		echo "Packages: $Packs"
@@ -70,7 +75,7 @@ if [ "${pack}" ]; then
 	umount /tmp/squashfs/"${bpack}"
 	rmdir  /tmp/squashfs/"${bpack}"
   else
-	unsquashfs -l "${pack}" | grep squashfs-root${PFSDIR}/mount/.*/pfs.files |sed -e 's:squashfs-root.*/mount/::' -e 's:/pfs.files::'
+    unsquashfs -l -d ""  "${pack}"  | grep ${PFSDIR}/.*/pfs.files |sed -e "s:${PFSDIR}/mount/::" -e 's:/submod/mount::g' -e 's:/pfs.files$::' -e 's#/#:#g'
   fi
 else
   [ "${readdir}" != "install" ] && [ -d "${PFSDIR}/mount" ] && echo "$(find "${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"

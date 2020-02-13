@@ -3,7 +3,7 @@
 #Authors: puppyrus.org : Zay, DdShurick, sfs
 #Author: magos-linux.ru: Betcher
 #License: GPL v3
-#VERSION 3.6
+#VERSION 4.1
 
 #help
 HELP(){
@@ -86,19 +86,42 @@ allow_only_root() {
     fi
 }
 
+trim () {
+[ "$1" ] && r="$1" || return 1
+[ -d "$r" ] || return 2
+cat <<EOF | while read a ; do rm -f "$a" ; done
+$r/var/log
+$r/run
+$r/etc/udev/hwdb.bin
+$r/etc/ld.so.cache
+$r/var/cache/ldconfig/aux-cache
+$r/var/cache/fontconfig
+$r/var/cache/ldconfig
+$r/usr/local/share/applications/mimeinfo.cache
+$r/usr/share/applications/mimeinfo.cache
+EOF
+find "$r/usr/share/icons" -type f -name icon-theme.cache 2>/dev/null | xargs rm -f
+#$r/var/lib/chroot2pfs
+#$r/var/cache/pacman/pkg
+#$r/var/lib/pacman/sync
+}
+
 mklist () {
-#mklist source_dir [dest_dir] [pack_name]
-source_dir="$(realpath "$1")"
-[ "$2" ] && dest_dir="$(realpath "$2")" || dest_dir="$source_dir"
+source_root="$(realpath "$1")"
+[ "$2" ] && dest_root="$(realpath "$2")" || dest_root="$source_root"
 pack_name="$(basename "${1%.$EXT}")"
 [ "$3" ] && pack_name="$3"
-#[ "$(pwd)" != "/" ] && find "${source_dir}${PFSDIR}/mount/" -mindepth 1 -maxdepth 1  -exec rm -rf "{}" \; 2>/dev/null
-mkdir -p "${dest_dir}${PFSDIR}/mount/${pack_name}" &&
-[ -f "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs" ] || echo 'name="'$pack_name'"' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.specs" &&
-find "${source_dir}" ! -type d        | sed "s:$source_dir::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.files" &&
-find "${source_dir}"   -type d -empty | sed "s:$source_dir::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty" #&&
-#[ -s "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty" ] || rm "${dest_dir}${PFSDIR}/mount/${pack_name}/pfs.dirs.empty"
-#exitmsg "mklist error" $?
+dest_dir="${dest_root}${PFSDIR}/mount/${pack_name}/"
+mkdir -p $dest_dir
+if [ -d "${source_root}${PFSDIR}/mount" ] ; then
+  mkdir -p "${dest_dir}submod"
+  cp  -fr "${source_root}${PFSDIR}/mount"   /tmp/ 
+  mv  -f /tmp/mount "${dest_dir}submod/"
+  rm -rf /tmp/mount
+fi
+[ -f "${dest_dir}/pfs.specs" ] || echo 'name="'$pack_name'"' > "${dest_dir}/pfs.specs"
+find "${source_root}" ! -type d        | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.files" &&
+find "${source_root}"   -type d -empty | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.dirs.empty"
 }
 
 checkramfreeb () {
@@ -106,7 +129,7 @@ checkramfreeb () {
 if [[ -x $(which checkramfree) ]] ; then
 	echo $(checkramfree) 
 else
-   free=$(df $copyramdir -B 1024 |grep tmpfs |awk '{print $4}')
+   free=$(df $copyramdir -B 1024 |tail -n1 |awk '{print $4}')
    freeram="$(free | grep 'Mem:' | tr -s ' ' | cut -f 4 -d ' ')"
    echo $free
 fi 2>/dev/null
@@ -177,7 +200,6 @@ find "${rootdir}" -type f -executable | while read chfile; do [ "$(file --brief 
 return 0
 }
 
-
 losetupb() { losetup $@ || losetup-FULL $@   ; }
 mountb()   { mount $@ || busybox mount $@  ; }
 umountb()  { umount $@ || busybox umount $@  ; }
@@ -194,29 +216,40 @@ mount -t aufs -o dirs=/$SYSMNT/changes$N/=rw aufs /$SYSMNT/aufs$N && echo "$SYSM
 }
 
 delaufs () {
-#remove aufs 
-[ $1 ] || return 1
-umount $SYSMNT/aufs$1 2>/dev/null
-rmdir $SYSMNT/aufs$1 2>/dev/null
-if [ "$(grep changes$1 /proc/mounts)" ]; then
-	umount -d $SYSMNT/changes$1 &&	rmdir $SYSMNT/changes$1
-else
-	rm -rf $SYSMNT/changes$1
-fi 2>/dev/null
-if [ -d $SYSMNT/bundles$1 ]; then
-	ls -1 $SYSMNT/bundles$1 | while read D
-	do
-		umount -d $SYSMNT/bundles$1/$D && 	rmdir $SYSMNT/bundles$1/$D
+#remove aufs from $1 to $2
+[ $1 ] || return 2
+End="$1" ; [ $2 ] && End="$2"
+for N in $( seq $1 $End ) ; do
+	for tm in {sys,proc,dev}; do
+		while grep $SYSMNT/aufs$N/$tm /proc/mounts; do
+			echo $SYSMNT/aufs$N/$tm
+			umount $SYSMNT/aufs$N/$tm
+		done
 	done
-	 rmdir $SYSMNT/bundles$1
-fi 2>/dev/null
-if [ "$(grep tmpfs$1 /proc/mounts)" ]; then
-	umount $SYSMNT/tmpfs$1 && 	rmdir $SYSMNT/tmpfs$1
+umount $SYSMNT/aufs$N 2>/dev/null
+rmdir $SYSMNT/aufs$N 2>/dev/null
+if [ "$(grep changes$N /proc/mounts)" ]; then
+	umount -d $SYSMNT/changes$N &&	rmdir $SYSMNT/changes$N
 else
-	rm -rf  $SYSMNT/tmpfs$1
+	rm -rf $SYSMNT/changes$N
 fi 2>/dev/null
-ls -1 $SYSMNT | egrep  "aufs${1}$|changes${1}$|bundles${1}$" && return 3
-rm -f $SYSMNT/aufs${1}.lock
+if [ -d $SYSMNT/bundles$N ]; then
+	ls -1A $SYSMNT/bundles$N | while read D
+	do
+		umount -d $SYSMNT/bundles$N/$D && 	rmdir $SYSMNT/bundles$N/$D
+	done
+	 rmdir $SYSMNT/bundles$N
+fi 2>/dev/null
+if [ "$(grep tmpfs$N /proc/mounts)" ]; then
+	umount $SYSMNT/tmpfs$N && 	rmdir $SYSMNT/tmpfs$N
+else
+	rm -rf  $SYSMNT/tmpfs$N
+fi 2>/dev/null
+ls -1 $SYSMNT | egrep  "aufs${N}$|changes${N}$|bundles${N}$" && delaufs_error=yes
+rm -f $SYSMNT/aufs${N}.lock
+done
+[ $delaufs_error ] && return 3
+return 0
 }
 
 addlayer () {
@@ -262,8 +295,11 @@ echo $NEWLAYER
 
 mksqmod(){
 #make module
-eval mksquashfs "${1}" "${2}" ${compression} -noappend ${noprogress} ${useproc} $wh $devnull
+excludes=""
+[ -f /tmp/mkpfs_excludes ] && excludes="-ef /tmp/mkpfs_excludes" 
+eval mksquashfs "${1}" "${2}" ${compression} ${excludes} -noappend ${noprogress} ${useproc} -wildcards $wh $devnull
 exitmsg "error create squashfs module" $? $3
+rm /tmp/mkpfs_excludes 2>/dev/null
 }
 
 pfsramfree () {
@@ -328,7 +364,7 @@ done
 }
 
 
-if [ "$(basename $0)" == "pfs" ] ;then
+if [ "$(basename $0)" = "pfs" ] ;then
 [ $1 ] || HELP
 command="$1" 
 shift

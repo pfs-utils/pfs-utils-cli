@@ -1,0 +1,95 @@
+#!/bin/bash
+#addmemory
+#VERSION 4.1
+
+if [ -f $(dirname $0)/pfs ] ;  then
+    . $(dirname $0)/pfs
+else 
+    . $(which pfs) || exit 13 
+fi    
+
+
+HELP () {
+
+if echo $LANG | grep -q ru_RU ;then
+cat <<EOF
+Cкрипт $0 увеличивает размер корневого раздела MagOS в чистом режиме.
+
+использовать так: $0 <размер на который вы хотите увеличить корневой раздел в мегабайтах>
+либо: $0 <имя существующего не смонтированнного swap файла>
+
+Cкрипт создает в текущем каталоге swap файл, за счет которого будет увеличиваться объем памяти.
+Поэтому перед использованием убедитесь, что в текущем каталоге достаточно места и он не в tmpfs
+Вы можете использовать скрипт повторно если вам вновь понадобится увеличить память.
+
+пример 1: $0 1000 - увеличит размер tmpfs на 1G и создаст в текущем каталоге файл-swap того же размера
+пример 2: $0 my.swap - подключит файл my.swap и увеличит корневой раздел на размер файла my.swap
+EOF
+else
+cat <<EOF
+$0 increases root filesysytem for MagOS (only Clean mode supported)
+
+Usage: $0 <Size_in_Mb>
+       $0 <name of existing swap file>
+
+This script makes swap file in current directory and when increases memory on root tmpfs.
+Before launching be shure where are enought free space in current directory.
+You may run script again in the same directory.
+
+Examples: $0 1000  # will increase root tmpfs filesystem on 1G by creating swap file with same size
+          $0 my.swap # will activate existing swap file and increase root on size of my.swap
+
+EOF
+fi
+}
+
+ADDMEMORY () {
+df ./ |grep -q ^/dev/sd.* || exitmsg  "Current dir must be real disk" 2
+[ $(aufs-n --raw '$source' |head -n1) = tmpfs ]  ||    exitmsg  "Error: Only Clean mode supported" 3
+
+# создавать swap или использовать готовый
+
+if ! [ -f $1 ] ; then
+  [ $1 -gt  $(df -m ./ | sed 1d | awk '{print $4}') ] && exitmsg  "Error: Not enough free space!" 4
+  # создаем swap
+  name=$$.swap
+  > ./$name 
+  dd if=/dev/zero of=./$name bs=1M count=$1
+  mkswap ./$name
+  if swapon "./$name" >/dev/null 2>&1 ; then  
+		echo  "swap file ./$name enabled"
+	else
+		LOOPDEV=$(losetup -f)
+		losetup $LOOPDEV "./$name"
+		mkswap $LOOPDEV >/dev/null
+		swapon $LOOPDEV
+		echo  "enabled swap file: ./$name, setup a loop device $LOOPDEV as wrapper for it to work"
+	fi
+  size=$1
+else
+  name=$1
+  swapon ./$name
+  size=$(du -m $1 |  awk '{print $1}')
+fi
+# увеличиваем tmpfs
+changes=$(df "$(aufs-n --raw '$bundle' |head -n1)" |tail -n1 |awk '{print $NF}')
+newsize=$(expr $size + $(df -m | grep -m 1 /$ | awk '{print $2}'))
+mount -o remount,size=${newsize}M $changes 
+# результат
+df /  -BM
+swapon -s
+}
+
+cmd=$1
+if [ "$cmd" = "" -o "$cmd" = "--help" ]; then
+    cmd="-h"
+fi
+
+case $cmd in
+    -h | --help )
+      HELP ;;
+    * )
+      ADDMEMORY $1;;
+esac
+
+exit 0
