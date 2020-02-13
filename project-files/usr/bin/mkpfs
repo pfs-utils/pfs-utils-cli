@@ -57,6 +57,7 @@ echo "  --mkilst  add files list to simple (non contaner) module"
 echo "  --save-duplicates  при сборке контейнеров сохранять одноименные файлы из разных источников если они отличаются, "
 echo "                     при распаковке файлы будут возвращены на место"
 echo "  --mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
+
 echo "Алиасы (сокращения):"
 echo " -d | -D - Только каталоги"
 echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.$EXT'
@@ -167,15 +168,13 @@ else
   bundles=$(find $(echo $n |sed 's:aufs:bundles:') -maxdepth 1 -mindepth 1 -type d )
   #mklist for modules, submodule name is basename source with no prefix
   for i in $bundles ;do
-	name="$(basename "${i%.$EXT}")" 
-	mklist "$i" "$n" "$name"
-	for submod in $(ls -1 ${i}${PFSDIR}/mount/ 2>/dev/null); do
-		rm -rf ${n}${PFSDIR}/mount/$submod
-	done
+	  name="$(basename "${i%.$EXT}")" 
+	  mklist "$i" "$n" "$name"
+	  for submod in $(ls -1 ${i}${PFSDIR}/mount/ 2>/dev/null); do
+		  rm -rf ${n}${PFSDIR}/mount/$submod
+	  done
   done
-######################
 [ $save_dups ] && save_duplicates
-######################
 fi
 
 [ $TRIM ] && trim $n
