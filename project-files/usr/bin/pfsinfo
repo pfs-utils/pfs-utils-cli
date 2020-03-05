@@ -1,7 +1,12 @@
 #!/bin/sh
 #Read list PFS packages
 #VERSION 4.3
-. $(which pfs)
+
+if [ -f $(dirname $0)/pfs ] ;  then
+    . $(dirname $0)/pfs
+else 
+    . $(which pfs) || exit 13 
+fi    
 
 HLP(){
 echo   "Usage: $0 <par>" 
@@ -42,7 +47,7 @@ if [ "${pack}" ]; then
 	mount -t squashfs -o loop -o ro "${pack}" /tmp/squashfs/"${bpack}"
 	[ -e /tmp/squashfs/${bpack}${PFSDIR}/mount ] && ispfs=yes
 
-	if [ "$ispfs" == "yes" ] ; then
+	if [ "$ispfs" = "yes" ] ; then
 		Deps=$(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f -name pfs.depends -exec cat "{}" \; |sort |uniq |grep -v "^$" | tr "\n" "   ")
 		Packs=$(ls -1   --indicator-style=none /tmp/squashfs/${bpack}${PFSDIR}/mount  | tr "\n" "   ")
 #		echo "Dependenses: $Deps"
