@@ -3,3 +3,5 @@
 ./ftprepolist.lst.gz
 ./httprepolist.lst
 #/mnt/live/prar1912/PRAR/prar1912/modules
+./local.lst
+

@@ -22,12 +22,10 @@ SORT='2,3'  # возможно есть смысл добавить к ключ�
 
 #$1 modname
 get_requires() {
-	local file
-	file=$(echo $1 |awk '{print $6}')
-	[ -z $file ] && return
-	mkdir -p ${WORK_DIR}/requires
-	reqfile=$(getfile $file ${WORK_DIR}/requires/$(basename $(echo $1 |cut -d " " -f1) ))
-	cat $reqfile |grep ^req: |sed 's/^req://' >> ${WORK_DIR}/requires.lst
+	local deplist
+	deplist=$(pfsinfo -s $1 |grep ^Dependenses: |sed -e 's/^Dependenses://' -e 's/,/ /g') 
+	[ -z "$deplist" ] && return
+	echo "$deplist" |sed 's/-\{2,\}//g' >> ${WORK_DIR}/requires.lst
 }
 
 ####### Ф У Н К Ц И И ########################
@@ -52,15 +50,16 @@ getfile() {
 # $1 папка
 # $2 файл реполист
 mkrepolist() {
-reponame=$(realpath $1)
-mkdir -p $(dirname $2)
-: > $2
-for a in $(find $reponame -maxdepth 2 -type f -name *.$EXT) ; do
-	date=$(ls -la $a --time-style=+%F |cut -d " " -f6)
-	size=$(du -h $a |cut -f1)
-	echo "$a $date 0 0 $size" >> $2 
-done
-[ -f $2 ] && echo $2
+	local reponame date size 
+	reponame=$(realpath $1)
+	mkdir -p $(dirname $2)
+	: > $2
+	for a in $(find $reponame -maxdepth 2 -type f -name *.$EXT) ; do
+		date=$(ls -la $a --time-style=+%F |cut -d " " -f6)
+		size=$(du -h $a |cut -f1)
+		echo "$a $date 0 0 $size" >> $2 
+	done
+	[ -f $2 ] && echo $2
 }
 
 # склеивает списки в форматах txt и txt.gz в один
@@ -75,7 +74,7 @@ make_full_repolist() {
 # $1 шаблон поиска для grep (ищет только отдельное слово)
 find_mods() {
 if [ "$2" == new ] ; then
-	cat ${WORK_DIR}/sfs-full-repolist | grep -wi "$1" |sort -k$SORT |tail -n1 ## sort -nk2,2 -k3,3
+	cat ${WORK_DIR}/sfs-full-repolist | grep -wi "$1" |sort -k$SORT |tail -n1 
    return
 elif [ "$2" == all ] ; then
 	cat ${WORK_DIR}/sfs-full-repolist | grep -wi "$1" |sort -k$SORT  | cut -d " " -f1 
@@ -148,7 +147,6 @@ if [ $FORCE ] ; then
 		fi
 		modpath="$(echo $MODULE |cut -d " " -f1)"
 		echo $modpath >> ${WORK_DIR}/download.lst
-		get_requires "$MODULE"
 	done
 else 
 for reg in $sourcelist ; do
@@ -189,7 +187,6 @@ for reg in $sourcelist ; do
 		fi	
 	fi
 	echo $modpath >> ${WORK_DIR}/download.lst
-	get_requires "$MODULE"
 done
 fi
 [ "$SEARCH" == "on" ] && exit
@@ -197,13 +194,23 @@ fi
 [ "$OUTDIR" ] && TARGET_PATH=$OUTDIR
 [ "$TARGET_PATH" ] || TARGET_PATH="./"
 for a in $(cat ${WORK_DIR}/download.lst) ;do
-MOD=$(getfile "$a" $TARGET_PATH/$(basename $a))
-echo "==> $(basename $MOD) - загружен успешно" 
-[ "$INSTALL" == "on" -o "$LOAD" == "on" ] && pfsload $MOD
-aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" && echo "==> $(basename $MOD) - подключен успешно"
+	MOD=$(getfile "$a" $TARGET_PATH/$(basename $a))
+	echo "==> $(basename $MOD) - загружен успешно"
+	get_requires $MOD 
+	[ "$INSTALL" == "on" -o "$LOAD" == "on" ] && pfsload $MOD
+	aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" && echo "==> $(basename $MOD) - подключен успешно"
 done
 if ! [ -z "$(cat ${WORK_DIR}/requires.lst)" ] ;then
+	reqlist=''
+	for req in $(cat ${WORK_DIR}/requires.lst) ; do
+		aufs-n --raw '$bname_source' |grep -wq "$req" && continue
+		find $TARGET_PATH -maxdepth 1 -type f -name "*${req}*" |grep -wq "$req" && continue
+		reqlist="$reqlist $req"
+	done
 	L=''
 	[ "$INSTALL" == "on" -o "$LOAD" == "on" ] && L="-l"
-	$0 $L -f -o $TARGET_PATH $(echo $(cat ${WORK_DIR}/requires.lst))  
+	if [ -n "$reqlist" ] ; then
+		echo "Загружаем зависимости: $reqlist"
+		$0 $L -f -o $TARGET_PATH $reqlist
+	fi  
 fi
