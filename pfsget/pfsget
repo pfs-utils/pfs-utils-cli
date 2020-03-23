@@ -160,7 +160,7 @@ for reg in $sourcelist ; do
 	else
 		if [ $(echo $MODULES |wc -w) -gt 1 ] ; then
 			echo -e "\nПодходят под шаблон - $reg:"
-			for b in $MODULES ; do echo $b ; done
+			for b in $MODULES ; do echo "==> $b" ; done
 		fi
 		modpath="$(echo $MODULE |cut -d " " -f1)"
 		echo -e "\nВы искали Это?  (Y/N)"
