@@ -8,7 +8,7 @@ fi
 
 #потом распихаем по конфигам
 mirror_list=./mirror.lst # список зеркал 
-EXT=pfs				 # расширение для модулей
+EXT=xzm				 # расширение для модулей
 ALIASES="./alias.cfg"     # файл с алиасами для нечеткого поиска
 WORK_DIR="./pfsget_work_dir"
 INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
@@ -17,6 +17,9 @@ COLUMN3="Версия"
 COLUMN4="Ревизия"
 COLUMN5="Размер"
 COLUMN6="Описание"
+#формат авто реполиста для локальных папок
+#если имя будет нормально парситься заменим ноли на значения
+COLUMNS_FORMAT='file:/$a $date 0 0 $size'
 SORT='2,3'  # возможно есть смысл добавить к ключам
 			# например --sort 3,4 (поиск без учета даты)
 
@@ -63,8 +66,7 @@ mkrepolist() {
 	for a in $(find $reponame -maxdepth 2 -type f -name *.$EXT) ; do
 		date=$(ls -la $a --time-style=+%F |cut -d " " -f6)
 		size=$(du -h $a |cut -f1)
-		#если имя будет нормально парситься заменим ноли на значения
-		echo "file:/$a $date 0 0 $size" >> $2 
+		eval echo "$COLUMNS_FORMAT" >> $2 
 	done
 	[ -f $2 ] && echo $2
 }
@@ -120,10 +122,11 @@ done
 
 #добавляем пути до репы в реполист
 #$1 локальный реполист
-#$2 удаленный реполист
+#$2 реполист с путем до сервера
 add_repo_path() {
 	local path tmpfile
 	path=$(dirname $2)
+	# если не нужны листы в формате gz можно sed -i (без временного файлв)
 	tmpfile="${1}_tmp"
 	zcat $1 > $tmpfile || cp $1 $tmpfile
 	sed -r '/^[a-z]{3,6}:\/\//!s#^#'$path'/#' "$tmpfile" > $1
@@ -150,6 +153,7 @@ done
 
 mkdir -p ${WORK_DIR}/lists
 
+# если ключ -u или холодный старт создаем списки
 if [ "$UPDATE_M" == "on" -o ! -f ${WORK_DIR}/sfs-full-repolist ] ; then
 	echo '#########################################################################'
 	update_repolists
@@ -157,6 +161,7 @@ if [ "$UPDATE_M" == "on" -o ! -f ${WORK_DIR}/sfs-full-repolist ] ; then
 	[ -z "$sourcelist" ] && exit
 	echo '#########################################################################' 
 fi
+#Обнуляем списки загрузки
 :> ${WORK_DIR}/download.lst
 :> ${WORK_DIR}/requires.lst
 if [ $FORCE ] ; then
