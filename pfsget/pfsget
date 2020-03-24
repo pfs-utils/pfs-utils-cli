@@ -8,9 +8,9 @@ fi
 
 #потом распихаем по конфигам
 mirror_list=./mirror.lst # список зеркал 
-EXT=pfs 				 # расширение для модулей
+EXT=pfs				 # расширение для модулей
 ALIASES="./alias.cfg"     # файл с алиасами для нечеткого поиска
-WORK_DIR="./sfs-get"
+WORK_DIR="./pfsget_work_dir"
 INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
 COLUMN2="Создан" # колонки в файлах списках
 COLUMN3="Версия"
@@ -20,6 +20,8 @@ COLUMN6="Описание"
 SORT='2,3'  # возможно есть смысл добавить к ключам
 			# например --sort 3,4 (поиск без учета даты)
 
+####### Ф У Н К Ц И И ########################
+
 #$1 modname
 get_requires() {
 	local deplist
@@ -28,21 +30,25 @@ get_requires() {
 	echo "$deplist" |sed 's/-\{2,\}//g' >> ${WORK_DIR}/requires.lst
 }
 
-####### Ф У Н К Ц И И ########################
 # $1 файл (локальный, http, ftp)
 # $2 файл для сохранения 
 # вернет имя файла с путем
 getfile() {
+	local file
 	#отдельная функция на случай протоколов недоступных с wget
 	geturl() { 
-		wget -t 2 -O $2  $1 
+		wget -t 2 -O $2  $1
+		[ $? == 0 ] && echo $2 
 	}
 	mkdir -p "$(dirname $2)"
-	if echo "$1" | egrep -q "^[a-z]{3,4}://[a-z0-9./-]*"; then
-    		geturl $1 $2
+	if echo "$1" | egrep -q "^file://[a-z0-9./-]*" ; then
+		file=$(echo $1 |sed 's#^file:/##')
+	elif echo "$1" | egrep -q "^[a-z]{3,6}://[a-z0-9./-]*"; then
+    	geturl $1 $2
 	else
-		[ -f $1 ] && cp -a $1 $2
+		file="$1"  
 	fi
+	[ -f "$file" ] && cp -a $file $2
 	[ $? == 0 ] && echo $2
 }
 
@@ -57,7 +63,8 @@ mkrepolist() {
 	for a in $(find $reponame -maxdepth 2 -type f -name *.$EXT) ; do
 		date=$(ls -la $a --time-style=+%F |cut -d " " -f6)
 		size=$(du -h $a |cut -f1)
-		echo "$a $date 0 0 $size" >> $2 
+		#если имя будет нормально парситься заменим ноли на значения
+		echo "file:/$a $date 0 0 $size" >> $2 
 	done
 	[ -f $2 ] && echo $2
 }
@@ -100,12 +107,27 @@ for a in $(cat $mirror_list) ; do
 	echo $a |grep -q "^[[:space:]]*#" && continue
 	if [ -d $a ] ; then
 		file=$(mkrepolist $a ${WORK_DIR}/lists/${n}.list)
-	else
+	elif [ -f $a ] ; then
 		file=$(getfile $a ${WORK_DIR}/lists/${n}.list)
-	fi
+	else 
+		file=$(getfile $a ${WORK_DIR}/lists/${n}.list)
+		add_repo_path "$file" "$a"
+	fi 
 	echo "$a --> $file"
 	n=$(( $n + 1 ))
 done
+}
+
+#добавляем пути до репы в реполист
+#$1 локальный реполист
+#$2 удаленный реполист
+add_repo_path() {
+	local path tmpfile
+	path=$(dirname $2)
+	tmpfile="${1}_tmp"
+	zcat $1 > $tmpfile || cp $1 $tmpfile
+	sed -r '/^[a-z]{3,6}:\/\//!s#^#'$path'/#' "$tmpfile" > $1
+	rm "$tmpfile"
 }
 
 #################### К О Д ##############################
