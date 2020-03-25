@@ -1,16 +1,8 @@
 #!/bin/bash
-
-if [ -f $(dirname $0)/pfs ] ;  then
-    . $(dirname $0)/pfs
-else 
-    . $(which pfs) || exit 13 
-fi    
-
 #потом распихаем по конфигам
-mirror_list=./mirror.lst # список зеркал 
-EXT=xzm				 # расширение для модулей
-ALIASES="./alias.cfg"     # файл с алиасами для нечеткого поиска
-WORK_DIR="./pfsget_work_dir"
+mirror_list=./mirror.lst     # список зеркал 
+ALIASES="./alias.cfg"        # файл с алиасами для нечеткого поиска
+WORK_DIR="./pfsget_work_dir" # папка для хранения реполистов и проч. /var/lib/pfsget?
 INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
 COLUMN2="Создан" # колонки в файлах списках
 COLUMN3="Версия"
@@ -22,6 +14,13 @@ COLUMN6="Описание"
 COLUMNS_FORMAT='file:/$a $date 0 0 $size'
 SORT='2,3'  # возможно есть смысл добавить к ключам
 			# например --sort 3,4 (поиск без учета даты)
+
+# здесь подтянется pfs.cfg и можно переопределить из него переменные 
+if [ -f $(dirname $0)/pfs ] ;  then
+    . $(dirname $0)/pfs
+else 
+    . $(which pfs) || exit 13 
+fi    
 
 ####### Ф У Н К Ц И И ########################
 
@@ -37,7 +36,7 @@ get_requires() {
 # $2 файл для сохранения 
 # вернет имя файла с путем
 getfile() {
-	local file
+	local file='/' 
 	#отдельная функция на случай протоколов недоступных с wget
 	geturl() { 
 		wget -t 2 -O $2  $1
@@ -51,8 +50,8 @@ getfile() {
 	else
 		file="$1"  
 	fi
-	[ -f "$file" ] && cp -a $file $2
-	[ $? == 0 ] && echo $2
+	[ -f "$file" -a "$(realpath "$file")" != "$(realpath "$2")" ] && cp -a "$file" "$2"
+	[ -f "$2" ] && echo $2
 }
 
 # сделать реполист для локальной папки
@@ -167,7 +166,11 @@ fi
 if [ $FORCE ] ; then
 # если -f качаем первый найденный. Можно использвать после поиска с -s 
 	for reg in $sourcelist ; do
-		MODULE=$(find_mods $reg new)
+		if [ -f "$reg" ] ; then
+			MODULE="$reg"
+		else
+			MODULE=$(find_mods $reg new)
+		fi
 		if [ -z "$MODULE" ] ; then
 			echo "Модуль не найден, измените шаблон,повторите поиск"
 			exit
@@ -177,19 +180,18 @@ if [ $FORCE ] ; then
 	done
 else 
 for reg in $sourcelist ; do
-	if aufs-n --raw '$bname_source' |grep -w "$reg" ; then
-		echo -n "Модуль подходящий под шаблон - $reg - уже подключен: "
-		aufs-n --raw '$bname_source' |grep -w "$reg"
-		echo "Продолжить (Y/N)"
-		read m
-		[ "$m" != Y -a "$m" != y ] && continue
+	AUFS_FOUND=$(aufs-n --raw '$bname_source' |grep -w "$reg")
+	[ -n "$AUFS_FOUND" ] && echo -e "Внимание!!! В системе подключены подходящие под шаблон \"$reg\" модули--:\n--> $AUFS_FOUND"
+	if [ -f "$reg" ] ; then
+			MODULE="$reg"
+		else
+			MODULES=$(find_mods $reg all)
+			MODULE=$(find_mods $reg new)
 	fi
-	MODULES=$(find_mods $reg all)
-	MODULE=$(find_mods $reg new)
  	if [ -z "$MODULE" ] ; then
 		maybe=$(find_alias $reg $ALIASES)
 		if [ -z "$maybe" ] ; then
-			echo "$reg Не найден. Измените шаблон,повторите поиск"
+			echo "$reg Не найден в репозитории. Измените шаблон,повторите поиск"
 		else
 			echo "Возможно вы искали:"
 			echo $maybe
@@ -198,11 +200,12 @@ for reg in $sourcelist ; do
 	else
 		if [ $(echo $MODULES |wc -w) -gt 1 ] ; then
 			echo -e "\nПодходят под шаблон - $reg:"
-			for b in $MODULES ; do echo "==> $b" ; done
+			for b in $MODULES ; do echo "++> $b" ; done
 		fi
+		echo ''
 		modpath="$(echo $MODULE |cut -d " " -f1)"
-		echo -e "\nВы искали Это?  (Y/N)"
-		echo "==> $modpath"
+		echo -e "\nНайден модуль, продолжить?  (Y/N)"
+		echo "++> $modpath"
 		for c in $(seq $(echo "$MODULE" |wc -w)) ; do
 			[ "$c" -eq 1 ] && continue
 			eval echo \$COLUMN${c}: "$(echo $MODULE |cut -d " " -f $c)"
@@ -216,16 +219,16 @@ for reg in $sourcelist ; do
 	echo $modpath >> ${WORK_DIR}/download.lst
 done
 fi
-[ "$SEARCH" == "on" ] && exit
-[ "INSTALL" == "on" ] && TARGET_PATH=$INSTALL_DIR
+[ "$SEARCH" = "on" ] && exit
+[ "$INSTALL" = "on" ] && TARGET_PATH=$INSTALL_DIR
 [ "$OUTDIR" ] && TARGET_PATH=$OUTDIR
 [ "$TARGET_PATH" ] || TARGET_PATH="./"
 for a in $(cat ${WORK_DIR}/download.lst) ;do
 	MOD=$(getfile "$a" $TARGET_PATH/$(basename $a))
-	echo "==> $(basename $MOD) - загружен успешно"
+	echo "<<>> $(basename $MOD) - загружен успешно"
 	get_requires $MOD 
 	[ "$INSTALL" == "on" -o "$LOAD" == "on" ] && pfsload $MOD
-	aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" && echo "==> $(basename $MOD) - подключен успешно"
+	aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" && echo "<<>> $(basename $MOD) - подключен успешно"
 done
 if ! [ -z "$(cat ${WORK_DIR}/requires.lst)" ] ;then
 	reqlist=''
