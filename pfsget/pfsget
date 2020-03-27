@@ -40,7 +40,7 @@ getfile() {
 	local file='/' 
 	#отдельная функция на случай протоколов недоступных с wget
 	geturl() { 
-		eval wget -t 2 -O $2  $1 "$DEVNULL" 
+		eval wget -t 2 -O $2  $1 $DEVNULL
 	}
 	mkdir -p "$(dirname $2)"
 	if echo "$1" | egrep -q "^file://[a-z0-9./-]*" ; then
@@ -115,7 +115,7 @@ for a in $(cat $mirror_list) ; do
 		file=$(getfile $a ${WORK_DIR}/lists/${n}.list)
 		add_repo_path "$file" "$a"
 	fi 
-	echo "$a --> $file"
+	[ "$GUIMODE" != "on" ] && echo "$a --> $file" 
 	n=$(( $n + 1 ))
 done
 }
@@ -126,7 +126,7 @@ done
 add_repo_path() {
 	local path tmpfile
 	path=$(dirname $2)
-	# если не нужны листы в формате gz можно sed -i (без временного файлв)
+	# если не нужны листы в формате gz можно sed -i (без временного файла)
 	tmpfile="${1}_tmp"
 	zcat $1 > $tmpfile || cp $1 $tmpfile
 	sed -r '/^[a-z]{3,6}:\/\//!s#^#'$path'/#' "$tmpfile" > $1
@@ -152,18 +152,18 @@ do
   esac
 done
 
-[ "$GUIMODE" = "on" ] && DEVNULL="2>/dev/null"
+[ "$GUIMODE" = "on" ] && DEVNULL=">/dev/null 2>&1"
 
 mkdir -p ${WORK_DIR}/lists
 
 # если ключ -u или холодный старт создаем списки
 if [ "$UPDATE_M" == "on" -o ! -f ${WORK_DIR}/sfs-full-repolist ] ; then
-	echo '#########################################################################'
+	[ "$GUIMODE" != "on" ] && echo '#########################################################################'
 	update_repolists
 	make_full_repolist
-	[ -z "$sourcelist" ] && exit
-	echo '#########################################################################' 
+	[ "$GUIMODE" != "on" ] && echo '#########################################################################' 
 fi
+[ -z "$sourcelist" ] && exit
 #Обнуляем списки загрузки
 :> ${WORK_DIR}/download.lst
 :> ${WORK_DIR}/requires.lst
@@ -244,15 +244,19 @@ for a in $(cat ${WORK_DIR}/download.lst) ;do
 done
 if ! [ -z "$(cat ${WORK_DIR}/requires.lst)" ] ;then
 	reqlist=''
-	for req in $(cat ${WORK_DIR}/requires.lst) ; do
-		aufs-n --raw '$bname_source' |grep -wq "$req" && continue
-		find $TARGET_PATH -maxdepth 1 -type f -name "*${req}*" |grep -wq "$req" && continue
-		reqlist="$reqlist $req"
-	done
+	allreqlist=$(cat ${WORK_DIR}/requires.lst)
+	if ! [ -z "$allreqlist" ] ; then
+	echo "Список зависимостей: $allreqlist"
+		for req in $(cat ${WORK_DIR}/requires.lst) ; do
+			aufs-n --raw '$bname_source' |grep -wq "$req" && echo "$req уже подключен" && continue
+			find $TARGET_PATH -maxdepth 1 -type f -name "*${req}*" |grep -wq "$req" && echo "$req уже загружен" && continue
+			reqlist="$reqlist $req"
+		done
+	fi
 	L=''
-	[ "$INSTALL" == "on" -o "$LOAD" == "on" ] && L="-l"
+	[ "$INSTALL" = "on" -o "$LOAD" = "on" ] && L="-l"
 	if [ -n "$reqlist" ] ; then
-		eval echo "Загружаем зависимости: $reqlist" $DEVNULL
+		[ "$GUIMODE" != "on" ] && echo "Из них отсутствуют: $reqlist, загружаем"
 		$0 $L -f -o $TARGET_PATH $reqlist
 	fi  
 fi
