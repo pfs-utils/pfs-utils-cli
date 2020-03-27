@@ -231,12 +231,15 @@ for a in $(cat ${WORK_DIR}/download.lst) ;do
 		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - ошибка загрузки!!!"
 	fi
 	get_requires $MOD 
-	[ "$INSTALL" == "on" -o "$LOAD" == "on" ] && pfsload "$MOD"
-	if aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" ; then
-		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - подключен успешно"
-		[ "$GUIMODE" = "on" ] && echo "pfsload:>> $MOD"
-	else
-		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - ошибка подключения!!!"
+	
+	if [ "$INSTALL" == "on" -o "$LOAD" == "on" ] ; then 
+		pfsload "$MOD"
+		if 	aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" ; then
+			[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - подключен успешно"
+			[ "$GUIMODE" = "on" ] && echo "pfsload:>> $MOD"
+		else
+			[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - ошибка подключения!!!"
+		fi
 	fi
 done
 if ! [ -z "$(cat ${WORK_DIR}/requires.lst)" ] ;then
