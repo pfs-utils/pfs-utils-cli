@@ -28,9 +28,11 @@ fi
 #$1 modname
 get_requires() {
 	local deplist
-	deplist=$(pfsinfo -s $1 |grep ^Dependenses: |sed -e 's/^Dependenses://' -e 's/,/ /g') 
+	# не забыть убрать путь у pfsinfo
+	deplist=$(./pfsinfo -s $1 |grep ^Dependenses: |sed -e 's/^Dependenses://' -e 's/,/ /g') 
 	[ -z "$deplist" ] && return
 	echo "$deplist" |sed 's/-\{2,\}//g' >> ${WORK_DIR}/requires.lst
+	sed -i 's/^[ \t\n]*$//' ${WORK_DIR}/requires.lst
 }
 
 # $1 файл (локальный, http, ftp)
@@ -233,7 +235,7 @@ for a in $(cat ${WORK_DIR}/download.lst) ;do
 	get_requires $MOD 
 	
 	if [ "$INSTALL" == "on" -o "$LOAD" == "on" ] ; then 
-		pfsload "$MOD"
+		eval pfsload "$MOD" $DEVNULL
 		if 	aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" ; then
 			[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - подключен успешно"
 			[ "$GUIMODE" = "on" ] && echo "pfsload:>> $MOD"
@@ -246,17 +248,17 @@ if ! [ -z "$(cat ${WORK_DIR}/requires.lst)" ] ;then
 	reqlist=''
 	allreqlist=$(cat ${WORK_DIR}/requires.lst)
 	if ! [ -z "$allreqlist" ] ; then
-	echo "Список зависимостей: $allreqlist"
+	[ "$GUIMODE" != "on" ] && echo "Список зависимостей: $(echo $allreqlist)"
 		for req in $(cat ${WORK_DIR}/requires.lst) ; do
-			aufs-n --raw '$bname_source' |grep -wq "$req" && echo "$req уже подключен" && continue
-			find $TARGET_PATH -maxdepth 1 -type f -name "*${req}*" |grep -wq "$req" && echo "$req уже загружен" && continue
+			aufs-n --raw '$bname_source' |grep -wq "$req" && eval echo "$req - уже подключен" $DEVNULL && continue
+			find $TARGET_PATH -maxdepth 1 -type f -name "*${req}*" |grep -wq "$req" && eval echo "$req - уже загружен" $DEVNULL && continue
 			reqlist="$reqlist $req"
 		done
 	fi
-	L=''
-	[ "$INSTALL" = "on" -o "$LOAD" = "on" ] && L="-l"
+	M='-f'; [ "$GUIMODE" = "on" ] && M='-g'
+	L='' ; [ "$INSTALL" = "on" -o "$LOAD" = "on" ] && L="-l"
 	if [ -n "$reqlist" ] ; then
 		[ "$GUIMODE" != "on" ] && echo "Из них отсутствуют: $reqlist, загружаем"
-		$0 $L -f -o $TARGET_PATH $reqlist
+		$0 $L $M -o $TARGET_PATH $reqlist
 	fi  
 fi
