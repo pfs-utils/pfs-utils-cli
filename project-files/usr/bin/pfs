@@ -51,6 +51,11 @@ if echo $compression |grep -q xz; then
 	fi
 fi
 
+
+mirror_list="/etc/pfsget/mirror.lst"     # список зеркал 
+ALIASES="/etc/pfsget/aliases.cfg"        # файл с алиасами для нечеткого поиска
+WORK_DIR="/var/tmp/pfsget" # папка для хранения реполистов и проч. /var/lib/pfsget?
+
 #user config
 [ -f /etc/pfs.cfg ] && . /etc/pfs.cfg
 
@@ -112,7 +117,7 @@ source_root="$(realpath "$1")"
 pack_name="$(basename "${1%.$EXT}")"
 [ "$3" ] && pack_name="$3"
 dest_dir="${dest_root}${PFSDIR}/mount/${pack_name}/"
-mkdir -p $dest_dir
+mkdir -p $dest_dir	
 if [ -d "${source_root}${PFSDIR}/mount" ] ; then
   mkdir -p "${dest_dir}submod"
   cp  -fr "${source_root}${PFSDIR}/mount"   /tmp/ 
@@ -122,6 +127,7 @@ fi
 [ -f "${dest_dir}/pfs.specs" ] || echo 'name="'$pack_name'"' > "${dest_dir}/pfs.specs"
 find "${source_root}" ! -type d        | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.files" &&
 find "${source_root}"   -type d -empty | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.dirs.empty"
+[ "$4" ] && echo "$4" > "${dest_dir}/pfs.depends"
 }
 
 checkramfreeb () {

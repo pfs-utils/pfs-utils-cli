@@ -1,15 +1,13 @@
 #!/bin/bash
-#потом распихаем по конфигам
-mirror_list=./mirror.lst     # список зеркал 
-ALIASES="./alias.cfg"        # файл с алиасами для нечеткого поиска
-WORK_DIR="./pfsget_work_dir" # папка для хранения реполистов и проч. /var/lib/pfsget?
-INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
+#формат строки в реполисте
 COLUMN2="Создан" # колонки в файлах списках
 COLUMN3="Версия"
 COLUMN4="Ревизия"
 COLUMN5="Размер"
 COLUMN6="Описание"
 DEVNULL=''
+#INSTALL_DIR нельзя определит в pfs  с aufs-n из-зи рекурсии
+INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
 #формат авто реполиста для локальных папок
 #если имя будет нормально парситься заменим ноли на значения
 COLUMNS_FORMAT='file:/$a $date 0 0 $size'
@@ -24,12 +22,11 @@ else
 fi    
 
 ####### Ф У Н К Ц И И ########################
-
 #$1 modname
 get_requires() {
 	local deplist
 	# не забыть убрать путь у pfsinfo
-	deplist=$(./pfsinfo -s $1 |grep ^Dependenses: |sed -e 's/^Dependenses://' -e 's/,/ /g') 
+	deplist=$(pfsinfo -s $1 |grep ^Dependenses: |sed -e 's/^Dependenses://' -e 's/,/ /g') 
 	[ -z "$deplist" ] && return
 	echo "$deplist" |sed 's/-\{2,\}//g' >> ${WORK_DIR}/requires.lst
 	sed -i 's/^[ \t\n]*$//' ${WORK_DIR}/requires.lst
@@ -96,12 +93,12 @@ fi
 # $1 что ищем
 # $2 файл с синонимами
 find_alias() {
-FIND=$(grep -m1 -w "$1" $2 | awk '{print $1'} )
-# поиск с учетом ошибок написания если есть agrep
-[ -z $FIND -a  "$(which agrep 2>/dev/null)" ] && FIND=$( agrep -I 1 -D 1 -E 1 -w "$1" $2 | head -n 1 | awk '{print $1'})
-[ $FIND ] || return
-FIND=$(echo $FIND |sed 's/^_//')
-LIST=$(grep _${FIND} $2 |sed 's/^_[^\ ]*\ //')
+	FIND=$(grep -m1 -w "$1" $2 | awk '{print $1'} )
+	# поиск с учетом ошибок написания если есть agrep
+	[ -z $FIND -a  "$(which agrep 2>/dev/null)" ] && FIND=$( agrep -I 1 -D 1 -E 1 -w "$1" $2 | head -n 1 | awk '{print $1'})
+	[ $FIND ] || return
+	FIND=$(echo $FIND |sed 's/^_//')
+	LIST=$(grep _${FIND} $2 |sed 's/^_[^\ ]*\ //')
 echo ${FIND}:  "$LIST"
 }
 
@@ -234,7 +231,7 @@ for a in $(cat ${WORK_DIR}/download.lst) ;do
 	fi
 	get_requires $MOD 
 	
-	if [ "$INSTALL" == "on" -o "$LOAD" == "on" ] ; then 
+	if [ "$LOAD" == "on" ] ; then 
 		eval pfsload "$MOD" $DEVNULL
 		if 	aufs-n --raw '$bname_source' |grep -wq "$(basename $MOD)" ; then
 			[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - подключен успешно"
@@ -256,7 +253,7 @@ if ! [ -z "$(cat ${WORK_DIR}/requires.lst)" ] ;then
 		done
 	fi
 	M='-f'; [ "$GUIMODE" = "on" ] && M='-g'
-	L='' ; [ "$INSTALL" = "on" -o "$LOAD" = "on" ] && L="-l"
+	L='' ; [ "$LOAD" = "on" ] && L="-l"
 	if [ -n "$reqlist" ] ; then
 		[ "$GUIMODE" != "on" ] && echo "Из них отсутствуют: $reqlist, загружаем"
 		$0 $L $M -o $TARGET_PATH $reqlist

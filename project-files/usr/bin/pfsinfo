@@ -50,10 +50,9 @@ if [ "${pack}" ]; then
 	if [ "$ispfs" = "yes" ] ; then
 		Deps=$(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f -name pfs.depends -exec cat "{}" \; |sort |uniq |grep -v "^$" | tr "\n" "   ")
 		Packs=$(ls -1   --indicator-style=none /tmp/squashfs/${bpack}${PFSDIR}/mount  | tr "\n" "   ")
-#		echo "Dependenses: $Deps"
+		echo "Dependenses: $Deps"
 		echo "Modules: $Packs"
 		echo ''
-		echo "Includes submodules: $Deps"
 		echo ''
 		standard_files="pfs.files pfs.depends pfs.dirs.empty"
 		for file in $(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f) ; do
