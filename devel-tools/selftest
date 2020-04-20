@@ -91,7 +91,7 @@ pfsload -r ./testmodule.${EXT} && PFSLOADr=OK
 m="$m\nload to ram=		$PFSLOADr"
 
 echo "############# pfsrebuild ##############"
-[ "$PFSLOAD" == "OK" ] && rm -f ./testmodule.${EXT}
+[ "$PFSLOAD" = "OK" ] && rm -f ./testmodule.${EXT}
 pfsrebuild testmodule.${EXT} && PFSREBUILD=OK
 m="$m\npfsrebuild=		$PFSREBUILD" 
 rm -r first second 2>/dev/nul
