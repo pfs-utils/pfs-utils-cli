@@ -32,7 +32,7 @@ dirsempty=$(echo $fileslist | sed 's/pfs.files/pfs.dirs.empty/')
 if [  -n "$bundle" -a -d ${bundle}${PFSDIR}/mount/   ] ; then
 	package_list=$(ls ${bundle}${PFSDIR}/mount/)
 	echo "$package_list"
-	if [[ -n $package_list ]] ; then
+	if ! [ -z "$package_list" ] ; then
 		pfs_in_contaner=''
 		for pack in $package_list ; do
 			echo "pfsrebuild  "$pack" --nopfs"
@@ -53,7 +53,7 @@ if [ -n "${bundle}" -o -f ${fileslist} ] ; then
   mkdir -p "$buildir"
   [ -f ${fileslist} ]  ||  mklist ${bundle} / ${package_name}
   tar -c -p --ignore-failed-read --no-recursion -T $fileslist  2>/dev/null | tar -x -p -C ${buildir}
-  if [[ -f  ${dirsempty} ]] ; then
+  if [ -f  ${dirsempty} ] ; then
 	cat $dirsempty | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g' | while read emptydir ; do
 	#it is a hack to save owner and permissions for empty dirs
 	cp -apx --parents $emptydir/not_existing_filename ${buildir}/ 2>/dev/null
