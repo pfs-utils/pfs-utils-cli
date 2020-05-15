@@ -1,20 +1,9 @@
 #!/bin/bash
-#формат строки в реполисте
-COLUMN2="Создан" # колонки в файлах списках
-COLUMN3="Версия"
-COLUMN4="Ревизия"
-COLUMN5="Размер"
-COLUMN6="Описание"
 DEVNULL=''
 #INSTALL_DIR нельзя определит в pfs  с aufs-n из-зи рекурсии
 INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
-#формат авто реполиста для локальных папок
-#если имя будет нормально парситься заменим ноли на значения
-COLUMNS_FORMAT='file:/$a $date 0 0 $size'
-SORT='2,3'  # возможно есть смысл добавить к ключам
-			# например --sort 3,4 (поиск без учета даты)
-
-# здесь подтянется pfs.cfg и можно переопределить из него переменные 
+SORT_STR='-t = -bk2,2n -bk3,3n -bk4,4n'  # 
+		# здесь подтянется pfs.cfg и можно переопределить из него переменные 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
 else 
@@ -39,7 +28,7 @@ getfile() {
 	local file='/' 
 	#отдельная функция на случай протоколов недоступных с wget
 	geturl() { 
-		eval wget -t 2 -O $2  $1 $DEVNULL
+		eval wget -t 2 -O $2  $1 $DEVNULL || rm -f $2
 	}
 	mkdir -p "$(dirname $2)"
 	if echo "$1" | egrep -q "^file://[a-z0-9./-]*" ; then
@@ -53,39 +42,61 @@ getfile() {
 	[ -f "$2" ] && echo $2
 }
 
-# сделать реполист для локальной папки
+# Сделать реполист для папки $1
+# Eсли указать имя с путем для файла реполиста ($2), то будет создан реполист без подписи, 
+# без сжатия и с прописанными путями к каждому файлу. Это нужно для указания папки с модулями в качестве репы.
+# Если указан только $1 будет создан реполист со стандартным именем _REPOLIST.gz
+# В случае настроенного gpg, также будет создан отдельный файл ключ _REPOLIST.gz.sig
+# Каталог с этими файлами можно целиком синкать на сервер с любым протоколом, без правок реполиста.
 # $1 папка
-# $2 файл реполист
+# $2 реполист вне репы
 mkrepolist() {
-	local reponame date size 
+	local reponame REPOLIST DATE SIZE VER REV MD5 LOCAL
 	reponame=$(realpath $1)
-	mkdir -p $(dirname $2)
-	: > $2
+	REPOLIST="${reponame}/_REPOLIST"
+	if [ $2 ] ; then
+	 REPOLIST=$2
+	 LOCAL=yes
+	fi 
+	: > $REPOLIST
 	for a in $(find $reponame -maxdepth 2 -type f -name *.$EXT) ; do
-		date=$(ls -la $a --time-style=+%F |cut -d " " -f6)
-		size=$(du -h $a |cut -f1)
-		eval echo "$COLUMNS_FORMAT" >> $2 
-	done
-	[ -f $2 ] && echo $2
+		if [ "$LOCAL" = yes ] ; then
+			SUBPATH_a="file:/$a"
+		else 
+			SUBPATH_a=$(echo $a |sed "s:${reponame}/::")
+		fi
+		DATE='' ; SIZE='' ; VER='' ; REV='' ; MD5=''
+		DATE=$(ls -la $a --time-style=+%F |cut -d " " -f6)
+		SIZE=$(du -h $a |cut -f1)
+		VER=
+		REV=
+		MD5=$(md5sum $a |awk '{print $1}')
+		echo "$SUBPATH_a VER=$VER REV=$REV DATE=$DATE SIZE=$SIZE MD5=$MD5 " >> $REPOLIST
+	done 
+	if [ "$LOCAL" != yes ] ; then
+		gzip $REPOLIST 2>/dev/null && REPOLIST=${REPOLIST}.gz
+		gpg2 -K 2>/dev/null |grep -q ^uid && gpg2 --detach-sign --output $REPOLIST.sig $REPOLIST 2>/dev/null
+	fi
+	[ -f $REPOLIST ] && echo $REPOLIST
 }
 
 # склеивает списки в форматах txt и txt.gz в один
 make_full_repolist() {
 	:> ${WORK_DIR}/sfs-full-repolist
-	for a in $(find ${WORK_DIR}/lists -type f) ; do
+	for a in $(find ${WORK_DIR}/lists -type f -name *.list ) ; do
 		zcat $a  2>/dev/null || cat $a 
-	done |sort |uniq >> ${WORK_DIR}/sfs-full-repolist
+	done |sort |uniq |awk '$1=$1' >> ${WORK_DIR}/sfs-full-repolist
 } 
 
 # поиск модуля с самой свежей версией
 # $1 шаблон поиска для grep (ищет только отдельное слово)
 find_mods() {
-	new=$(cat ${WORK_DIR}/sfs-full-repolist | grep -wi "$1" |sort -k$SORT |tail -n1)
+	new=$(cat ${WORK_DIR}/sfs-full-repolist | grep -wi "$1" |sort $SORT_STR |head -n1)
 if [ "$2" == new ] ; then
 	echo "$new" 
 	return
 elif [ "$2" == all ] ; then
-	cat ${WORK_DIR}/sfs-full-repolist | grep -wi "$1" |sort -k$SORT  | grep -v "$new" | cut -d " " -f1 
+	cat ${WORK_DIR}/sfs-full-repolist | grep -wi "$1" |sort $SORT_STR  | grep -v "$new" | cut -d " " -f1 
 fi
 }
 
@@ -102,16 +113,41 @@ find_alias() {
 echo ${FIND}:  "$LIST"
 }
 
+checksign() {
+	local a ans
+	for a in ${PUBKEYS}/*.gpg ;do
+		if gpg2 --verify --keyring $a "$1" "$2" ;then
+			echo "File $(basename $2) signed by $(basename $a)"
+		return 0
+		fi
+	done
+	echo "Incorrect signature in $(basename $1)"
+	echo "Continue: (y/n)"
+	read ans
+	[ $ans != "y" -a $ans != "Y" ] && exit 1 
+}
+
 update_repolists() {
+local file sign_file ans a 
 n=1
 for a in $(cat $mirror_list) ; do
 	echo $a |grep -q "^[[:space:]]*#" && continue
+	file='' ; sign_file=''
 	if [ -d $a ] ; then
 		file=$(mkrepolist $a ${WORK_DIR}/lists/${n}.list)
 	elif [ -f $a ] ; then
 		file=$(getfile $a ${WORK_DIR}/lists/${n}.list)
 	else 
 		file=$(getfile $a ${WORK_DIR}/lists/${n}.list)
+		sign_file=$(getfile ${a}.sig ${WORK_DIR}/lists/${n}.list.sig)
+		if [ -f "$sign_file" ] ; then
+			checksign $sign_file $file
+		else
+			echo "Repository list was not signed, or signature was not found"
+			echo "Continue: (y/n)"
+			read ans
+			[ $ans != "y" -a $ans != "Y" ] && exit 1 
+		fi
 		add_repo_path "$file" "$a"
 	fi 
 	[ "$GUIMODE" != "on" ] && echo "$a --> $file" 
@@ -143,6 +179,7 @@ do
     "-o" | "--outdir" ) outdir="on";;
     "-s" | "--search" ) SEARCH="on";;
     "-g" | "--guimode" ) GUIMODE="on";;
+    "-m" | "--mkrepolist" ) MKREPOLIST="on";;
     "-h" | "--help")  HLP ;exit 1;;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${outdir}" = "on" ]; then OUTDIR="${arg}"
@@ -152,6 +189,13 @@ do
 done
 
 [ "$GUIMODE" = "on" ] && DEVNULL=">/dev/null 2>&1"
+
+# если --mkrepolist создаем _REPOLIST для указанной папки в ней же
+# и выходим. Для создания реполистов на сервере. 
+if [ "$MKREPOLIST" ] ; then
+	mkrepolist $sourcelist
+	exit
+fi
 
 mkdir -p ${WORK_DIR}/lists
 
@@ -167,24 +211,25 @@ fi
 :> ${WORK_DIR}/download.lst
 :> ${WORK_DIR}/requires.lst
 for reg in $sourcelist ; do
-	MODPATH=''; MODULE=''; MODULES=''; MAYBE='' 
+	MODPATH=''; MODULE=''; MODULES=''; MAYBE='' ; MD5=''
 	AUFS_FOUND=$(aufs-n --raw '$bname_source' |grep -w "$reg")
 	[ -f "$reg" ] && MODULE="$reg"
 	[ ! -f "$reg" ] && MODULE=$(find_mods $reg new)
 	[ ! -f "$reg" ] && MODULES=$(find_mods $reg all)
 	[ -z "$MODULE" ] && MAYBE=$(find_alias $reg $ALIASES)
-	MODPATH="$(echo $MODULE |cut -d " " -f1)" 
+	MODPATH="$(echo $MODULE |cut -d " " -f1)"
+	echo $MODULE |grep -q 'MD5=' && MD5=$(echo $MODULE |sed 's/.*MD5=//' |cut -f1)
 	if [ "$FORCE" = "on" ] ; then
 		if [ -z "$MODULE" ] ; then
 			echo "Модуль не найден, измените шаблон,повторите поиск"
 			exit
 		fi
-		echo $MODPATH >> ${WORK_DIR}/download.lst
+		echo "$MODPATH" "$MD5" >> ${WORK_DIR}/download.lst
 	elif [ "$GUIMODE" = "on" ] ; then
 		echo "maybe:>> $MAYBE"  
 		echo "new:>> $MODPATH"
 		for b in $MODULES ; do echo "old:>> $b" ; done
-		echo "$MODPATH" >> ${WORK_DIR}/download.lst
+		echo "$MODPATH" "$MD5" >> ${WORK_DIR}/download.lst
 	else
 		if [ -z "$MODULE" ] ; then
 			if [ -z "$MAYBE" ] ; then
@@ -197,14 +242,13 @@ for reg in $sourcelist ; do
 		else
 			if [ $(echo $MODULES |wc -w) -gt 1 ] ; then
 				echo -e "\nПодходят под шаблон - $reg:"
-				for b in $MODULES ; do echo "==> $b" ; done
+				for b in "$MODULES" ; do echo "==> $b" ; done
 			fi
 			echo ''
 			echo -e "\nНайден модуль, продолжить?  (Y/N)"
-			echo "==> $MODPATH"
-			for c in $(seq $(echo "$MODULE" |wc -w)) ; do
-				[ "$c" -eq 1 ] && continue
-				eval echo \$COLUMN${c}: "$(echo $MODULE |cut -d " " -f $c)"
+			echo -n "==> "
+			for item in $(echo $MODULE) ; do
+				echo $item
 			done
 			if [ "$SEARCH" == "on" ] ; then d=Y ; else  read d ; fi
 			if [ "$d" != Y -a "$d" != y ] ; then
@@ -212,7 +256,7 @@ for reg in $sourcelist ; do
 				continue
 			fi	
 		fi
-	echo "$MODPATH" >> ${WORK_DIR}/download.lst
+	echo "$MODPATH" "$MD5" >> ${WORK_DIR}/download.lst
 	fi
 done
 
@@ -220,14 +264,20 @@ done
 [ "$INSTALL" = "on" ] && TARGET_PATH=$INSTALL_DIR
 [ "$OUTDIR" ] && TARGET_PATH=$OUTDIR
 [ "$TARGET_PATH" ] || TARGET_PATH="./"
-for a in $(cat ${WORK_DIR}/download.lst) ;do
-	MOD=''
-	MOD=$(getfile "$a" $TARGET_PATH/$(basename $a))
-	if  [ -f "$MOD" ] ; then
-		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - загружен успешно"
+cat ${WORK_DIR}/download.lst |while read a ;do
+	MOD='' ; MD5='' ; CHECKMD5=no ; DMOD=''
+	DMOD=$(echo $a |awk '{print $1}')
+	MD5=$(echo $a |awk '{print $2}')
+	MOD=$(getfile "$DMOD" $TARGET_PATH/$(basename $DMOD))
+	if [ -n "$MD5" ] ; then 
+		CHECKMD5=checked
+		md5sum "$MOD" |grep $MD5 || CHECKMD5=error
+	fi
+	if  [ -f "$MOD" -a "$CHECKMD5" != "error" ] ; then
+		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - загружен успешно. (проверка md5 - $CHECKMD5)"
 		[ "$GUIMODE" = "on" ] && echo "download:>> $MOD"
 	else
-		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - ошибка загрузки!!!"
+		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - ошибка загрузки!!! (проверка md5 - $CHECKMD5, $MD5)"
 	fi
 	get_requires $MOD 
 	
