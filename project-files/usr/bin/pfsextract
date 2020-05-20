@@ -12,9 +12,13 @@ HLP(){
 echo "\
 $(basename $0) - Распаковщик для модулей pfs
 Использование:
-    $(basename $0) file.pfs - если модуль составной - разобрать на составляющие модули в папку ./file 
-    $(basename $0) file.pfs - если модуль простой - распаковать
-    $(basename $0) file.pfs pack1 pack2 - извлечь из file.pfs только модули pack1 и pack2 
+    $(basename $0) file.$EXT - если модуль составной - разобрать на составляющие модули в папку ./file 
+                          на один уровень вложенности 
+    $(basename $0) file.$EXT --nopfs  - разобрать составной модуль на составляющие на всю глубину вложенности,
+                                   результат не паковать.
+    $(basename $0) file.$EXT - если модуль простой - распаковать
+    $(basename $0) file.$EXT pack1 pack2 - извлечь из file.$EXT только модули pack1 и pack2, 
+                                      имена в формате pfsinfo module.$EXT 
     
 Параметры (ключи):
 	-i / --install   распаковать в систему т.е. \"установить\"
@@ -107,7 +111,7 @@ done
 installDir ()  {
 sourcedir=$(echo $sourcelist |sed 's:^\ *::')
 eval echo "directory: $sourcedir installing..." $devnull 
-mklist "$sourcedir"   /
+mklist source_root="$sourcedir"   dest_root='/'
 cp -a "$sourcedir"/*   /
 mkdir -p ${PFSDIR}/install/
 mv -f ${PFSDIR}/mount/$(basename "${sourcedir}") ${PFSDIR}/install/

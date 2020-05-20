@@ -59,8 +59,9 @@ pfsextract -i -q ./first.${EXT} && PFSINSTALL=OK
 m="$m\npfsextract -i=		$PFSINSTALL"
 [ "$PFSINSTALL" != "OK" ] && ex
 
-echo "############# pfsunstall ##############"
-pfsuninstall ./first.${EXT} && PFSUNINSTALL=OK 
+echo "############# pfsuninstall ##############"
+pfsuninstall ./first.${EXT} 
+[ -f /111/file ] || PFSUNINSTALL=OK 
 m="$m\npfsuninstall=		$PFSUNINSTALL" 
 [ "$PFSUNINSTALL" != "OK" ] && ex
 

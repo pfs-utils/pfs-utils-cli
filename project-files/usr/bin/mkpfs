@@ -96,15 +96,19 @@ do
     "-w" | "--wh" ) WH="yes";;
     "-l" | "--local" ) inplace=yes ;;
     "--mklist" ) make_list=yes ;;
+    "--spec" ) make_list=yes ; spec=yes;;
+    "--depends" ) make_list=yes ; deps=yes ;; 
     "-f" | "--fast" | "-g" ) [ "$compression_fast" ] && compression="$compression_fast" || compression="gzip";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; HLP; exit 1;;
     *) if [ "${usepkname}" = "on" ]; then packname="${arg}"
        elif [ "${ondir}" = "on" ]; then D "${arg}"
        elif [ "${onmod}" = "on" ]; then M "${arg}"
        elif [ "${onuserout}" = "on" ]; then userout="${arg}"
+       elif [ "${spec}" = "yes" ]; then SPEC="${arg}"
+       elif [ "${deps}" = "yes" ]; then DEPENDS="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
        else sourcelist="${sourcelist} ${arg}"; fi
-       onuserout="off"; usepkname="off"; usindlib="off"; numproc="off";;
+       onuserout="off"; usepkname="off"; usindlib="off"; numproc="off"; deps="off"; spec="off" ;;
   esac
 done
 
@@ -125,7 +129,7 @@ if [ -d $sourcelist 2>/dev/null -a "$inplace" = "yes" ] ;then
 	eval echo "==== In place mode ====" $devnull
     [ "$wh" ] ||  eval  echo "=== save aufs whiteout \(.wh*\) ===" $devnull
     [ ! "$(ls -a $sourcelist)" ] && exitmsg "directory '$sourcelist' empty" 1
-    [ $make_list ] && mklist $sourcelist $sourcelist ${userout%.$EXT} 
+	[ $make_list ] && mklist source_root=$sourcelist dest_root=$sourcelist pack_name=${userout%.$EXT} spec_file="$SPEC" depends=$DEPENDS 
     [ $TRIM ] && trim $sourcelist
     if echo ${userout} | grep -q "^.*\.$EXT$" ; then 
 		mksqmod $sourcelist "${userout}" && exit 0 
@@ -163,16 +167,14 @@ done
 
 if [ $(echo $sourcelist | wc -w) -eq 1 ] ;then
   # if source is only one - submodule name is $userout with no prefix (pfs,xzm,etc)
-  [ $make_list ] && mklist "$i" "$n" $([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} )
+  pack_name=$([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} )
+  [ $make_list ] && mklist source_root="$i" dest_root="$n" pack_name=$pack_name spec_file=$SPEC depends=$DEPENDS 
 else	
   bundles=$(find $(echo $n |sed 's:aufs:bundles:') -maxdepth 1 -mindepth 1 -type d )
   #mklist for modules, submodule name is basename source with no prefix
   for i in $bundles ;do
 	  name="$(basename "${i%.$EXT}")" 
-	  mklist "$i" "$n" "$name"
-	  for submod in $(ls -1 ${i}${PFSDIR}/mount/ 2>/dev/null); do
-		  rm -rf ${n}${PFSDIR}/mount/$submod
-	  done
+	  mklist source_root="$i" dest_root="$n" pack_name="$name"
   done
 [ $save_dups ] && save_duplicates
 fi

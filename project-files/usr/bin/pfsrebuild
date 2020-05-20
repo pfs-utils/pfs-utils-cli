@@ -30,7 +30,7 @@ fileslist="${PFSDIR}/install/${package_name}/pfs.files"
 if [ -n "${bundle}" -o -f ${fileslist} ] ; then 
   buildir="./build_${package_name}/${package_name}"
   mkdir -p "$buildir"
-  [ -f ${fileslist} ]  ||  mklist ${bundle} / ${package_name}
+  [ -f ${fileslist} ]  ||  mklist source_root="${bundle}" dest_root='/' pack_name="${package_name}"
   cp -fax ${bundle}/* "${buildir}/" 
   cpio -pud ${buildir} < "$fileslist"
   # --nopfs parameter - make build dir and exit 

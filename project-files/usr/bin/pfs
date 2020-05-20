@@ -113,22 +113,33 @@ find "$r/usr/share/icons" -type f -name icon-theme.cache 2>/dev/null | xargs rm 
 }
 
 mklist () {
-source_root="$(realpath "$1")"
-[ "$2" ] && dest_root="$(realpath "$2")" || dest_root="$source_root"
-pack_name="$(basename "${1%.$EXT}")"
-[ "$3" ] && pack_name="$3"
-dest_dir="${dest_root}${PFSDIR}/mount/${pack_name}/"
-mkdir -p $dest_dir	
-if [ -d "${source_root}${PFSDIR}/mount" ] ; then
+	local source_root dest_root pack_name spec_file depends
+	while [ $1 ] ; do eval $1 ; shift ; done 
+	[ "$source_root" ] || return 1
+	source_root=$(realpath $source_root)
+	if [ "$dest_root" ] ; then 
+		dest_root="$(realpath "$dest_root")" 
+	else 
+		dest_root="$source_root"
+	fi
+	[ $pack_name ] || pack_name="$(basename "${source_root%.$EXT}")"
+
+	dest_dir="${dest_root}${PFSDIR}/mount/${pack_name}/"
+	mkdir -p $dest_dir	
+if [ -d "${source_root}${PFSDIR}/mount" -a $(ls -1 "${source_root}${PFSDIR}/mount" 2>/dev/null |wc -l) -gt 1 ] ; then
   mkdir -p "${dest_dir}submod"
-  cp  -fr "${source_root}${PFSDIR}/mount"   /tmp/ 
-  mv  -f /tmp/mount "${dest_dir}submod/"
-  rm -rf /tmp/mount
+  cp  -fax "${source_root}${PFSDIR}/mount"   /tmp/ 
+  mv  -f /tmp/mount "${dest_dir}submod/" &&  rm -rf /tmp/mount
+  for submod in $(ls -1 ${source_root}${PFSDIR}/mount/ 2>/dev/null); do
+	  echo "rm ${dest_root}${PFSDIR}/mount/$submod"
+	  rm -rf ${dest_root}${PFSDIR}/mount/$submod
+  done
 fi
-[ -f "${dest_dir}/pfs.specs" ] || echo 'name="'$pack_name'"' > "${dest_dir}/pfs.specs"
+[ ! -z $spec_file -a -f $spec_file ] && cat $spec_file > ${dest_dir}/pfs.specs
+cat "${dest_dir}/pfs.specs" 2>/dev/null |grep -i 'name=' || echo -e '\nname="'$pack_name'"' >> "${dest_dir}/pfs.specs"
 find "${source_root}" ! -type d        | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.files" &&
 find "${source_root}"   -type d -empty | sed "s:$source_root::" |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.dirs.empty"
-[ "$4" ] && echo "$4" > "${dest_dir}/pfs.depends"
+[ "$depends" ] && echo "$depends" > "${dest_dir}/pfs.depends"
 }
 
 checkramfreeb () {
