@@ -2,7 +2,19 @@
 DEVNULL=''
 #INSTALL_DIR нельзя определит в pfs  с aufs-n из-зи рекурсии
 INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
-SORT_STR='-t = -bk2,2n -bk3,3n -bk4,4n'  # 
+
+# функции getVER getREV (номер версии и номер ревизии) и строка сортировки индивидульны для дистров и 
+# могут быть переопределены в pfs или /etc/pfs.cfg
+# $1 имя модуля, функция должна вернуть версию
+getVER() {
+	echo 00.00
+} 
+# $1 имя модуля, функция должна вернуть ревизию
+getREV() {
+	echo 00
+}  
+SORT_STR='-t = -bk2,2n -bk3,3n -bk4,4n'  # параметры сортировки
+
 		# здесь подтянется pfs.cfg и можно переопределить из него переменные 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -51,7 +63,7 @@ getfile() {
 # $1 папка
 # $2 реполист вне репы
 mkrepolist() {
-	local reponame REPOLIST DATE SIZE VER REV MD5 LOCAL
+	local reponame REPOLIST DATE SIZE VER REV MD5 LOCAL a
 	reponame=$(realpath $1)
 	REPOLIST="${reponame}/_REPOLIST"
 	if [ $2 ] ; then
@@ -59,7 +71,7 @@ mkrepolist() {
 	 LOCAL=yes
 	fi 
 	: > $REPOLIST
-	for a in $(find $reponame -maxdepth 2 -type f -name *.$EXT) ; do
+	for a in $(find $reponame -maxdepth 2 -type f -name "*.$EXT") ; do
 		if [ "$LOCAL" = yes ] ; then
 			SUBPATH_a="file:/$a"
 		else 
@@ -68,8 +80,8 @@ mkrepolist() {
 		DATE='' ; SIZE='' ; VER='' ; REV='' ; MD5=''
 		DATE=$(ls -la $a --time-style=+%F |cut -d " " -f6)
 		SIZE=$(du -h $a |cut -f1)
-		VER=
-		REV=
+		VER=$(getVER $(basename $a))
+		REV=$(getREV $(basename $a))
 		MD5=$(md5sum $a |awk '{print $1}')
 		echo "$SUBPATH_a VER=$VER REV=$REV DATE=$DATE SIZE=$SIZE MD5=$MD5 " >> $REPOLIST
 	done 
@@ -202,6 +214,7 @@ mkdir -p ${WORK_DIR}/lists
 # если ключ -u или холодный старт создаем списки
 if [ "$UPDATE_M" == "on" -o ! -f ${WORK_DIR}/sfs-full-repolist ] ; then
 	[ "$GUIMODE" != "on" ] && echo '#########################################################################'
+	rm -rf ${WORK_DIR}/lists/*
 	update_repolists
 	make_full_repolist
 	[ "$GUIMODE" != "on" ] && echo '#########################################################################' 
@@ -271,7 +284,7 @@ cat ${WORK_DIR}/download.lst |while read a ;do
 	MOD=$(getfile "$DMOD" $TARGET_PATH/$(basename $DMOD))
 	if [ -n "$MD5" ] ; then 
 		CHECKMD5=checked
-		md5sum "$MOD" |grep $MD5 || CHECKMD5=error
+		md5sum "$MOD" |grep -q $MD5 || CHECKMD5=error
 	fi
 	if  [ -f "$MOD" -a "$CHECKMD5" != "error" ] ; then
 		[ "$GUIMODE" != "on" ] && echo "==> $(basename $MOD) - загружен успешно. (проверка md5 - $CHECKMD5)"

@@ -35,10 +35,10 @@ if [ -f "${fileslist}" ]; then
   mkdir -p "/tmp/.pfs/uninstall/$package_name"
   mv "${fileslist}" "/tmp/.pfs/uninstall/$package_name"
   rm -rf "${PFSDIR}/install/$package_name/" 
-  finded="$(find ${PFSDIR}/ -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | sed -e 's:[\]:\\\\\\\\:g'; done)"
+  found="$(find ${PFSDIR}/ -mindepth 3 -maxdepth 3 -type f -name 'pfs.files' | while read listfiles; do cat "${listfiles}" | sed -e 's:[\]:\\\\\\\\:g'; done)"
   listfiles="$(cat "/tmp/.pfs/uninstall/$package_name/pfs.files" | sed -e 's:^[^/]*::' -e 's:[\]:\\\\:g')"
   echo "${listfiles}" | while read file; do 
-	if ! echo "${finded}" | grep -q -F "${file}" ; then 
+	if ! echo "${found}" | grep -q -F "${file}" ; then 
 		[ ! -d $file ] && rm -f "${file}"  
 		[ -d $file ] && echo $file
 	fi 
