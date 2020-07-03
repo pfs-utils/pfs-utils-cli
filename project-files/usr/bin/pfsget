@@ -40,8 +40,13 @@ get_requires() {
 getfile() {
 	local file='/' 
 	#отдельная функция на случай протоколов недоступных с wget
-	geturl() { 
-		eval wget -t 2 -O $2  $1 $DEVNULL || rm -f $2
+	geturl() {
+		if  echo "$1" | egrep -q "^rsync://[a-z0-9./-]*" ; then 
+			eval rsync -avz $1 $2 $DEVNULL || rm -f $2
+		else
+			eval wget -t 2 -O $2  $1 $DEVNULL || rm -f $2
+		fi
+		
 	}
 	mkdir -p "$(dirname $2)"
 	if echo "$1" | egrep -q "^file://[a-z0-9./-]*" ; then
