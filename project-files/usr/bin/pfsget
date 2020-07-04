@@ -94,7 +94,7 @@ mkrepolist() {
 	done 
 	if [ "$LOCAL" != yes ] ; then
 		gzip $REPOLIST 2>/dev/null && REPOLIST=${REPOLIST}.gz
-		gpg2 -K 2>/dev/null |grep -q ^uid && gpg2 --detach-sign --output $REPOLIST.sig $REPOLIST 2>/dev/null
+		gpg --detach-sign --output $REPOLIST.sig $REPOLIST 2>/dev/null
 	fi
 	[ -f $REPOLIST ] && echo $REPOLIST
 }
@@ -183,9 +183,9 @@ add_repo_path() {
 	local path 
 	path=$(dirname $2)
 	# если не нужны листы в формате gz можно sed -i (без временного файла)
-	echo ---$1
-	echo ---$path
-	sed -ri '/^[a-z]{3,6}:\/\//!s#^#'$path'/#'  $1
+	zcat $1 >/tmp/tmpfilelist 2>/dev/null || cat $1 >/tmp/tmpfilelist
+	cat /tmp/tmpfilelist | sed -r '/^[a-z]{3,6}:\/\//!s#^#'$path'/#' >  $1
+	rm -f /tmpfilelist
 }
 
 #################### К О Д ##############################
