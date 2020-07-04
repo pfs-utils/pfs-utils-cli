@@ -41,8 +41,9 @@ getfile() {
 	local file='/' 
 	#отдельная функция на случай протоколов недоступных с wget
 	geturl() {
-		if  echo "$1" | egrep -q "^rsync://[a-z0-9./-]*" ; then 
-			eval rsync -avz $1 $2 $DEVNULL || rm -f $2
+		if  echo "$1" | egrep -q "^rsync://[a-z0-9./-]*" ; then
+			path=$(echo $1 | sed 's#^rsync://##') 
+			eval rsync -avz $path $2 >/dev/null 2>/dev/null || rm -f $2
 		else
 			eval wget -t 2 -O $2  $1 $DEVNULL || rm -f $2
 		fi
@@ -134,7 +135,7 @@ echo ${FIND}:  "$LIST"
 checksign() {
 	local a ans
 	for a in ${PUBKEYS}/*.gpg ;do
-		if gpg2 --verify --keyring $a "$1" "$2" ;then
+		if gpg --verify --keyring $a "$1" "$2" ;then
 			echo "File $(basename $2) signed by $(basename $a)"
 		return 0
 		fi
@@ -159,8 +160,10 @@ for a in $(cat $mirror_list) ; do
 		file=$(getfile $a ${WORK_DIR}/lists/${n}.list)
 		sign_file=$(getfile ${a}.sig ${WORK_DIR}/lists/${n}.list.sig)
 		if [ -f "$sign_file" ] ; then
+			echo "check $sign_file <--> $file"
 			checksign $sign_file $file
 		else
+			echo "check $sign_file <--> $file"
 			echo "Repository list was not signed, or signature was not found"
 			echo "Continue: (y/n)"
 			read ans
@@ -177,13 +180,12 @@ done
 #$1 локальный реполист
 #$2 реполист с путем до сервера
 add_repo_path() {
-	local path tmpfile
+	local path 
 	path=$(dirname $2)
 	# если не нужны листы в формате gz можно sed -i (без временного файла)
-	tmpfile="${1}_tmp"
-	zcat $1 > $tmpfile || cp $1 $tmpfile
-	sed -r '/^[a-z]{3,6}:\/\//!s#^#'$path'/#' "$tmpfile" > $1
-	rm "$tmpfile"
+	echo ---$1
+	echo ---$path
+	sed -ri '/^[a-z]{3,6}:\/\//!s#^#'$path'/#'  $1
 }
 
 #################### К О Д ##############################

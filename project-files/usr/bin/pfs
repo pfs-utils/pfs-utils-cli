@@ -52,7 +52,7 @@ if echo $compression |grep -q xz; then
 fi
 
 CFG_DIR="/etc/pfsget" 				# папска с конфигами для pfsget
-PUBKEYS="$CFG_DIR"					# папка для доверенных публтчных ключей
+PUBKEYS="$CFG_DIR/keys"					# папка для доверенных публтчных ключей
 mirror_list="$CFG_DIR/mirror.lst"   # список зеркал 
 ALIASES="$CFG_DIR/aliases.cfg"      # файл с алиасами для нечеткого поиска
 WORK_DIR="/var/tmp/pfsget" 			# папка для хранения реполистов и проч. /var/lib/pfsget?
