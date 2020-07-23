@@ -41,8 +41,7 @@ getfile() {
 	#отдельная функция на случай протоколов недоступных с wget
 	geturl() {
 		if  echo "$1" | egrep -q "^rsync://[a-z0-9./-]*" ; then
-			path=$(echo $1 | sed 's#^rsync://##') 
-			eval rsync -avz $path $2 >/dev/null 2>/dev/null || rm -f $2
+			eval rsync -avz $1 $2 >/dev/null 2>/dev/null || rm -f $2
 		else
 			eval wget -t 2 -O $2  $1 $DEVNULL || rm -f $2
 		fi
