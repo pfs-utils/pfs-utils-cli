@@ -1,6 +1,6 @@
 #!/bin/bash
 DEVNULL=''
-#INSTALL_DIR нельзя определит в pfs  с aufs-n из-зи рекурсии
+#INSTALL_DIR нельзя определить в pfs с aufs-n из-за рекурсии
 INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
 
 # функции getVER getREV (номер версии и номер ревизии) и строка сортировки индивидульны для дистров и 
@@ -16,7 +16,7 @@ getREV() {
 }  
 SORT_STR='-t = -bk2,2n -bk3,3n -bk4,4n'  # параметры сортировки
 
-		# здесь подтянется pfs.cfg и можно переопределить из него переменные 
+# здесь подтянется pfs.cfg и можно переопределить из него переменные 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
 else 
@@ -27,7 +27,6 @@ fi
 #$1 modname
 get_requires() {
 	local deplist
-	# не забыть убрать путь у pfsinfo
 	deplist=$(pfsinfo -s $1 |grep ^Dependenses: |sed -e 's/^Dependenses://' -e 's/,/ /g') 
 	[ -z "$deplist" ] && return
 	echo "$deplist" |sed 's/-\{2,\}//g' >> ${WORK_DIR}/requires.lst
@@ -194,7 +193,7 @@ do
   case "${arg}" in
 	"-u" | "--updete-media" ) UPDATE_M="on";;
     "-f" | "--force" ) FORCE="on";;
-    "-i" | "--install" ) INSTALL="on";;
+    "-i" | "--install" ) INSTALL="on"; LOAD="on";;
     "-l" | "--load" ) LOAD="on";;
     "-o" | "--outdir" ) outdir="on";;
     "-s" | "--search" ) SEARCH="on";;
