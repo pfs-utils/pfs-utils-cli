@@ -157,6 +157,10 @@ for a in $(cat $mirror_list) ; do
 	else 
 		file=$(getfile $a ${WORK_DIR}/lists/${n}.list)
 		sign_file=$(getfile ${a}.sig ${WORK_DIR}/lists/${n}.list.sig)
+		if ! [ -f "$file" ] ; then
+			echo -e "Cannot download repository list \n $a"
+			continue
+		fi
 		if [ -f "$sign_file" ] ; then
 			echo "check $sign_file <--> $file"
 			checksign $sign_file $file
