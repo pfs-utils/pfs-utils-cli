@@ -27,7 +27,7 @@ CLEAR () {
 	rm -fr ./testmodule_pfs 2>/dev/null
 	pfsunload ./testmodule.${EXT} 2>/dev/null
 	pfsuninstall ./testmodule.${EXT} 2>/dev/null
-	rmdir /111
+	rmdir /111 2>/dev/null
 }
 
 ex(){ printf "$m\n====== \e[31mTest  aborted\e[0m =====\n"
@@ -38,6 +38,9 @@ ex(){ printf "$m\n====== \e[31mTest  aborted\e[0m =====\n"
 mkdir -p ./first/111 ./second/222 ./first/empty
 echo first  > ./first/111/file
 echo second > ./second/222/file
+ln -s /bin/bash ./second/222/symlink
+ln -s /bin/bash ./first/111/symlink
+
 chmod 644 ./first/empty ; chown nobody ./first/empty
 
 echo "############# mkpfs ##############"
@@ -115,8 +118,8 @@ rm -r testmodule 2>/dev/null
 [ "$MKPFSm" != "OK" ] && ex
 
 echo "############# pfsextract -d##############"
-pfsextract -d testmodule.${EXT} && [ -d testmodule/first ] && \
-    [ -d testmodule/second ]  && PFSEXTRACTd=OK
+pfsextract -d testmodule.${EXT} && [ -f testmodule/first/111/file ] && \
+    [ -L testmodule/second/222/symlink ]  && PFSEXTRACTd=OK
 m="$m\npfsextract -d=		$PFSEXTRACTd"
 [ "$PFSEXTRACTd" != "OK" ] && ex
 
@@ -132,7 +135,7 @@ pfsload ./chroot2pfs.${EXT}
 [ -d /testdir ] &&  CHROOT2PFS=OK
 m="$m\nchroot2pfs=		$CHROOT2PFS"
 pfsunload  chroot2pfs.${EXT}
-rm -r chroot2pfs.${EXT}
+rm -f chroot2pfs.${EXT}
 
 
 CLEAR

@@ -68,7 +68,13 @@ for m in $sourcelist ; do
     bundle=$(addlayer "$nn" "$pfs" || exitmsg "can't insert layer to aufs $n" 5)
      
     cat "${n}${PFSDIR}/mount/${m}/pfs.files" | while read F; do 
-	touch "$n$F" || cp -a "$bundle/$F" "${n}$(dirname "$F")"
+	touch "$n$F" 
+	if ! [ -e "$SYSMNT/changes$nn/$F" ] ; then
+		pushd "$bundle"
+		cp -a --parents "$(echo "$F" |sed 's:^/::')" "${n}/"
+		popd
+	fi
+	[ -e "$SYSMNT/changes$nn/$F" ] || echo "Warning. Cannot extract $F"
     done
        
     emp="$SYSMNT/aufs$nn/${PFSDIR}/mount/$m/pfs.dirs.empty"
