@@ -38,10 +38,9 @@ get_requires() {
 # вернет имя файла с путем
 getfile() {
 	local file='/' 
-	#отдельная функция на случай протоколов недоступных с wget
 	geturl() {
 		if  echo "$1" | egrep -q "^rsync://[a-z0-9./-]*" ; then
-			eval rsync -avz $1 $2 >/dev/null 2>/dev/null || rm -f $2
+			eval rsync -avzz --progress $1 $2 1>&2 $DEVNULL   || rm -f $2
 		else
 			eval wget -t 2 -O $2  $1 $DEVNULL || rm -f $2
 		fi
@@ -57,6 +56,12 @@ getfile() {
 	fi
 	[ -f "$file" -a "$(realpath "$file")" != "$(realpath "$2")" ] && cp -a "$file" "$2"
 	[ -f "$2" ] && echo $2
+}
+
+check_net() {
+    ping -c2 ya.ru >/dev/null && return 0
+    echo "Сеть не доступна"
+    exit $LINENO
 }
 
 # Сделать реполист для папки $1
@@ -219,6 +224,8 @@ if [ "$MKREPOLIST" ] ; then
 	exit
 fi
 
+[ "$SEARCH" ] || check_net 
+
 mkdir -p ${WORK_DIR}/lists
 
 # если ключ -u или холодный старт создаем списки
@@ -252,7 +259,6 @@ for reg in $sourcelist ; do
 		echo "maybe:>> $MAYBE"  
 		echo "new:>> $MODPATH"
 		for b in $MODULES ; do echo "old:>> $b" ; done
-		#echo "$MODPATH" "$MD5" >> ${WORK_DIR}/download.lst
 	else
 		if [ -z "$MODULE" ] ; then
 			if [ -z "$MAYBE" ] ; then
@@ -268,11 +274,12 @@ for reg in $sourcelist ; do
 				for b in "$MODULES" ; do echo "==> $b" ; done
 			fi
 			echo ''
-			echo -e "\nНайден модуль, продолжить?  (Y/N)"
+			echo -e "\nВероятно вы искали этот модуль:" 
 			echo -n "==> "
 			for item in $(echo $MODULE) ; do
 				echo $item
 			done
+			[ $SEARCH ] || echo "загружать?  (Y/N)"
 			if [ "$SEARCH" == "on" ] ; then d=Y ; else  read d ; fi
 			if [ "$d" != Y -a "$d" != y ] ; then
 				echo "Уточните шаблон поиска и повторите"
@@ -287,6 +294,10 @@ done
 [ "$INSTALL" = "on" ] && TARGET_PATH=$INSTALL_DIR
 [ "$OUTDIR" ] && TARGET_PATH=$OUTDIR
 [ "$TARGET_PATH" ] || TARGET_PATH="./"
+if ! [ -w $TARGET_PATH ] ; then
+    echo "ERROR: '$TARGET_PATH' не доступен для записи"
+    exit ${LINENO}
+fi
 cat ${WORK_DIR}/download.lst |while read a ;do
 	MOD='' ; MD5='' ; CHECKMD5=no ; DMOD=''
 	DMOD=$(echo $a |awk '{print $1}')
