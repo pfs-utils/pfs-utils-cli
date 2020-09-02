@@ -107,7 +107,7 @@ do
        elif [ "${spec}" = "yes" ]; then SPEC="${arg}"
        elif [ "${deps}" = "yes" ]; then DEPENDS="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
-       else sourcelist="${sourcelist} ${arg}"; fi
+       else sourcelist="${sourcelist} "${arg}""; fi
        onuserout="off"; usepkname="off"; usindlib="off"; numproc="off"; deps="off"; spec="off" ;;
   esac
 done
@@ -148,8 +148,8 @@ fi
 
 #test sources, source must be dir or squashfs module
 for source in $sourcelist ;do
-	[ -d $source ] && continue
-	[ "$(fs_type $source)" = "squashfs" ] && continue
+	[ -d "$source" ] && continue
+	[ "$(fs_type "$source")" = "squashfs" ] && continue
 	exitmsg "Type of source \"$source\" is not correct" 2
 done	
 
@@ -168,15 +168,15 @@ done
 if [ $(echo $sourcelist | wc -w) -eq 1 ] ;then
   # if source is only one - submodule name is $userout with no prefix (pfs,xzm,etc)
   pack_name=$([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} )
-  [ $make_list ] && mklist source_root="$i" dest_root="$n" pack_name=$pack_name spec_file=$SPEC depends=$DEPENDS 
+  [ $make_list ] && mklist source_root="$i" dest_root="$n" pack_name="$pack_name" spec_file="$SPEC" depends="$DEPENDS" 
 else	
-  bundles=$(find $(echo $n |sed 's:aufs:bundles:') -maxdepth 1 -mindepth 1 -type d )
+  bundles=$(find $(echo $n |sed 's#aufs#bundles#') -maxdepth 1 -mindepth 1 -type d )
   #mklist for modules, submodule name is basename source with no prefix
   for i in $bundles ;do
-	  name="$(basename "${i%.$EXT}")" 
+	  name="$(basename "${i%.$EXT}" |sed -e 's/_comma_/,/g' -e 's/_equal_/=/g' -e 's/_asterisk_/\*/g' -e 's/_hash_/\#/g')" 
 	  mklist source_root="$i" dest_root="$n" pack_name="$name"
   done
-[ $save_dups ] && save_duplicates
+  [ $save_dups ] && save_duplicates
 fi
 
 [ $TRIM ] && trim $n

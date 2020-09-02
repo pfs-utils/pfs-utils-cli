@@ -9,22 +9,30 @@ else
 fi    
 
 HLP(){
-echo   "Usage: $0 <par>" 
+echo   "Usage: $0 <par>"
+echo   "-d --delimeter	  separator character" 
 echo   "-s --stat         statistic"
 echo   "-m --mount   mount submodules"
 echo   "-i --install      installed submodules"
 exit 1
 }
 
+DELIMETER='/'
 for arg in "$@"
 do
   case "${arg}" in
+	"-d" | "--delimeter" ) delimeter='yes' ;;
 	"-h" | "--help" ) HLP ;;
     "-s" | "--stat") stat="yes";;
     "-m" | "--mount" | "--mount-packages") readdir="mount";;
     "-i" | "--install" | "--install-packages") readdir="install";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
-    *) inpack="${arg}";;
+    *) 	if [ "$delimeter" = 'yes' ] ; then
+			DELIMETER="$arg"
+		else 
+			inpack="${arg}"
+		fi
+		delimeter='no';;
   esac
 done
 
@@ -77,7 +85,7 @@ if [ "${pack}" ]; then
 	umount /tmp/squashfs/"${bpack}"
 	rmdir  /tmp/squashfs/"${bpack}"
   else
-  unsquashfs -l -d ""  "${pack}"  | grep ${PFSDIR}/.*/pfs.files |sed -e "s:${PFSDIR}/mount/::" -e 's:/submod/mount::g' -e 's:/pfs.files$::' -e 's#/#:#g'
+  unsquashfs -l -d ""  "${pack}"  | grep ${PFSDIR}/.*/pfs.files |sed -e "s#${PFSDIR}/mount/##" -e 's#/submod/mount##g' -e 's#/pfs.files$##' -e 's#/#'"$DELIMETER"'#g'
   fi
 else
   [ "${readdir}" != "install" ] && [ -d "${PFSDIR}/mount" ] && echo "$(find "${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"
