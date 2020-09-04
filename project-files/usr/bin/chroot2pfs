@@ -132,8 +132,8 @@ if  $(file $(echo $modules |awk '{print $1}') 2>/dev/null | grep -q quashfs); th
     cd $buildDir
     for mod in $(find ./ -type d -name "??*"); do
 		SCRIPT=$(readlink -e $(ls -1 ./$mod/*.sh 2>/dev/null ) 2>/dev/null ) ; [ $SCRIPT ] && SCRIPT="--script $SCRIPT"
-        $u2pfs_current $(echo $(cat $mod/cmdline) $SCRIPT )  | tee ./urpm2pfs.out
-        module=$(cat ./urpm2pfs.out | tail -n1)
+        $u2pfs_current $(echo $(cat $mod/cmdline) $SCRIPT )  | tee ./chroot2pfs.out
+        module=$(cat ./chroot2pfs.out | tail -n1)
         mv $CPWD/$(basename $module) $CPWD/$(basename $module).old 2>/dev/null
         mv $module ${CPWD}/
     done
@@ -186,14 +186,16 @@ if [ "$SCRIPT" ] ; then
 fi
 
 if [ "$BIND" ] ; then
+bind_dirs=''
 binds="$(echo "$BIND" |sed 's/[\,]/ /g')"
 for bnd in $binds ; do
 	extdir=$(echo $bnd |sed 's/::/#/' |cut -d "#" -f1)
 	indir="$root_br/$(echo $bnd |sed 's/::/#/' |cut -d "#" -f2)"
 	mkdir -p "$indir"
 	mount -o bind "$extdir" "$indir"
+	bind_dirs="$bind_dirs $indir"
 done
- fi
+fi
 
 if [ "$X" = "yes" ] ; then
 	if ! xhost |grep -q "LOCAL:" ; then
@@ -225,7 +227,9 @@ rm -rf $mod_br/{dev,proc,sys,tmp} >/dev/null
 rmdir "$mod_br"/{dev,proc,sys,lost+found} "$mod_br/var/cache" "$mod_br/var/lib" "$mod_br/var" "$mod_br/etc" 2>/dev/null
 
 [ $NOMOD ] || mkpfs $mod_br -l $fast_alg  $WH  $TRIM   -o $NAME && MODULE="$(readlink -e ${NAME})" 
-umount "$indir"
+[ "$bind_dirs" ] && for dir in $bind_dirs ; do
+	umount "$dir"
+done 
 echo "delaufs $nn"
 delaufs $nn
 
