@@ -57,7 +57,9 @@ echo "  --mkilst  add files list to simple (non contaner) module"
 echo "  --save-duplicates  при сборке контейнеров сохранять одноименные файлы из разных источников если они отличаются, "
 echo "                     при распаковке файлы будут возвращены на место"
 echo "  --mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
-
+echo "  --spec ./file  -  Добпаить файл с информацией. Только для атомарных модулей"
+echo "  --deps aaa,bbb,ccc - Добавить список зависимостей.  Только для атомарных модулей"
+echo ""
 echo "Алиасы (сокращения):"
 echo " -d | -D - Только каталоги"
 echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.$EXT'
