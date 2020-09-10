@@ -57,9 +57,7 @@ echo "  --mkilst  add files list to simple (non contaner) module"
 echo "  --save-duplicates  при сборке контейнеров сохранять одноименные файлы из разных источников если они отличаются, "
 echo "                     при распаковке файлы будут возвращены на место"
 echo "  --mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
-echo " 	--spec ./файл  - добавить файл со спецификациями, описанием и проч. Только при паковке атомарного модуля"
-echo " 	--depends aaa,bbb,ccc - добавить список зависимостей. Только для атомарного модуля."
-echo '' 
+
 echo "Алиасы (сокращения):"
 echo " -d | -D - Только каталоги"
 echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.$EXT'
@@ -131,7 +129,7 @@ if [ -d $sourcelist 2>/dev/null -a "$inplace" = "yes" ] ;then
 	eval echo "==== In place mode ====" $devnull
     [ "$wh" ] ||  eval  echo "=== save aufs whiteout \(.wh*\) ===" $devnull
     [ ! "$(ls -a $sourcelist)" ] && exitmsg "directory '$sourcelist' empty" 1
-	[ $make_list ] && mklist source_root=$sourcelist dest_root=$sourcelist spec_file="$SPEC" depends="$DEPENDS"
+	[ $make_list ] && mklist source_root=$sourcelist dest_root=$sourcelist pack_name=${userout%.$EXT} spec_file="$SPEC" depends="$DEPENDS" 
     [ $TRIM ] && trim $sourcelist
     if echo ${userout} | grep -q "^.*\.$EXT$" ; then 
 		mksqmod $sourcelist "${userout}" && exit 0 
@@ -169,14 +167,14 @@ done
 
 if [ $(echo $sourcelist | wc -w) -eq 1 ] ;then
   # if source is only one - submodule name is $userout with no prefix (pfs,xzm,etc)
-  pack_name=$([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} )
-  [ $make_list ] && mklist source_root="$i" dest_root="$n" spec_file="$SPEC" depends="$DEPENDS" 
+  pack_name=$([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} |sed -e 's/_comma_/,/g' -e 's/_equal_/=/g' -e 's/_asterisk_/\*/g' -e 's/_hash_/\#/g' )
+  [ $make_list ] && mklist source_root="$i" dest_root="$n" pack_name="$pack_name" spec_file="$SPEC" depends="$DEPENDS" 
 else	
   bundles=$(find $(echo $n |sed 's#aufs#bundles#') -maxdepth 1 -mindepth 1 -type d )
   #mklist for modules, submodule name is basename source with no prefix
   for i in $bundles ;do
 	  name="$(basename "${i%.$EXT}" |sed -e 's/_comma_/,/g' -e 's/_equal_/=/g' -e 's/_asterisk_/\*/g' -e 's/_hash_/\#/g')" 
-	  mklist source_root="$i" dest_root="$n" 
+	  mklist source_root="$i" dest_root="$n" pack_name="$name"
   done
   [ $save_dups ] && save_duplicates
 fi
