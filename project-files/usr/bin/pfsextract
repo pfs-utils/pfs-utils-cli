@@ -80,12 +80,10 @@ for m in $sourcelist ; do
     emp="$SYSMNT/aufs$nn/${PFSDIR}/mount/$m/pfs.dirs.empty"
     [ -f "$emp" ] && cat "$emp" | while read F; do 
 	F=$(echo $F |sed s':\$::')
-        if [ -d "$F" -o -f "$F" ] ; then
+    if [ -d "$F" ] ; then
 	    touch "$SYSMNT/aufs$nn$F"
 	else
-	    PWD=$(pwd)
-	    cp -a "$bundle/$F" "${n}$(dirname "$F")"
-	    cd $PWD
+	    echo "$F - is not directory"
 	fi
     done
 	cp -a $SYSMNT/aufs$nn${PFSDIR}/mount/${m}/unique/*  "${n}/" 2>/dev/null 
@@ -97,7 +95,8 @@ for m in $sourcelist ; do
 		[ -d  "$dir/$moddirname" ] && moddirname=${moddirname}_$RANDOM 
 		mkdir -p "$dir/${moddirname}" 
 		cp -a "$SYSMNT/changes$nn"/* "$dir/${moddirname}/" &&
-		rm -rf $dir/${moddirname}/$PFSDIR
+		rm -f $dir/${moddirname}/$PFSDIR/mount/{pfs.files,pfs.dirs.empty}
+		rmdir $dir/${moddirname}/$PFSDIR/mount $dir/${moddirname}/$PFSDIR 2>/dev/null
 	elif [ "$install" ] ; then
 	    mklist "$SYSMNT/changes$nn" "$SYSMNT/aufs$nn" "$(basename $m)" 
 		cp -a "$SYSMNT/changes$nn"/* /
@@ -108,7 +107,7 @@ for m in $sourcelist ; do
 		if [ -d "$SYSMNT/aufs$nn${PFSDIR}/mount/$m/submod/mount" ] ; then
 			cp -fr "$SYSMNT/aufs$nn${PFSDIR}/mount/$m/submod/mount"  "$SYSMNT/changes$nn/${PFSDIR}/"  
 		else 
-			# сохраняем спек
+			# сохраняем спеки
 			mkdir -p "$SYSMNT/changes$nn${PFSDIR}/mount/$(basename $m)"
 			find "$SYSMNT/aufs$nn${PFSDIR}/mount/$m/" -type f | while read aaa ; do 
 			[ "$(basename $aaa)" = 'pfs.files' -o "$(basename $aaa)" = 'pfs.dirs.empty' ] && continue 
