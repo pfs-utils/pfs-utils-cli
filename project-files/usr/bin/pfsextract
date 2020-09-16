@@ -41,7 +41,7 @@ extract_simple () {
     fi
     eval unsquashfs -f -dest "${dir}" "${pfs}" $noprogress $useproc "$devnull" 
     exitmsg "Unsquashfs error" $?
-    if [ "$i" ] ;  then   
+    if [ "$install" ] ;  then   
 		PFSINFO=$(pfsinfo "$pfs")
 		if [ "$PFSINFO" ] ; then 
 			mv ${PFSDIR}/mount/"$PFSINFO" ${PFSDIR}/install/
