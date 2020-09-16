@@ -1,0 +1,48 @@
+#!/bin/sh 
+EXT=$1
+#Это список команд с пояснениями, выхлоп частично подрезан там от mksquashfs много лишнего.
+#Создаем пару папок из которых будум делать модули.
+ mkdir -p 1/1
+echo PFS  > 1/1/1
+ mkdir -p 2/2
+  > 2/2/2
+ mkdir -p a/a
+echo UTILS  > a/a/a
+ mkdir -p b/b
+  > b/b/b
+#Пакуем  1+2 и a+b.
+
+ mkpfs 1 2 -o 12.$EXT
+ mkpfs a b  -o ab.$EXT
+
+#Получили два контейнера 12.xzm, ab.xzm
+#Усложним задачу. Создадим еще две папки и смержим их в эти модули.
+
+ mkdir -p 3/3/
+echo FOREVER > 3/3/3
+ mkdir -p c/c
+echo '!!!' > c/c/c
+ mkpfs ab.$EXT c -o abc.$EXT
+ mkpfs 12.$EXT 3 -o 123.$EXT
+
+#Теперь у нас два контейнера 123.xzm abc.xzm с двойной вложенностью.
+#Смержим их друг с другом.
+mkpfs abc.$EXT 123.$EXT -o abc123.$EXT
+rm -rf 1 2 3 a b c ab.$EXT 12.$EXT abc.$EXT 123.$EXT
+
+pfsextract abc123.$EXT abc/ab 123/12 
+pfsextract -d abc123.$EXT abc/c 123/3
+pfsextract abc123/ab.$EXT a
+pfsextract abc123/12.$EXT 1
+pfsextract ab/a.$EXT
+pfsextract 12/1.$EXT
+
+echo "    abc123.$EXT:"
+pfsinfo abc123.xzm
+echo "    abc123/ab.$EXT:"
+pfsinfo abc123/ab.xzm
+echo "    abc123/12.$EXT:"
+pfsinfo abc123/12.xzm
+
+echo $(cat 1/1/1 a/a/a abc123/3/3/3 abc123/c/c/c)
+rm -rf 1 12 a ab abc123 
