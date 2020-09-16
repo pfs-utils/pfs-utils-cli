@@ -60,7 +60,7 @@ extract_simple () {
 extract_contaner () {
 #extract packages from contaner
 for m in $sourcelist ; do
-    eval echo  "package: $m    -- processing..." $devnull
+    eval echo  "submodule: $m    -- processing..." $devnull
     m=$(echo $m |sed 's#/#/submod/mount/#g')
     n="$(mkaufs || exitmsg "mkaufs error" 2)"
 	nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
