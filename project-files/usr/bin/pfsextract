@@ -33,7 +33,7 @@ $(basename $0) - Распаковщик для модулей pfs
 extract_simple () {
 #unsquashfs non component-pfs or simple squashfs  
     #[ "$sourcelist" ] && exitmsg "File '${pfs}' is not component-pfs.  Can't extract packages: $sourcelist" 1
-    if [ $i ] ; then
+    if [ $install ] ; then
 		dir="/" && mkdir -p ${PFSDIR}/install/
     else
 		[ $dir ] || dir="./"
@@ -88,7 +88,7 @@ for m in $sourcelist ; do
     done
 	cp -a $SYSMNT/aufs$nn${PFSDIR}/mount/${m}/unique/*  "${n}/" 2>/dev/null 
           
-    [ $dir ] || dir=$(basename $pfs |sed "s/\.${EXT}$//")
+    dir=$(basename $pfs |sed "s/\.${EXT}$//")
 	if [ "$nopfs" ] ; then
 		moddirname=$(basename $m)
 		#submod names may be equal
@@ -149,7 +149,7 @@ do
   case "${arg}" in
     "-o" | "--out-dir") onuserout="on";;
     "-d" | "--nopfs") nopfs=yes ;;
-    "-i" | "--install") i=yes ;;
+    "-i" | "--install") install=yes ;;
     "-h" | "--help")  HLP ;;
     "-q" | "--quiet" ) devnull='>/dev/null' ;;
     "-no-progress" | "--no-progress") noprogress="-no-progress";;
