@@ -1,4 +1,8 @@
 #!/bin/sh 
+if ! [ $1 ] ; then 
+    echo 'укажи расширение $1'
+    exit
+fi
 EXT=$1
 #Это список команд с пояснениями, выхлоп частично подрезан там от mksquashfs много лишнего.
 #Создаем пару папок из которых будум делать модули.
@@ -38,11 +42,11 @@ pfsextract ab/a.$EXT
 pfsextract 12/1.$EXT
 
 echo "    abc123.$EXT:"
-pfsinfo abc123.xzm
+pfsinfo abc123.$EXT
 echo "    abc123/ab.$EXT:"
-pfsinfo abc123/ab.xzm
+pfsinfo abc123/ab.$EXT
 echo "    abc123/12.$EXT:"
-pfsinfo abc123/12.xzm
+pfsinfo abc123/12.$EXT
 
 echo $(cat 1/1/1 a/a/a abc123/3/3/3 abc123/c/c/c)
 rm -rf 1 12 a ab abc123 
