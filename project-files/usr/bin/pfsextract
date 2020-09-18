@@ -59,6 +59,9 @@ extract_simple () {
 
 extract_contaner () {
 #extract packages from contaner
+dir=$(basename $pfs |sed "s/\.${EXT}$//")
+mkdir "$dir"
+[ "nopfs" -a "$ADDINFO" ] && pfsinfo $pfs > ${dir}/$(basename $dir).info
 for m in $sourcelist ; do
     eval echo  "submodule: $m    -- processing..." $devnull
     m=$(echo $m |sed 's#/#/submod/mount/#g')
@@ -76,7 +79,7 @@ for m in $sourcelist ; do
 	fi
 	[ -e "$SYSMNT/changes$nn/$F" ] || echo "Warning. Cannot extract $F"
     done
-       
+  
     emp="$SYSMNT/aufs$nn/${PFSDIR}/mount/$m/pfs.dirs.empty"
     [ -f "$emp" ] && cat "$emp" | while read F; do 
 	F=$(echo $F |sed s':\$::')
@@ -88,7 +91,7 @@ for m in $sourcelist ; do
     done
 	cp -a $SYSMNT/aufs$nn${PFSDIR}/mount/${m}/unique/*  "${n}/" 2>/dev/null 
           
-    dir=$(basename $pfs |sed "s/\.${EXT}$//")
+    
 	if [ "$nopfs" ] ; then
 		moddirname=$(basename $m)
 		#submod names may be equal
@@ -188,6 +191,7 @@ echo "$sourcelist"  |grep  -q "[[:alnum:]]" || unset sourcelist
 pfsInfo=$(pfsinfo $pfs)
 if ! [ "$sourcelist" ] ; then
 	if  [ $nopfs ] ; then
+		ADDINFO='yes'
 		for a in $pfsInfo ; do 
 			[ $(echo $pfsInfo |sed 's/ /\n/g' | grep ^${a}  | wc -l) -eq 1 ]  && sourcelist="$sourcelist $a"
 		done
