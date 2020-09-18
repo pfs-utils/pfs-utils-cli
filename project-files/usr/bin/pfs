@@ -122,7 +122,6 @@ mklist () {
 		dest_root="$source_root"
 	fi
 	[ $pack_name ] || pack_name="$(basename "${source_root%.$EXT}")"
-
 	dest_dir="${dest_root}${PFSDIR}/mount/${pack_name}/"
 	mkdir -p $dest_dir	
 if [ -d "${source_root}${PFSDIR}/mount" -a $(ls -1 "${source_root}${PFSDIR}/mount" 2>/dev/null |wc -l) -gt 1 ] ; then
@@ -133,8 +132,7 @@ if [ -d "${source_root}${PFSDIR}/mount" -a $(ls -1 "${source_root}${PFSDIR}/moun
 	  rm -rf ${dest_root}${PFSDIR}/mount/$submod
   done
 fi
-[ ! -z $spec_file -a -f $spec_file ] && cat $spec_file > ${dest_dir}/pfs.specs
-cat "${dest_dir}/pfs.specs" 2>/dev/null |grep -iq 'name=' || echo -e '\nname="'$pack_name'"' >> "${dest_dir}/pfs.specs"
+[ ! -z $spec_file -a -f $spec_file ] && cp "$spec_file" ${dest_dir}/
 find "${source_root}" ! -type d        | sed 's#'"$source_root"'##' |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.files" &&
 find "${source_root}"   -type d -empty | sed 's#'"$source_root"'##' |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.dirs.empty"
 [ "$depends" ] && echo "$depends" > "${dest_dir}/pfs.depends"

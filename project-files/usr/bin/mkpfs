@@ -57,7 +57,9 @@ echo "  --mkilst  add files list to simple (non contaner) module"
 echo "  --save-duplicates  при сборке контейнеров сохранять одноименные файлы из разных источников если они отличаются, "
 echo "                     при распаковке файлы будут возвращены на место"
 echo "  --mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
-
+echo "  --spec ./file  -  Добпаить файл с информацией. Только для атомарных модулей"
+echo "  --deps aaa,bbb,ccc - Добавить список зависимостей.  Только для атомарных модулей"
+echo ""
 echo "Алиасы (сокращения):"
 echo " -d | -D - Только каталоги"
 echo "	$(basename $0) -d dir ---> $(basename $0)" '$(find dir -maxdepth 1 -mindepth 1 -type d ) -o dir.$EXT'
@@ -129,7 +131,7 @@ if [ -d $sourcelist 2>/dev/null -a "$inplace" = "yes" ] ;then
 	eval echo "==== In place mode ====" $devnull
     [ "$wh" ] ||  eval  echo "=== save aufs whiteout \(.wh*\) ===" $devnull
     [ ! "$(ls -a $sourcelist)" ] && exitmsg "directory '$sourcelist' empty" 1
-	[ $make_list ] && mklist source_root=$sourcelist dest_root=$sourcelist pack_name=${userout%.$EXT} spec_file="$SPEC" depends=$DEPENDS 
+	[ $make_list ] && mklist source_root=$sourcelist dest_root=$sourcelist pack_name=${userout%.$EXT} spec_file="$SPEC" depends="$DEPENDS" 
     [ $TRIM ] && trim $sourcelist
     if echo ${userout} | grep -q "^.*\.$EXT$" ; then 
 		mksqmod $sourcelist "${userout}" && exit 0 
@@ -167,7 +169,7 @@ done
 
 if [ $(echo $sourcelist | wc -w) -eq 1 ] ;then
   # if source is only one - submodule name is $userout with no prefix (pfs,xzm,etc)
-  pack_name=$([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} )
+  pack_name=$([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} |sed -e 's/_comma_/,/g' -e 's/_equal_/=/g' -e 's/_asterisk_/\*/g' -e 's/_hash_/\#/g' )
   [ $make_list ] && mklist source_root="$i" dest_root="$n" pack_name="$pack_name" spec_file="$SPEC" depends="$DEPENDS" 
 else	
   bundles=$(find $(echo $n |sed 's#aufs#bundles#') -maxdepth 1 -mindepth 1 -type d )
