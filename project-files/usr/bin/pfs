@@ -133,7 +133,7 @@ if [ -d "${source_root}${PFSDIR}/mount" -a $(ls -1 "${source_root}${PFSDIR}/moun
   done
 fi
 [ ! -z $spec_file -a -f $spec_file ] && cp "$spec_file" ${dest_dir}/
-find "${source_root}" ! -type d        | sed 's#'"$source_root"'##' |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.files" &&
+find "${source_root}" ! -type d        | sed 's#'"$source_root"'##' |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.files"
 find "${source_root}"   -type d -empty | sed 's#'"$source_root"'##' |egrep -v '^/.wh..wh.|^'$PFSDIR'' > "${dest_dir}/pfs.dirs.empty"
 [ "$depends" ] && echo "$depends" > "${dest_dir}/pfs.depends"
 return 0 #иначе без $depends не нулевое завершение 

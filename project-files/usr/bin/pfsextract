@@ -193,7 +193,7 @@ if ! [ "$sourcelist" ] ; then
 	if  [ $nopfs ] ; then
 		ADDINFO='yes'
 		for a in $pfsInfo ; do 
-			[ $(echo $pfsInfo |sed 's/ /\n/g' | grep ^${a}  | wc -l) -eq 1 ]  && sourcelist="$sourcelist $a"
+			echo "$pfsInfo" | grep ^${a}/  || sourcelist="$sourcelist $a"
 		done
     else
 		for a in $pfsInfo ; do
