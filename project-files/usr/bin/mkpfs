@@ -87,6 +87,7 @@ for arg in $argslist
 do
   case "${arg}" in
     "-o" | "--out-file" ) onuserout="on";;
+    "--mkinfo" ) mkinfo='yes';;
     "-d" | "-D" ) ondir="on";;
     "-m" | "-M" ) onmod="on";;
     "-h" | "--help")  HLP ;exit 1;;
@@ -192,7 +193,30 @@ if [ $WH ] ; then
 	rm /tmp/allfiles-wh
 fi
 
-if echo ${userout} | grep -q "^.*\.$EXT$" ; then 
+mkinfo() {
+	local NAME PACKVER MODVER AUTHOR ALIAS
+	info=$1/${PFSDIR}/INFO
+	mkdir -p $(dirname $info)
+	[ -f "$info" ] && source $info
+	> "$info"
+	for a in NAME PACKVER MODVER MODREV AUTHOR ALIAS; do
+		eval echo -n \""Please enter $a (current: \$$a): "\"
+		read newstr
+		if ! [ -z "$newstr" ] ; then
+			eval $a="$newstr"
+		fi
+		eval echo "$a=\$$a" >> $info
+		unset newstr 
+	done
+}
+
+
+if echo ${userout} | grep -q "^.*\.$EXT$" ; then
+	if [ $mkinfo ] ;then 
+		mkinfo "$n"
+	else
+		rm -f $n/${PFSDIR}/INFO
+	fi 
 	mksqmod "${n}" "${userout}" noexit
 else
 	echo "Please wait..."

@@ -3,20 +3,9 @@ DEVNULL=''
 #INSTALL_DIR нельзя определить в pfs с aufs-n из-за рекурсии
 INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
 
-# функции getVER getREV (номер версии и номер ревизии) и строка сортировки индивидульны для дистров и 
-# могут быть переопределены в pfs или /etc/pfs.cfg, если достаточно сортировки по дате - оставить как есть или
-# возвращать зачения одинкаовые для всех модулей getVER, getREV.
-# $1 имя модуля, функция должна вернуть версию
-getVER() {
-	echo 00.00
-} 
-# $1 имя модуля, функция должна вернуть ревизию
-getREV() {
-	echo 00
-}  
 SORT_STR='-t = -bk2,2n -bk3,3n -bk4,4n'  # параметры сортировки
 
-# здесь подтянется pfs.cfg и можно переопределить из него переменные 
+# здесь подтянется pfs и можно переопределить из него переменные 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
 else 
@@ -60,8 +49,9 @@ getfile() {
 
 check_net() {
     ping -c2 ya.ru >/dev/null && return 0
-    echo "Сеть не доступна"
-    exit $LINENO
+    echo "Вероятно сеть не доступна, прервать? (y/n)"
+    read qqq 
+    [ "$qqq" == 'y' -o "$qqq" == 'Y' ] &&  exit $LINENO
 }
 
 # Сделать реполист для папки $1
@@ -73,7 +63,8 @@ check_net() {
 # $1 папка
 # $2 реполист вне репы
 mkrepolist() {
-	local reponame REPOLIST DATE SIZE VER REV MD5 LOCAL a
+	local reponame REPOLIST DATE SIZE VER REV MD5 LOCAL a NAME PACKNAME \
+	MODVER MODREV ALIASES PACKALIASES AUTHOR MODAUTHOR
 	reponame=$(realpath $1)
 	REPOLIST="${reponame}/_REPOLIST"
 	if [ $2 ] ; then
@@ -87,13 +78,22 @@ mkrepolist() {
 		else 
 			SUBPATH_a=$(echo $a |sed "s:${reponame}/::")
 		fi
-		DATE='' ; SIZE='' ; VER='' ; REV='' ; MD5=''
+		unsquashfs -d /tmp/info "$a" -e ${PFSDIR}/INFO >/dev/null 2>&1
+		source /tmp/info/${PFSDIR}/INFO 2>/dev/null
 		DATE=$(ls -la $a --time-style=+%F |cut -d " " -f6)
 		SIZE=$(du -h $a |cut -f1)
-		VER=$(getVER $(basename $a))
-		REV=$(getREV $(basename $a))
+		VER=$MODVER 
+		[ -z $VER ] && VER=0
+		REV=$MODREV 
+		[ -z $REV ] && REV=0
+		PACKNAME=$NAME ; [ -z $PACKNAME ] && PACKNAME=$(basename $a)
+		PACKALIASES=$ALIAS ; [ -z $PACKALIASES ] && PACKALIASES="$PACKNAME" 
+		MODAUTHOR=$AUTHOR ; [ -z $MODAUTHOR ] && MODAUTHOR='unknown'
 		MD5=$(md5sum $a |awk '{print $1}')
-		echo "$SUBPATH_a VER=$VER REV=$REV DATE=$DATE SIZE=$SIZE MD5=$MD5 " >> $REPOLIST
+		echo "$SUBPATH_a VER=$VER REV=$REV DATE=$DATE NAME=$PACKNAME \
+		ALIASES=$PACKALIASES AUTHOR=$MODAUTHOR SIZE=$SIZE MD5=$MD5 " >> $REPOLIST
+		unset VER REV NAME PACKNAME MODVER MODREV DATE SIZE MD5 ALIASES PACKALIASES AUTHOR MODAUTHOR
+		rm -rf /tmp/info 2>/dev/null
 	done 
 	if [ "$LOCAL" != yes ] ; then
 		gzip $REPOLIST 2>/dev/null && REPOLIST=${REPOLIST}.gz
@@ -194,12 +194,15 @@ add_repo_path() {
 	cat /tmp/tmpfilelist | sed -r '/^[a-z]{3,6}:\/\//!s#^#'$path'/#' >  $1
 	rm -f /tmpfilelist
 }
-
+HLP() {
+# Затычка
+cat $0 |egrep '\-.*\|.*\-\-.*\;\;'
+}
 #################### К О Д ##############################
 for arg in $@
 do
   case "${arg}" in
-	"-u" | "--updete-media" ) UPDATE_M="on";;
+    "-u" | "--update-media" ) UPDATE_M="on";;
     "-f" | "--force" ) FORCE="on";;
     "-i" | "--install" ) INSTALL="on"; LOAD="on";;
     "-l" | "--load" ) LOAD="on";;
@@ -241,12 +244,19 @@ fi
 :> ${WORK_DIR}/download.lst
 :> ${WORK_DIR}/requires.lst
 for reg in $sourcelist ; do
-	MODPATH=''; MODULE=''; MODULES=''; MAYBE='' ; MD5=''
+	unset MODPATH MODULE  MODULES MAYBE MD5
 	AUFS_FOUND=$(aufs-n --raw '$bname_source' |grep -w "$reg")
-	[ -f "$reg" ] && MODULE="$reg"
+	# если передано имя модуля, то достаем из него файл INFO и ищем NAME вместо поиска переданного
+	# это для обновления 
+	if [ -f "$reg" ] ; then 
+		MODULE="$(basename $reg)"
+		unsquashfs -d /tmp/info "$reg" -e ${PFSDIR}/INFO >/dev/null 2>&1
+		[ -f /tmp/info/${PFSDIR}/INFO ] && reg=$(cat /tmp/info/${PFSDIR}/INFO |grep NAME |sed 's/NAME=//')
+		rm -rf /tmp/info
+	fi
 	[ ! -f "$reg" ] && MODULE=$(find_mods $reg new)
 	[ ! -f "$reg" ] && MODULES=$(find_mods $reg all)
-	[ -z "$MODULE" ] && MAYBE=$(find_alias $reg $ALIASES)
+	[ -z "$MODULE" ] && MAYBE=$(find_alias $reg $ALIASCFG)
 	MODPATH="$(echo $MODULE |cut -d " " -f1)"
 	echo $MODULE |grep -q 'MD5=' && MD5=$(echo $MODULE |sed 's/.*MD5=//' |cut -f1)
 	if [ "$FORCE" = "on" ] ; then
@@ -256,10 +266,16 @@ for reg in $sourcelist ; do
 		fi
 		echo "$MODPATH" "$MD5" >> ${WORK_DIR}/download.lst
 	elif [ "$GUIMODE" = "on" ] ; then
-		echo "maybe:>> $MAYBE"  
+		echo "maybe:>> $MAYBE"   
 		echo "new:>> $MODPATH"
 		for b in $MODULES ; do echo "old:>> $b" ; done
 	else
+		if [ -n "$AUFS_FOUND" ] ; then
+			# если подключен такой модуль предупреждаем
+			echo "Модуль подходящий под шаблон $reg - $AUFS_FOUND подключен в данный момент"
+			read qqq 
+			[ "$qqq" == 'y' -o "$qqq" == 'Y' ] &&  exit $LINENO
+		fi
 		if [ -z "$MODULE" ] ; then
 			if [ -z "$MAYBE" ] ; then
 				echo "$reg Не найден в репозитории. Измените шаблон,повторите поиск"
@@ -271,7 +287,7 @@ for reg in $sourcelist ; do
 		else
 			if [ $(echo $MODULES |wc -w) -ge 1 ] ; then
 				echo -e "\nПодходят под шаблон - \"$reg\":"
-				for b in "$MODULES" ; do echo "==> $b" ; done
+				for b in $MODULES ; do echo "==> $b" ; done
 			fi
 			echo ''
 			echo -e "\nВероятно вы искали этот модуль:" 

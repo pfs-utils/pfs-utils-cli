@@ -191,7 +191,7 @@ echo "$sourcelist"  |grep  -q "[[:alnum:]]" || unset sourcelist
 pfsInfo=$(pfsinfo $pfs)
 if ! [ "$sourcelist" ] ; then
 	if  [ $nopfs ] ; then
-		ADDINFO='yes'
+		echo "$pfsInfo" |grep -q '\/' &&  ADDINFO='yes'
 		for a in $pfsInfo ; do 
 			echo "$pfsInfo" | grep ^${a}/  || sourcelist="$sourcelist $a"
 		done

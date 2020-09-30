@@ -57,7 +57,8 @@ if [ "${pack}" ]; then
 	
 	if [ "$ispfs" = "yes" ] ; then
 		Deps=$(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f -name pfs.depends -exec cat "{}" \; |sort |uniq |grep -v "^$" | tr "\n" "   ")
-		Packs=$(find /tmp/squashfs/${bpack} | grep ${PFSDIR}/.*/pfs.files |sed -e "s:/tmp/squashfs/${bpack}${PFSDIR}/mount/::" -e 's:/submod/mount::g' -e 's:/pfs.files$::' -e 's#/#:#g' | tr "\n" "   ")
+		Packs=$(find /tmp/squashfs/${bpack} | grep ${PFSDIR}/.*/pfs.files |sed -e "s:/tmp/squashfs/${bpack}${PFSDIR}/mount/::" -e 's:/submod/mount::g' -e 's:/pfs.files$::' -e 's#/#'$DELIMETER'#g' | tr "\n" "   ")
+		[ -f /tmp/squashfs/${bpack}${PFSDIR}/INFO ] && cat /tmp/squashfs/${bpack}${PFSDIR}/INFO |sed 's/=/: /'
 		echo "Dependenses: $Deps"
 		echo "Modules: $Packs"
 		echo ''
