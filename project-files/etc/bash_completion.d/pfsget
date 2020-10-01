@@ -1,0 +1,14 @@
+_pfsget_command(){ 
+	source `which pfs`
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    LIST="$cur" 
+	if [[ ${cur} == -* ]] ; then 
+        LIST="$(_parse_help pfsget)"
+	else 
+		[ -f ${WORK_DIR}/sfs-full-repolist ] && \
+		LIST="$(cat ${WORK_DIR}/sfs-full-repolist |sed -e 's#^.*NAME=##' -e 's# .*$##')"
+    fi
+	COMPREPLY=( $(compgen -W "$LIST" -- ${cur}) )
+}
+complete -F _pfsget_command pfsget

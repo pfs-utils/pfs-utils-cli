@@ -1,0 +1,14 @@
+_pfsextract_command(){ 
+	source `which pfs`
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}" 
+	if [[ ${cur} == -* ]] ; then 
+        LIST="$(_parse_help pfsextract)"
+	elif [[ ${cur} == [[:alnum:]]* ]] ; then 
+        LIST="$(ls -1 ./ |grep .$EXT$)"
+	else  
+		LIST="$(ls -1d ${cur}* 2>/dev/null)"
+    fi
+	COMPREPLY=( $(compgen -W "$LIST" -- ${cur}) )
+}
+complete -F _pfsextract_command pfsextract
