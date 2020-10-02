@@ -1,6 +1,6 @@
 _pfsunload_command(){ 
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}" 
+     _get_comp_words_by_ref cur prev words cword
 	if [[ ${cur} == -* ]] ; then 
         LIST="$(_parse_help pfsunload)"
 	else  

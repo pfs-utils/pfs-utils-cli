@@ -1,13 +1,18 @@
+
 _mkpfs_command(){ 
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}" 
+    HLP=mkpfs
+    _get_comp_words_by_ref cur prev words cword
+	echo "${words[@]}" |grep  -q '\-\-mksqfs' && HLP=mksquashfs
 	if [[ ${cur} == -* ]] ; then 
-        LIST="$(_parse_help mkpfs)"
-	elif [[ ${cur} == [[:alnum:]]* ]] ; then 
-        LIST="$(ls -1 ./)"
-	else  
-		LIST="$(ls -1d ${cur}* 2>/dev/null)"
+        LIST="$(_parse_help $HLP)"
+	elif [[ ${prev} == '--mksqfs' ]] ; then 
+        LIST="$(_parse_help $HLP)"
+	else 
+        _filedir
+        return 0
     fi
 	COMPREPLY=( $(compgen -W "$LIST" -- ${cur}) )
+	return 0
 }
 complete -F _mkpfs_command mkpfs

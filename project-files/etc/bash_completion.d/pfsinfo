@@ -1,13 +1,14 @@
 _pfsinfo_command(){ 
 	source `which pfs`
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}" 
+    _get_comp_words_by_ref cur prev words cword 
 	if [[ ${cur} == -* ]] ; then 
         LIST="$(_parse_help pfsinfo)"
 	elif [[ ${cur} == [[:alnum:]]* ]] ; then 
         LIST="$(ls -1 ./ |grep .$EXT$)"
 	else  
-		LIST="$(ls -1d ${cur}* 2>/dev/null)"
+		_filedir
+		return
     fi
 	COMPREPLY=( $(compgen -W "$LIST" -- ${cur}) )
 }
