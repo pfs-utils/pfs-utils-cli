@@ -66,14 +66,16 @@ done
 get_layers () {
 layers=""
 local layers
-[ "$MASK" ] && layers=$(aufs-n --hidetop  --reverse --raw '$bname_source $bundle' |grep "$MASK" | awk '{print $2}')
-#[ "$MLIST" ] && layers="$layers $(echo "$MLIST" |sed 's/[\,]/ /g')"
-[ "$MLIST" ] && layers="$layers $(echo "$MLIST" | sed 's/#[^,]\+,\?//g; s/,$//' |sed 's/[\,]/ /g')"
-#[ "$FLIST" ] && layers="$layers $(cat $FLIST)"
-[ "$FLIST" ] && layers="$layers $(grep -v '^#' $FLIST)"
-[ -z  "$layers"  ] && layers=$(aufs-n --hidetop --reverse --raw '$bname_source $bundle'  | awk '{print $2}')
+if  [ "$MASK" -o "$MLIST" -o "$FLIST" ] ; then
+	[ "$MASK" ] && layers=$(aufs-n --hidetop  --reverse --raw '$bname_source $bundle' |grep "$MASK" | awk '{print $2}')
+	[ "$MLIST" ] && layers="$layers $(echo "$MLIST" | sed 's/#[^,]\+,\?//g; s/,$//' |sed 's/[\,]/ /g')"
+	[ "$FLIST" ] && layers="$layers $(grep -v '^#' $FLIST)"
+else
+	layers=$(aufs-n --hidetop --reverse --raw '$bundle')
+fi
+echo $layers |grep [[:alnum:]] && return
 for item in $layers ; do 
-[ -e $item ] && echo $item || exitmsg "	layer:   $item is not exists" 4
+	[ -e $item ] && echo $item 
 done
 }
 
@@ -95,6 +97,7 @@ do
     "-b" | "--bind") bind="yes" ;;
     "--mlist" ) mlist="yes" ;;
     "--flist" ) flist="yes" ;;
+    "--showlayers" ) SHOWLAYERS=yes ;;
     "-c" | "--contaner" ) contaner=yes;;
     "--notrim" ) TRIM="";;
     "-w" | "--wh" ) WH="--wh";;
@@ -149,12 +152,18 @@ allow_only_root
 
 [ $CONTANER ] &&  CHROOT="$CONTANER"
 
+if [ $SHOWLAYERS ] ; then 
+	get_layers
+	exit
+fi
+
 echo "Using:  $CHROOT"
 #Имя обязательно, так как зацепиться не за что
 [ $NOMOD ] && NAME=nomod
 [ $NAME ] || read -p "Please enter name for module:      " NAME  
 [ -f "${NAME}" ] && exitmsg "Output file '$NAME' already exist" 6
 [ -d "${NAME}" ] && exitmsg "Output diectory '$NAME' already exist" 6
+
 
 #make root aufs
 root_br="$(mkaufs || exitmsg "mkaufs error" 2)"
@@ -163,7 +172,9 @@ nn="$(echo "$root_br" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 echo "aufs number: $nn"
 
 #add sources as aufs layers
-for  i in $(get_layers) ;do
+layers=$(get_layers)
+echo $layers |grep -q [[:alnum:]] || exitmsg "Empty layers list" 7
+for  i in $layers ;do
     eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
 done 
 
@@ -206,8 +217,6 @@ fi
 
 if [ $CHROOT = "nspawn" ] ; then
 md5sum /bin/bash | awk '{print $1}' > $root_br/etc/machine-id #  nspawn do not works without machine-id
-#[ "$SCRIPT" ] || systemd-nspawn -D $root_br   -M ${NAME%.$EXT} --setenv=DISPLAY="$DISPLAY" --bind=/tmp/.X11-unix $command 
-#[ "$SCRIPT" ] && systemd-nspawn -D $root_br   -M ${NAME%.$EXT} --setenv=DISPLAY="$DISPLAY" --bind=/tmp/.X11-unix /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
 [ "$SCRIPT" ] || systemd-nspawn $BOOT -D $root_br   -M ${NAME%.$EXT} --setenv=DISPLAY="$DISPLAY" --bind=/tmp/.X11-unix:/tmp/.X11-unix $command 
 [ "$SCRIPT" ] && systemd-nspawn $BOOT -D $root_br   -M ${NAME%.$EXT} --setenv=DISPLAY="$DISPLAY" --bind=/tmp/.X11-unix /var/lib/chroot2pfs/$(basename "${NAME%.$EXT}")/$(basename $SCRIPT)
 elif [ $CHROOT = "chroot" ] ; then
