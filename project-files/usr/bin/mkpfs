@@ -142,7 +142,6 @@ if [ -d $sourcelist 2>/dev/null -a "$inplace" = "yes" ] ;then
 		rmdir ${userout} 2>/dev/null
 		[ -d "${userout}" ] && exitmsg "Output diectory already exist" 6
 		mkdir -p "$(dirname ${userout})"
-		echo "cp -fax "$sourcelist" "${userout}""
 		cp -fax $sourcelist "${userout}" && exit 0
 		exitmsg "copy files error" 2
 	fi
