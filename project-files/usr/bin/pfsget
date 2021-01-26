@@ -49,7 +49,7 @@ getfile() {
 
 check_net() {
 	ping -c2 ya.ru >/dev/null && return 0
-	wget ya.ru -O - 2>/dev/null |grep -q DOCTYPE && && return 0 
+	wget ya.ru -O - 2>/dev/null |grep -q DOCTYPE && return 0 
     echo "Вероятно сеть не доступна, прервать? (y/n)"
     read qqq 
     [ "$qqq" == 'y' -o "$qqq" == 'Y' ] &&  exit $LINENO
