@@ -175,7 +175,7 @@ disktypeb () {
 if disktype "$1" 2>/dev/null ; then 
 	return 0
 else	
-	ftest=$(file $(basename "$1"))
+	ftest=$(file "$1")
 	if $(echo "$ftest" |egrep -qi cannot.*open) ; then
 		echo "$ftest"
 		return 1
