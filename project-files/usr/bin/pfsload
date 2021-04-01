@@ -38,7 +38,7 @@ echo  "${copyramdir}/$(basename ${fsfile})" | sed 's://:/:g'
 
 #get opts
 sourcelist=""
-for arg in $@
+for arg in "$@"
 do
   case "${arg}" in
     "-u"   | "--upper") mntmode="upper";;
@@ -48,7 +48,7 @@ do
     "--ro" | "--read-only" ) romode="yes";;
     "-h"   | "--help") HLP; break;;
     "-"*[A-Za-z]*) exitmsg "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" 1 ;;
-    *) sourcelist="${sourcelist} ${arg}";;
+    *) sourcelist="${sourcelist},${arg}";;
    esac
 done
 
@@ -56,7 +56,8 @@ done
 
 allow_only_root
  
-for  infile in $sourcelist ; do
+echo $sourcelist |sed 's/,/\n/' |while read infile  ; do
+[ -z "$infile" ] && continue
 if [ -f "${infile}" ]; then
   fsfile="$(realpath "${infile}")"
   [ $toram ] && fsfile=$(toram)
@@ -109,6 +110,7 @@ fi
 
 if [ ${status} -eq 0 ]; then
   mkdir -p "${mountpoint}"
+  
   sync
   case "${devtype}" in
     "file" )  if [ "${fstype}" = "squashfs" ]; then
@@ -137,27 +139,27 @@ if [ ${status} -eq 0 ]; then
     fi
     status=$?
     sync
+    
     if [ ${status} -eq 0 ]; then
-      if [ "${fupdate}" != "no" ] ; then 
-		pfs_update_caches "${mountpoint}" 
-	  fi 
+        [ "${fupdate}" != "no" ] && pfs_update_caches "${mountpoint}" 
     else
       umountb -d "${mountpoint}" >/dev/null
 	  rmdir "${mountpoint}" >/dev/null
 	  exitmsg "AUFS error!" ${status}
     fi
+    
   else
     losetupb -d /dev/loop${freeloop}
     rmdir "${mountpoint}" >/dev/null
 	exitmsg "Unable to mount \"${fsfile}\" in \"${mountpoint}\"." ${status}
   fi
+  
 else
   rmdir "${mountpoint}" 2>/dev/null
   exitmsg "Mount error!" ${status}
 fi
-sync
-done
 
+sync
 for script in $(find $(dirname $0) -maxdepth 1 -name "runpfsload*" -user root) ; do 
 	$script "${mountpoint}" &
 done
@@ -166,4 +168,5 @@ for dep in $requires ; do
 	echo "need: $dep"
 done
 
+done
 exit 0

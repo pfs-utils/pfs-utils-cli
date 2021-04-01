@@ -269,7 +269,6 @@ return 0
 
 addlayer () {
 #add new aufs layer, $1 - aufs number, $2 - layer source
-NEWLAYER=$(realpath "$2") || return 1
 AUFSMNT="/"
 case "$1" in
 	0) shift;;
@@ -283,6 +282,7 @@ case "$1" in
 	;;
 	*) return 3
 esac
+NEWLAYER="$(realpath "$(echo $@ )" )" || return 1
 [ "$(grep aufs$N /proc/mounts)" ] || return 4
 MODNAME="$(basename "$NEWLAYER" |sed -e 's/,/_comma_/g' -e 's/=/_equal_/g' -e 's/\*/_asterisk_/g' -e 's/\#/_hash_/g')"
 #if df --output=fstype $NEWLAYER |grep -q ^aufs$ ;then
@@ -312,7 +312,7 @@ mksqmod(){
 #make module
 excludes=""
 [ -f /tmp/mkpfs_excludes ] && excludes="-ef /tmp/mkpfs_excludes" 
-eval mksquashfs "${1}" "${2}" ${compression} ${excludes} -noappend ${noprogress} ${useproc} -wildcards $wh $devnull
+eval mksquashfs "${1}" \""${2}"\" ${compression} ${excludes} -noappend ${noprogress} ${useproc} -wildcards $wh $devnull
 exitmsg "error create squashfs module" $? $3
 rm /tmp/mkpfs_excludes 2>/dev/null
 return 0

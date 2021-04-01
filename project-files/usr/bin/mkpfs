@@ -74,18 +74,17 @@ exitmsg "Kernel is not support squashfs/aufs. Work only 'mkpfs -l'" $?
 }
 
 #parsing for "--mksqfs" arg
-argslist="$@"
-if  echo $argslist |grep -q "\-*mksqfs .*" ; then
-	compression="$(echo $@ |sed 's/^.*\-*mksqfs//')"
-	argslist="$(echo $@ |sed 's/\-*mksqfs.*$//')"
+if  echo "$@" |grep -q "\-*mksqfs .*" ; then
+	compression="$(echo "$@" |sed 's/^.*\-*mksqfs//')"
 fi
 
 #get opts
 sourcelist=""
 inplace=""
-for arg in $argslist
-do
-  case "${arg}" in
+sep=''
+for arg in "$@"; do
+    [ "$arg" = '-mksqfs' -o "$arg" = '--mksqfs' ] && break
+  case "$arg" in
     "-o" | "--out-file" ) onuserout="on";;
     "--mkinfo" ) mkinfo='yes';;
     "-d" | "-D" ) ondir="on";;
@@ -110,7 +109,8 @@ do
        elif [ "${spec}" = "yes" ]; then SPEC="${arg}"
        elif [ "${deps}" = "yes" ]; then DEPENDS="${arg}"
        elif [ "${numproc}" = "on" ]; then useproc="-processors ${arg}"
-       else sourcelist="${sourcelist} "${arg}""; fi
+       else sourcelist="${sourcelist}${sep}"${arg}""
+       sep='#' ;fi
        onuserout="off"; usepkname="off"; usindlib="off"; numproc="off"; deps="off"; spec="off" ;;
   esac
 done
@@ -123,7 +123,7 @@ allow_only_root
 [ "$inplace" ] || check_kernel
 
 if [ "${userout}_" = "_" ] ; then 
-  first="$(basename $(echo $sourcelist | awk '{print $1}'))" 
+  first="$(basename "$(echo "$sourcelist" | awk -F# '{print $1}')")" 
   userout="$(echo ${first%.$EXT}).$EXT" 
 fi
 
@@ -149,27 +149,27 @@ exit
 fi
 
 #test sources, source must be dir or squashfs module
-for source in $sourcelist ;do
+echo $sourcelist |sed 's/#/\n/g' |while read source ; do
 	[ -d "$source" ] && continue
 	[ "$(fs_type "$source")" = "squashfs" ] && continue
 	exitmsg "Type of source \"$source\" is not correct" 2
 done	
 
-[ -d "$sourcelist" ] && { ls "$sourcelist" 2>/dev/null || exitmsg "\"`echo $sourcelist`\" is empty" 2 ; }
-
+[ -d "$sourcelist" ] && { ls "$sourcelist" |grep -q . 2>/dev/null || exitmsg "\"`echo $sourcelist`\" is empty" 2 ; }
 #make root aufs
 n="$(mkaufs || exitmsg "mkaufs error" 2)"
 nn="$(echo "$n" | sed -n 's/^.*\([0-9]\)$/\1/p')"
 [ -d "$n" ] || exitmsg "error mounting aufs" 3
 
 #add sources as aufs layers
-for  i in $sourcelist ;do
+
+echo $sourcelist |sed 's/#/\n/g' |while read i ; do
     eval addlayer "$nn" "$i" "$devnull" || exitmsg "can't insert layer to aufs $nn" 5
 done 
 
-if [ $(echo $sourcelist | wc -w) -eq 1 ] ;then
+if ! echo $sourcelist |grep '#' ;then
   # if source is only one - submodule name is $userout with no prefix (pfs,xzm,etc)
-  pack_name=$([ $(echo $sourcelist  |wc -w) -eq 1 ] && echo ${userout%.$EXT} |sed -e 's/_comma_/,/g' -e 's/_equal_/=/g' -e 's/_asterisk_/\*/g' -e 's/_hash_/\#/g' )
+  pack_name=$(echo ${userout%.$EXT} |sed -e 's/_comma_/,/g' -e 's/_equal_/=/g' -e 's/_asterisk_/\*/g' -e 's/_hash_/\#/g' )
   [ $make_list ] && mklist source_root="$i" dest_root="$n" pack_name="$pack_name" spec_file="$SPEC" depends="$DEPENDS" 
 else	
   bundles=$(find $(echo $n |sed 's#aufs#bundles#') -maxdepth 1 -mindepth 1 -type d )
@@ -210,7 +210,7 @@ mkinfo() {
 }
 
 
-if echo ${userout} | grep -q "^.*\.$EXT$" ; then
+if echo "${userout}" | grep -q "^.*\.$EXT$" ; then
 	if [ $mkinfo ] ;then 
 		mkinfo "$n"
 	else
