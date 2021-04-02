@@ -289,7 +289,7 @@ MODNAME="$(basename "$NEWLAYER" |sed -e 's/,/_comma_/g' -e 's/=/_equal_/g' -e 's
 if [ "$(cat /proc/mounts |egrep '^'`df "$NEWLAYER" |tail -1 |cut -f1 -d " "`' ' |cut -f3 -d " " |uniq)" = aufs ];then
 	[ "$(grep $SYSMNT/tmpfs$N /proc/mounts)" ] || ( mkdir $SYSMNT/tmpfs$N && mount -t tmpfs tmpfs $SYSMNT/tmpfs$N )
 	cp -auPR "$NEWLAYER" "$SYSMNT/tmpfs$N/"
-	NEWLAYER="${SYSMNT}/tmpfs${N}/$(basename $NEWLAYER)"
+	NEWLAYER="${SYSMNT}/tmpfs${N}/$(basename "$NEWLAYER")"
 fi
 case $(file -b "$NEWLAYER") in
 	*directory) 
@@ -305,7 +305,7 @@ case $(file -b "$NEWLAYER") in
 	*) return 5 ;;
 esac
 mount -o remount,add:1:"$NEWLAYER"=ro+wh "$AUFSMNT" || return 5
-echo $NEWLAYER
+echo "$NEWLAYER"
 }
 
 mksqmod(){
