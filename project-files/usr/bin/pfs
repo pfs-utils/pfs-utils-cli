@@ -232,8 +232,8 @@ mount -t aufs -o dirs=/$SYSMNT/changes$N/=rw aufs /$SYSMNT/aufs$N && echo "$SYSM
 
 delaufs () {
 #remove aufs from $1 to $2
-[ $1 ] || return 2
-End="$1" ; [ $2 ] && End="$2"
+[ "$1" ] || return 2
+End="$1" ; [ "$2" ] && End="$2"
 for N in $( seq $1 $End ) ; do
 	for tm in {sys,proc,dev}; do
 		while grep $SYSMNT/aufs$N/$tm /proc/mounts; do
@@ -251,7 +251,7 @@ fi 2>/dev/null
 if [ -d $SYSMNT/bundles$N ]; then
 	ls -1A $SYSMNT/bundles$N | while read D
 	do
-		umount -d $SYSMNT/bundles$N/$D && 	rmdir $SYSMNT/bundles$N/$D
+		umount -d $SYSMNT/bundles$N/"$D" && 	rmdir $SYSMNT/bundles$N/"$D"
 	done
 	 rmdir $SYSMNT/bundles$N
 fi 2>/dev/null

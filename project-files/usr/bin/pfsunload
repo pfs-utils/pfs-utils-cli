@@ -36,7 +36,7 @@ allow_only_root
 if [ -f "${infile}" ] ; then 
 	findit="[[:punct:]]$(basename $(readlink -e "${infile}"))$" 
 	checksfsxzb >/dev/null || exitmsg "Kernel not support PFS!" 3
-elif [ "$(echo $infile | sed 's/^[[:digit:]].$/digit/')" = "digit" ] ; then 
+elif [ "$(echo "$infile" | sed 's/^[[:digit:]].$/digit/')" = "digit" ] ; then 
 	findit="^$infile[[:space:]]"
 else
 	findit="[[:punct:]]$(basename "${infile%.$EXT}").${EXT}$"
@@ -44,7 +44,7 @@ fi
 #echo $findit
 #mountpoint="${prefixmp}${fsname}"
 #mountpoint="$(awk  '{print $2}' /proc/mounts | grep  "${fsname}" )"
-mountpoint=$(aufs-n --hidetop --raw '$n $bundle' |grep "$findit" |awk '{print $2}' )
+mountpoint=$(aufs-n --hidetop --raw '$n#$bundle' |grep "$findit" |awk -F# '{print $2}' )
 if [ -d "${mountpoint}" ]; then
   sync
   mountb -t aufs -o remount,del:"${mountpoint}"/ aufs /  2>/dev/null

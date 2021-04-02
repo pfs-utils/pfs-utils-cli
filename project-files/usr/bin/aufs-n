@@ -45,6 +45,7 @@ fi
 while true ;  do 
 	if [ $reverse ] ; then
 		a="$( cat /sys/fs/aufs/si_${prefix}/br$MAX 2>/dev/null)"
+		a="$(echo -e "$a")"
 		[ "$MAX" -lt "$N" ] && break
 		[ $hidetop ] && [ "$MAX" -eq  "$N"  ] && break
 		n=$(seq -w 0 99 |sed -n "$(( $MAX + 1 ))p") # needed 01 02 03, not 1 2 3
@@ -52,15 +53,16 @@ while true ;  do
 		
  	else
 		a="$( cat /sys/fs/aufs/si_${prefix}/br$N 2>/dev/null)"
-		[ $a ] || break
+		a=$(echo -e "$a")
+		[ "$a" ] || break
 		N=$(expr $N + 1)
 		n=$(seq -w 0 99 |sed -n "${N}p") # needed 01 02 03, not 1 2 3
 	fi
 		
-	layer_perm=$(echo $a |awk -F=  '{print $2}')
-    bundle=$(echo $a |awk -F= '{print $1}')
-    bundle_perm=$( [ -w $bundle ] && echo rw || echo ro )
-    loop=$(findmnt  $bundle -o SOURCE | tail -n1  | tr -d '],['  ) ; [ $loop ] || loop=$(df $bundle |tail -n1 | awk '{print $1}')
+    layer_perm="$(echo "$a" |awk -F=  '{print $2}')"
+    bundle="$(echo "$a" |awk -F= '{print $1}')"
+    bundle_perm="$( [ -w "$bundle" ] && echo rw || echo ro )"
+    loop=$(findmnt  "$bundle" -o SOURCE | tail -n1  | tr -d '],['  ) ; [ $loop ] || loop=$(df "$bundle" |tail -n1 | awk '{print $1}')
     source=$(losetupb |grep  "$loop " |awk '{print $6}') ; [ $source ] || source=$loop
     if [ $human ] ; then 
       printf %3s "$n "; 

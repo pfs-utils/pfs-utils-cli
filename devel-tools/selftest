@@ -118,11 +118,12 @@ m="$m\nmkpfs -m=		$MKPFSm"
 rm -r testmodule 2>/dev/null
 [ "$MKPFSm" != "OK" ] && ex
 
+
 echo "############# pfsextract -d##############"
 pfsextract -d testmodule.${EXT} && [ -f testmodule/first/111/file ] && \
 [ -L testmodule/second/222/symlink ]  &&  [ -f 'testmodule/second/222/test +=:.,' ] && PFSEXTRACTd=OK
 m="$m\npfsextract -d=		$PFSEXTRACTd"
-[ "$PFSEXTRACTd" != "OK" ] && ex
+[ "$PFSEXTRACTd" != "OK" ] && exit
 
 echo "############# mkpfs -d ##############"
 rm -r ./testmodule.${EXT} 2>/dev/null

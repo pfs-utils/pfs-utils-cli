@@ -10,12 +10,14 @@ fi
 
 D(){
     sourcelist="$(find "$1" -maxdepth 1 -mindepth 1 -type d |sort)"
+    sourcelist=$(echo $sourcelist |sed 's/\ /#/g')
     [ "$sourcelist" ] || exitmsg "no directory in '$2'" 1
     ondir=
     [ "${userout}_" = "_" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").$EXT"
 }
 M(){
     sourcelist="$(find "$1" -maxdepth 1 -mindepth 1 -type f |egrep ".pfs$|.xzm$|.sfs$|.squashfs$|.$EXT$" |sort)"
+    sourcelist=$(echo $sourcelist |sed 's/\ /#/g')
     [ "$sourcelist" ] || exitmsg "no modules in '$2'" 1
     onmod=
     [ "${userout}_" = "_" ] && [ ! "`echo "$arglist" |grep "\-o "`" ] && userout="./$(basename "$1").$EXT"
@@ -116,6 +118,7 @@ for arg in "$@"; do
 done
 
 [ "$sourcelist" ] || HLP 
+#echo "Sources: $sourcelist"
 [ "$inplace" = "yes" -a  "$WH"  != "yes" ] && wh='-wildcards -e "... /.wh.*"'
 
 allow_only_root
