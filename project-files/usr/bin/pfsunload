@@ -34,14 +34,13 @@ done
 allow_only_root
 
 if [ -f "${infile}" ] ; then 
-	findit="[[:punct:]]$(basename $(readlink -e "${infile}"))$" 
-	checksfsxzb >/dev/null || exitmsg "Kernel not support PFS!" 3
+	findit="[[:punct:]]$(basename "$(realpath "${infile}")" )$"
 elif [ "$(echo "$infile" | sed 's/^[[:digit:]].$/digit/')" = "digit" ] ; then 
 	findit="^$infile#"
 else
 	findit="[[:punct:]]$(basename "${infile%.$EXT}").${EXT}$"
 fi
-#echo $findit
+#echo --$findit
 #mountpoint="${prefixmp}${fsname}"
 #mountpoint="$(awk  '{print $2}' /proc/mounts | grep  "${fsname}" )"
 mountpoint=$(aufs-n --hidetop --raw '$n#$bundle' |grep "$findit" |awk -F# '{print $2}' )
