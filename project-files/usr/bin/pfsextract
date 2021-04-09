@@ -73,9 +73,10 @@ for m in $sourcelist ; do
     cat "${n}${PFSDIR}/mount/${m}/pfs.files" | while read F; do 
 	touch "$n$F" 
 	if ! [ -e "$SYSMNT/changes$nn/$F" ] ; then
-		pushd "$bundle" >/dev/null
+		CPWD=$(pwd)
+		cd  "$bundle" >/dev/null
 		cp -a --parents "$(echo "$F" |sed 's:^/::')" "${n}/"
-		popd >/dev/null
+		cd $CPWD  >/dev/null
 	fi
 	[ -e "$SYSMNT/changes$nn/$F" ] || echo "Warning. Cannot extract $F"
     done
