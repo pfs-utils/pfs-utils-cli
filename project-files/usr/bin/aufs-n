@@ -45,7 +45,8 @@ fi
 while true ;  do 
 	if [ $reverse ] ; then
 		a="$( cat /sys/fs/aufs/si_${prefix}/br$MAX 2>/dev/null)"
-		a="$(echo -e "$a")"
+		# need real "/bin/echo" not shell built in
+		a="$(env echo -e "$a")"
 		[ "$MAX" -lt "$N" ] && break
 		[ $hidetop ] && [ "$MAX" -eq  "$N"  ] && break
 		n=$(seq -w 0 99 |sed -n "$(( $MAX + 1 ))p") # needed 01 02 03, not 1 2 3
@@ -53,7 +54,7 @@ while true ;  do
 		
  	else
 		a="$( cat /sys/fs/aufs/si_${prefix}/br$N 2>/dev/null)"
-		a=$(echo -e "$a")
+		a=$(env echo -e "$a")
 		[ "$a" ] || break
 		N=$(expr $N + 1)
 		n=$(seq -w 0 99 |sed -n "${N}p") # needed 01 02 03, not 1 2 3
