@@ -1,6 +1,6 @@
 #!/bin/sh
 #Unmount filesystem from AUFS
-#VERSION 4.2
+#VERSION 4.4
 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -11,7 +11,7 @@ fi
 HLP () {
   echo "Usage: $(basename "$0") FYLESYSTEM (squashfs module, dir, iso, img, etc) or layer number (see aufs-n)"
   echo "-n  --no-update  - do not update icon caches, fonts, etc"
-  echo "-s  --saveram    - do not remoove module from RAM after unmounting" 
+  echo "-s  --saveram    - do not remove module from RAM after unmounting" 
   echo "-v               - verbose output" 
   echo "-h  --help       - this help"
   exit 2

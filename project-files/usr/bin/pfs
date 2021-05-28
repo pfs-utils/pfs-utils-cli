@@ -3,7 +3,7 @@
 #Authors: puppyrus.org : Zay, DdShurick, sfs
 #Author: magos-linux.ru: Betcher
 #License: GPL v3
-#VERSION 4.2
+#VERSION 4.4
 
 #help
 HELP(){
@@ -12,7 +12,7 @@ echo "Usage:"
 echo "$0 <function> <pars>"
 echo OR
 echo "source $(realpath $0) ; <function> <pars>" ; echo ""
-echo "Avaliable functions:"
+echo "Available functions:"
 cat $0 |grep \(\).*{$
 exit 1
 }
@@ -51,7 +51,7 @@ if echo $compression |grep -q xz; then
 	fi
 fi
 
-CFG_DIR="/etc/pfsget" 				# папска с конфигами для pfsget
+CFG_DIR="/etc/pfsget" 				# папка с конфигами для pfsget
 PUBKEYS="$CFG_DIR/keys"				# папка для доверенных публтчных ключей
 mirror_list="$CFG_DIR/mirror.lst"   # список зеркал 
 ALIASCFG="$CFG_DIR/aliases.cfg"      # файл с алиасами для нечеткого поиска

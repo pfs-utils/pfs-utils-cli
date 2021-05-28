@@ -1,7 +1,7 @@
 #!/bin/bash
 DEVNULL=''
 #INSTALL_DIR нельзя определить в pfs с aufs-n из-за рекурсии
-INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключем -i
+INSTALL_DIR="$(aufs-n --raw '$dname_source' |grep modules |head -n1)" # папка куда качается модуль с ключом -i
 
 SORT_STR='-t = -bk2,2n -bk3,3n -bk4,4n'  # параметры сортировки
 
@@ -16,7 +16,7 @@ fi
 #$1 modname
 get_requires() {
 	local deplist
-	deplist=$(pfsinfo -s $1 |grep ^Dependenses: |sed -e 's/^Dependenses://' -e 's/,/ /g') 
+	deplist=$(pfsinfo -s $1 |grep ^Dependencies: |sed -e 's/^Dependencies://' -e 's/,/ /g') 
 	[ -z "$deplist" ] && return
 	echo "$deplist" |sed 's/-\{2,\}//g' >> ${WORK_DIR}/requires.lst
 	sed -i 's/^[ \t\n]*$//' ${WORK_DIR}/requires.lst
@@ -56,7 +56,7 @@ check_net() {
 }
 
 # Сделать реполист для папки $1
-# Eсли указать имя с путем для файла реполиста ($2), то будет создан реполист без подписи, 
+# Если указать имя с путем для файла реполиста ($2), то будет создан реполист без подписи, 
 # без сжатия и с прописанными путями к каждому файлу. Это нужно для указания папки с модулями в качестве репы.
 # Если указан только $1 будет создан реполист со стандартным именем _REPOLIST.gz
 # В случае настроенного gpg, также будет создан отдельный файл ключ _REPOLIST.gz.sig

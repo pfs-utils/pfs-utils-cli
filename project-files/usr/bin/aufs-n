@@ -1,6 +1,6 @@
 #!/bin/sh
 #aufs layers list
-#VERSION 4.2
+#VERSION 4.4
 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -17,7 +17,7 @@ printf %-68s "   Source " ;  printf  "Bundle perms\n\n"
 usage () {
 	echo -e "$(basename $0) util, detailed information about root aufs\n" 
 	echo "Usage:" 
-	echo "	$(basename $0)        - human readble format"
+	echo "	$(basename $0)        - human readable format"
 	echo "	$(basename $0) N      - returns mount point of layer \"N\" "
 	echo "	$(basename $0) --raw  - full list formated for pipes"
 	echo "	$(basename $0) --raw  '"'$n $source'"'   - return only needed values"

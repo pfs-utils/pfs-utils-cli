@@ -1,6 +1,6 @@
 #!/bin/sh
 #Find file in root aufs
-#VERSION 4.2
+#VERSION 4.4
 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -12,10 +12,10 @@ TMPFS=tmpfs
 usage () {
 	echo -e "$(basename $0) util, find file (\$1) in modules mounted to root aufs  and in $changesDir\n" 
 	echo "Usage:" 
-	echo "	$(basename $0)  filename        - find \"filename\"  (human readble format)"
+	echo "	$(basename $0)  filename        - find \"filename\"  (human readable format)"
 	echo "	$(basename $0)  filename --raw  - find \"filename\"  (output separated by spaces)"
 	echo "	$(basename $0)  filename --raw  '"'$n $module'"'   - return only needed values"
-	echo "avaliable values:"
+	echo "available values:"
 	echo '  $n - layer number'
 	echo '  $module - modulename'
     echo '  $submodule - submodule name (one of module sources)'

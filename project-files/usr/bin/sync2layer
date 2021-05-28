@@ -1,6 +1,6 @@
 #!/bin/bash
 #Util to move files to second aufs layer
-#VERSION 4.2
+#VERSION 4.4
 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -21,7 +21,7 @@ Usage:
 $(basename $0) <newlayer> 	- create new layer and move files
 $(basename $0)	 	- move files to existing second aufs layer
 
-If <newlayer> name has no extintion, $(basename $0) create directory-layer.
+If <newlayer> name has no extension, $(basename $0) create directory-layer.
 If <newlayer> has extintion \".rom\" $(basename $0) create fs in file layer (ext3).
 
 Please edit file \"/.savelist\" to specifу files to move:

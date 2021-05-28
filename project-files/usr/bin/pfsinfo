@@ -1,6 +1,6 @@
 #!/bin/sh
 #Read list PFS packages
-#VERSION 4.3
+#VERSION 4.4
 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -17,22 +17,22 @@ echo   "-i --install      installed submodules"
 exit 1
 }
 
-DELIMETER='/'
+DELIMITER='/'
 for arg in "$@"
 do
   case "${arg}" in
-	"-d" | "--delimeter" ) delimeter='yes' ;;
+	"-d" | "--delimiter" ) delimiter='yes' ;;
 	"-h" | "--help" ) HLP ;;
     "-s" | "--stat") stat="yes";;
     "-m" | "--mount" | "--mount-packages") readdir="mount";;
     "-i" | "--install" | "--install-packages") readdir="install";;
     "-"*[A-Za-z]*) echo "$(basename "$0"): invalid option -- '$(echo ${arg} | tr -d '-')'" >&2; exit 1;;
-    *) 	if [ "$delimeter" = 'yes' ] ; then
-			DELIMETER="$arg"
+    *) 	if [ "$delimiter" = 'yes' ] ; then
+			DELIMITER="$arg"
 		else 
 			inpack="${arg}"
 		fi
-		delimeter='no';;
+		delimiter='no';;
   esac
 done
 
@@ -57,9 +57,9 @@ if [ "${pack}" ]; then
 	
 	if [ "$ispfs" = "yes" ] ; then
 		Deps=$(find /tmp/squashfs/${bpack}${PFSDIR}/mount  -type f -name pfs.depends -exec cat "{}" \; |sort |uniq |grep -v "^$" | tr "\n" "   ")
-		Packs=$(find /tmp/squashfs/${bpack} | grep ${PFSDIR}/.*/pfs.files |sed -e "s:/tmp/squashfs/${bpack}${PFSDIR}/mount/::" -e 's:/submod/mount::g' -e 's:/pfs.files$::' -e 's#/#'$DELIMETER'#g' | tr "\n" "   ")
+		Packs=$(find /tmp/squashfs/${bpack} | grep ${PFSDIR}/.*/pfs.files |sed -e "s:/tmp/squashfs/${bpack}${PFSDIR}/mount/::" -e 's:/submod/mount::g' -e 's:/pfs.files$::' -e 's#/#'$DELIMITER'#g' | tr "\n" "   ")
 		[ -f /tmp/squashfs/${bpack}${PFSDIR}/INFO ] && cat /tmp/squashfs/${bpack}${PFSDIR}/INFO |sed 's/=/: /'
-		echo "Dependenses: $Deps"
+		echo "Dependencies: $Deps"
 		echo "Modules: $Packs"
 		echo ''
 		echo ''
@@ -73,7 +73,7 @@ if [ "${pack}" ]; then
 		done
 	else 
 		echo "Modules: -----"
-		echo "Dependenses:  -----"
+		echo "Dependencies:  -----"
 	fi
 
 	Msize=$(du -s ${pack} |cut -f1) 
@@ -86,7 +86,7 @@ if [ "${pack}" ]; then
 	umount /tmp/squashfs/"${bpack}"
 	rmdir  /tmp/squashfs/"${bpack}"
   else
-  unsquashfs -l -d ""  "${pack}"  | grep ${PFSDIR}/.*/pfs.files |sed -e "s#${PFSDIR}/mount/##" -e 's#/submod/mount##g' -e 's#/pfs.files$##' -e 's#/#'"$DELIMETER"'#g'
+  unsquashfs -l -d ""  "${pack}"  | grep ${PFSDIR}/.*/pfs.files |sed -e "s#${PFSDIR}/mount/##" -e 's#/submod/mount##g' -e 's#/pfs.files$##' -e 's#/#'"$DELIMITER"'#g'
   fi
 else
   [ "${readdir}" != "install" ] && [ -d "${PFSDIR}/mount" ] && echo "$(find "${PFSDIR}/mount/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -f)"

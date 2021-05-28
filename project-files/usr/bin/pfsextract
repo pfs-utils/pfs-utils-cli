@@ -1,6 +1,6 @@
 #!/bin/sh
 #PFS module extractor
-#VERSION 4.2
+#VERSION 4.4
 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -57,8 +57,8 @@ extract_simple () {
 	fi
  }
 
-extract_contaner () {
-#extract packages from contaner
+extract_container () {
+#extract packages from container
 dir=$(basename $pfs |sed "s/\.${EXT}$//")
 mkdir "$dir"
 [ "nopfs" -a "$ADDINFO" ] && pfsinfo $pfs > ${dir}/$(basename $dir).info
@@ -212,5 +212,5 @@ fi
 if [ "$(unsquashfs -l ${pfs} |grep ${PFSDIR}/mount |egrep '.files$' |wc -l)" -lt 2 ];then
 		extract_simple
 else
-		extract_contaner
+		extract_container
 fi

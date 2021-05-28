@@ -1,6 +1,6 @@
 #!/bin/sh
 #PFS module creator 
-#VERSION 4.2
+#VERSION 4.4
 
 if [ -f $(dirname $0)/pfs ] ;  then
     . $(dirname $0)/pfs
@@ -47,7 +47,7 @@ HLP(){
 echo "Usage: $0 <list of sources> -o out.$EXT"
 echo "Examples:"
 echo "$0 ./dir 			-make dir.pfs from dir"
-echo "$0 1.$EXT 2.$EXT -o 3.$EXT	-collect 1.$EXT and 2.$EXT to contaner 3.$EXT"
+echo "$0 1.$EXT 2.$EXT -o 3.$EXT	-collect 1.$EXT and 2.$EXT to container 3.$EXT"
 echo "$0 * -o ./big.$EXT		-collect all dirs and squashfs modules from current dir to big.$EXT" 
 echo
 echo "Параметры (ключи):"
@@ -55,11 +55,11 @@ echo "	-o / --out-file - указывает название выходного 
 echo "  -w - сохранить тени AUFS"
 echo "  -l / --local - сборка на месте, без использования aufs."
 echo "  -f / --fast - быстрая компрессия (размер .$EXT больше, но создается быстрее)."
-echo "  --mkilst  add files list to simple (non contaner) module"
+echo "  --mkilst  add files list to simple (non container) module"
 echo "  --save-duplicates  при сборке контейнеров сохранять одноименные файлы из разных источников если они отличаются, "
 echo "                     при распаковке файлы будут возвращены на место"
 echo "  --mksqfs / параметры для mksquashfs, компрессия размер блока и проч.(Внимание параметр должен быть последним)"
-echo "  --spec ./file  -  Добпаить файл с информацией. Только для атомарных модулей"
+echo "  --spec ./file  -  Добавить файл с информацией. Только для атомарных модулей"
 echo "  --deps aaa,bbb,ccc - Добавить список зависимостей.  Только для атомарных модулей"
 echo ""
 echo "Алиасы (сокращения):"
