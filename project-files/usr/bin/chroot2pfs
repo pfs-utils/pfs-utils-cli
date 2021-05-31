@@ -67,7 +67,7 @@ get_layers () {
 layers=""
 local layers
 if  [ "$MASK" -o "$MLIST" -o "$FLIST" ] ; then
-	[ "$MASK" ] && layers=$(aufs-n --hidetop  --reverse --raw '$bname_source $bundle' |grep "$MASK" | awk '{print $2}')
+	[ "$MASK" ] && layers=$(aufs-n --hidetop  --reverse --raw '$bname_source $bundle' |egrep "$MASK" | awk '{print $2}')
 	[ "$MLIST" ] && layers="$layers $(echo "$MLIST" | sed 's/#[^,]\+,\?//g; s/,$//' |sed 's/[\,]/ /g')"
 	[ "$FLIST" ] && layers="$layers $(grep -v '^#' $FLIST)"
 else
